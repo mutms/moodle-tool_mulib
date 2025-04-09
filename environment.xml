@@ -12,6 +12,11 @@
                     <ON_CHECK message="environment_mssql_unsupported" plugin="tool_mulib"/>
                 </FEEDBACK>
             </CUSTOM_CHECK>
+            <CUSTOM_CHECK file="admin/tool/mulib/environmentlib.php" function="tool_mulib_mysql_unsupported" level="optional">
+                <FEEDBACK>
+                    <ON_CHECK message="environment_mysql_unsupported" plugin="tool_mulib"/>
+                </FEEDBACK>
+            </CUSTOM_CHECK>
             <CUSTOM_CHECK file="admin/tool/mulib/environmentlib.php" function="tool_mulib_windows_unsupported" level="optional">
                 <FEEDBACK>
                     <ON_CHECK message="environment_windows_unsupported" plugin="tool_mulib"/>

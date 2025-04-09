@@ -11,6 +11,7 @@
  */
 
 $string['environment_mssql_unsupported'] = 'MS SQL Server database is not supported for use with muTMS plugins.';
+$string['environment_mysql_unsupported'] = 'Oracle MySQL database is not recommended for use with muTMS plugins, use MariaDB or PostgreSQL instead.';
 $string['environment_oracle_incompatible'] = 'Oracle Database is not compatible with muTMS plugins.';
 $string['environment_windows_unsupported'] = 'MS Windows is not supported as web server for use with muTMS plugins. ';
 $string['notification'] = 'Notification';

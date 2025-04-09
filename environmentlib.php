@@ -46,6 +46,23 @@ function tool_mulib_mssql_unsupported(environment_results $result): ?environment
 }
 
 /**
+ * muTMS is not tested with Oracle MySQL databases.
+ *
+ * @param environment_results $result
+ * @return environment_results|null
+ */
+function tool_mulib_mysql_unsupported(environment_results $result): ?environment_results {
+    global $DB;
+
+    if ($DB->get_dbfamily() === 'mysql') {
+        $result->setStatus(false);
+        return $result;
+    }
+
+    return null;
+}
+
+/**
  * No official support for MS Windows because they stopped supporting PHP and their drivers.
  *
  * @param environment_results $result
