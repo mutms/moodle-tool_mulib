@@ -37,6 +37,19 @@ require_once(__DIR__ . '/../../../../../lib/behat/behat_base.php');
  */
 class behat_tool_mulib extends behat_base {
     /**
+     * Click header action
+     *
+     * @Given I click on :action action from :header header actions
+     *
+     * @param string $action
+     * @param string $header
+     */
+    public function i_click_header_action(string $action, string $header) {
+        $this->get_selected_node('button', $header)->click();
+        $this->get_selected_node('link', $action)->click();
+    }
+
+    /**
      * Submit modal form dialog.
      *
      * @Given I press dialog form button :element
