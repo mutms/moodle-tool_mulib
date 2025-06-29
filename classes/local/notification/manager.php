@@ -178,7 +178,7 @@ abstract class manager {
                 $notification->name = $classname::get_name();
             } else {
                 $notification->name = $notification->notificationtype
-                    .' <span class="badge badge-danger">'.get_string('error').'</span>';
+                    .' <span class="badge bg-danger">'.get_string('error').'</span>';
             }
         }
 
