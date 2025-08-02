@@ -25,6 +25,10 @@ require_once($CFG->dirroot . '/lib/formslib.php');
 
 /**
  * Helper class for ajax forms.
+ *
+ * @package    tool_mulib
+ * @copyright  2025 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class ajax_form extends \moodleform {
     use ajax_form_trait;
