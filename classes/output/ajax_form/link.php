@@ -16,16 +16,39 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\output\ajax_form\modal;
+namespace tool_mulib\output\ajax_form;
+
+use moodle_url;
+use lang_string;
 
 /**
- * Link or icon that opens modal form.
+ * Text link with optional icon that opens modal ajax form.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class link extends action {
+    /**
+     * Create a text link with optional icon that opens a form in modal dialog.
+     *
+     * @param moodle_url $formurl
+     * @param string|lang_string $text link text
+     * @param string $pixname optional icon name
+     * @param string $pixcomponent icon component
+     */
+    public function __construct(
+        moodle_url $formurl,
+        string|lang_string $text,
+        string $pixname = '',
+        string $pixcomponent = 'moodle'
+    ) {
+        parent::__construct($formurl, $text);
+        if ($pixname !== '') {
+            $this->icon = new \core\output\pix_icon($pixname, '', $pixcomponent, ['aria-hidden' => 'true']);
+        }
+    }
+
     /**
      * Create reportbuilder report action.
      *
@@ -35,7 +58,7 @@ final class link extends action {
     public function create_report_action(array $attributes = []): \core_reportbuilder\local\report\action {
         $formsubmittedaction = json_encode($this->formsubmittedaction);
         $formsize = json_encode($this->formsize);
-        $modaltitle = json_encode($this->modaltitle ?? $this->label);
+        $modaltitle = json_encode($this->modaltitle ?? (string)$this->label);
 
         $attributes['onclick'] = "
 let link = this;

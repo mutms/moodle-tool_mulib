@@ -16,11 +16,10 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\output\ajax_form\modal;
+namespace tool_mulib\output\ajax_form;
 
 use lang_string;
 use moodle_url;
-use renderer_base;
 
 /**
  * Base class for elements that open forms in modal dialogs.
@@ -41,14 +40,14 @@ abstract class action implements \core\output\named_templatable, \core\output\re
     protected $formsubmittedaction = self::SUBMITTED_ACTION_RELOAD;
     /** @var moodle_url ajax form URL */
     protected $formurl;
-    /** @var string|lang_string element label*/
+    /** @var string standard dialog size names 'sm', 'lg' and 'xl' */
+    protected $formsize = 'lg';
+    /** @var string|lang_string element label */
     protected $label;
     /** @var array extra CSS classes */
     protected $classes = [];
     /** @var \core\output\pix_icon|null */
     protected $icon = null;
-    /** @var string standard dialog size names 'sm', 'lg' and 'xl' */
-    protected $formsize = 'sm';
     /** @var string|null initial modal title, falls back to action label */
     protected $modaltitle = null;
 
@@ -70,7 +69,7 @@ abstract class action implements \core\output\named_templatable, \core\output\re
      * @return static
      */
     public function set_classes(array $classes): static {
-        $this->classes[] = $classes;
+        $this->classes = $classes;
         return $this;
     }
 
@@ -128,7 +127,7 @@ abstract class action implements \core\output\named_templatable, \core\output\re
      * @param string $action
      * @return static
      */
-    public function set_form_submitted_action(string $action): static {
+    public function set_submitted_action(string $action): static {
         if (
             $action !== self::SUBMITTED_ACTION__NOTHING
             && $action !== self::SUBMITTED_ACTION_REDIRECT
@@ -143,17 +142,17 @@ abstract class action implements \core\output\named_templatable, \core\output\re
     /**
      * Export data for template.
      *
-     * @param renderer_base $output
+     * @param \renderer_base $output
      * @return array
      */
-    public function export_for_template(renderer_base $output): array {
+    public function export_for_template(\renderer_base $output): array {
         $data = [
             'label' => (string)$this->label,
             'classes' => implode(' ', $this->classes),
             'formurl' => $this->formurl->out(false),
             'formsubmittedaction' => $this->formsubmittedaction,
             'formsize' => $this->formsize,
-            'modaltitle' => $this->modaltitle ?? $this->label,
+            'modaltitle' => $this->modaltitle ?? (string)$this->label,
         ];
 
         if ($this->icon) {
@@ -166,11 +165,11 @@ abstract class action implements \core\output\named_templatable, \core\output\re
     /**
      * Returns template name.
      *
-     * @param renderer_base $renderer
+     * @param \renderer_base $renderer
      * @return string
      */
-    public function get_template_name(renderer_base $renderer): string {
+    public function get_template_name(\renderer_base $renderer): string {
         $parts = explode('\\', get_class($this));
-        return 'tool_mulib/ajax_form/modal/' . array_pop($parts);
+        return 'tool_mulib/ajax_form/' . array_pop($parts);
     }
 }

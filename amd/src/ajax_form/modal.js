@@ -31,12 +31,6 @@ import * as FormEvents from 'core_form/events';
 import * as FormChangeChecker from 'core_form/changechecker';
 import Pending from 'core/pending';
 
-const SELECTORS = {
-    CANCEL_BUTTON: '[data-action="cancel"]',
-    SUBMIT_BUTTON: '[data-action="submit"]',
-    SUBMITTING_ICON_CONTAINER: '[data-region="submitting-icon-container"]',
-};
-
 const STATUSES = {
     CANCELLED: 'cancelled',
     RENDER: 'render',
@@ -68,10 +62,6 @@ export default class AjaxFormModal extends Modal {
         this.reloadingForm = false;
         this.formUrl = null;
         this.formSubmittedAction = null;
-
-        this.submitButton = this.getFooter().find(SELECTORS.SUBMIT_BUTTON);
-        this.cancelButton = this.getFooter().find(SELECTORS.CANCEL_BUTTON);
-        this.submittingContainer = this.getFooter().find(SELECTORS.SUBMITTING_ICON_CONTAINER);
     }
 
     /**
@@ -102,56 +92,15 @@ export default class AjaxFormModal extends Modal {
      */
     registerEventListeners() {
         super.registerEventListeners();
-        this.registerCloseOnCancel();
-        this.registerOnSubmit();
-    }
 
-    /**
-     * Register a listener on submit button.
-     *
-     * @method registerOnSubmit
-     */
-    registerOnSubmit() {
-        this.getRoot().on('click', this.getActionSelector('submit'), this.submitFormAjax.bind(this));
-
-        // Do not allow submitting via ENTER key in text field.
-        this.getRoot().on('submit', 'form', (e) => {
-            e.preventDefault();
+        this.getBody().on('click', 'form input[type=submit]', (e) => {
+            this.submitAjaxForm(e);
         });
-    }
 
-    /**
-     * Set the text of the submit button.
-     *
-     * @method setSubmitButtonText
-     * @param {String} value The button text
-     * @param {String} ariaLabel ARIA label
-     * @returns {Promise}
-     */
-    setSubmitButtonText(value, ariaLabel = '') {
-        this.submitButton.text(value);
-        if (ariaLabel === '') {
-            this.submitButton.removeAttr('aria-label');
-        } else {
-            this.submitButton.attr('aria-label', ariaLabel);
-        }
-    }
-
-    /**
-     * Set the text of the cancel button.
-     *
-     * @method setCancelButtonText
-     * @param {String} value The button text
-     * @param {String} ariaLabel ARIA label
-     * @returns {Promise}
-     */
-    setCancelButtonText(value, ariaLabel = '') {
-        this.cancelButton.text(value);
-        if (ariaLabel === '') {
-            this.cancelButton.removeAttr('aria-label');
-        } else {
-            this.cancelButton.attr('aria-label', ariaLabel);
-        }
+        // Allow submitting via ENTER key in text field.
+        this.getRoot().on('submit', 'form', (e) => {
+            this.submitAjaxForm.bind(e);
+        });
     }
 
     /**
@@ -184,18 +133,30 @@ export default class AjaxFormModal extends Modal {
     /**
      * Submit form.
      *
-     * @method submitFormAjax
+     * @method submitAjaxForm
      * @param {Event} e
      */
-    submitFormAjax(e) {
+    submitAjaxForm(e) {
         e.preventDefault();
 
-        if (!this.validateElements()) {
+        if (e.target.dataset.cancel === '1') {
+            FormChangeChecker.resetAllFormDirtyStates();
+            this.destroy();
             return;
         }
 
+        if (e.target.dataset.skipValidation !== '1') {
+            if (!this.validateElements()) {
+                return;
+            }
+        }
+
         const form = this.getRoot().find('form');
-        const formData = form.serialize();
+        let formData = form.serialize();
+
+        if (e.target.type === 'submit') {
+            formData = formData + '&' + encodeURIComponent(e.target.name) + '=' + encodeURIComponent(e.target.value);
+        }
 
         FormChangeChecker.resetAllFormDirtyStates();
 
@@ -216,7 +177,7 @@ export default class AjaxFormModal extends Modal {
         this.reloadingForm = true;
         const pendingPromise = new Pending('tool_mulib/modal_ajax_form:reload');
 
-        this.disableSubmitButton();
+        this.disableSubmitButtons();
 
         const settings = {
             async: true,
@@ -231,7 +192,7 @@ export default class AjaxFormModal extends Modal {
         if (formData === '') {
             this.setBody(renderPromise.promise());
         } else {
-            this.submittingContainer.removeClass('hidden');
+            this.startSubmitting();
         }
 
         $.ajax(this.formUrl, settings)
@@ -248,9 +209,6 @@ export default class AjaxFormModal extends Modal {
                         }
                         renderPromise.resolve(response.data.html, Fragment.processCollectedJavascript(response.data.javascript));
                         this.setTitle(response.data.dialogtitle);
-                        this.setSubmitButtonText(response.data.submittext, response.data.submitarialabel ?? '');
-                        this.setCancelButtonText(response.data.canceltext, response.data.cancelarialabel ?? '');
-                        this.submitButton.removeClass('hidden');
                         this.enableSubmitButtons();
                     } else if (response.data.status === STATUSES.CANCELLED) {
                         // This should not happen because cancel and close buttons are in JS only.
@@ -263,8 +221,10 @@ export default class AjaxFormModal extends Modal {
                             this.destroy();
                             callback(response.data.callbackdata);
                         } else if (this.formSubmittedAction === ACTIONS.RELOAD) {
+                            FormChangeChecker.disableAllChecks();
                             window.location.reload();
                         } else if (this.formSubmittedAction === ACTIONS.REDIRECT) {
+                            FormChangeChecker.disableAllChecks();
                             window.location = response.data.redirecturl;
                         } else {
                             // Option ACTIONS.NOTHING does not do anything.
@@ -282,27 +242,49 @@ export default class AjaxFormModal extends Modal {
             })
             .always(() => {
                 pendingPromise.resolve();
-                this.submittingContainer.addClass('hidden');
+                this.finishSubmitting();
                 this.reloadingForm = false;
             });
     }
 
     /**
-     * Disable the submit button in the footer.
+     * Disable the submit buttons.
      *
-     * @method disableSubmitButton
+     * @method disableSubmitButtons
      */
-    disableSubmitButton() {
-        this.submitButton.prop('disabled', true);
+    disableSubmitButtons() {
+        const buttons = this.getBody().find('form input[type=submit]');
+        buttons.prop('disabled', true);
     }
 
     /**
-     * Enable the submit button in the footer.
+     * Re-enable the submit button.
      *
      * @method enableSubmitButtons
      */
     enableSubmitButtons() {
-        this.submitButton.prop('disabled', false);
+        const buttons = this.getBody().find('form input[type=submit]');
+        buttons.prop('disabled', false);
+    }
+
+    /**
+     * Disable the submit buttons.
+     *
+     * @method startSubmitting
+     */
+    startSubmitting() {
+        const submitting = this.getBody().find('[data-region="submitting-icon-container"]');
+        submitting.removeClass('hidden');
+    }
+
+    /**
+     * Re-enable the submit button.
+     *
+     * @method finishSubmitting
+     */
+    finishSubmitting() {
+        const submitting = this.getBody().find('[data-region="submitting-icon-container"]');
+        submitting.addClass('hidden');
     }
 
     /**

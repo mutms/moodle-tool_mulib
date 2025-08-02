@@ -16,13 +16,13 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\output\ajax_form\modal;
+namespace tool_mulib\output\ajax_form;
 
 use moodle_url;
-use renderer_base;
+use lang_string;
 
 /**
- * Button that opens modal form.
+ * Button that opens modal ajax form.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
@@ -36,13 +36,11 @@ final class button extends action {
      * Create button that opens a form in modal dialog.
      *
      * @param moodle_url $formurl
-     * @param string $label button label
+     * @param string|lang_string $label button label
      * @param bool $primary is this a primary button?
      */
-    public function __construct(moodle_url $formurl, string $label, bool $primary = false) {
+    public function __construct(moodle_url $formurl, string|lang_string $label, bool $primary = false) {
         parent::__construct($formurl, $label);
-        $this->formurl = $formurl;
-        $this->label = $label;
         $this->primary = $primary;
 
         $this->add_class('singlebutton');
@@ -60,7 +58,7 @@ final class button extends action {
     }
 
     #[\Override]
-    public function export_for_template(renderer_base $output): array {
+    public function export_for_template(\renderer_base $output): array {
         $data = parent::export_for_template($output);
         $data['primary'] = $this->primary;
 

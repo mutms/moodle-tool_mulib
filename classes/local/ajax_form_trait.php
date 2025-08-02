@@ -67,11 +67,11 @@ trait ajax_form_trait {
     ) {
         if (self::is_ajax_request()) {
             // Note that there might be multiple chained forms in one ajax script.
-            if (!defined('MOD_BOARD_AJAX_FORM_INITIALISED')) {
+            if (!defined('TOOL_MULIB_AJAX_FORM_INITIALISED')) {
                 global $OUTPUT;
                 echo $OUTPUT->header();
-                self::start_output_collection();
-                define('MOD_BOARD_AJAX_FORM_INITIALISED', true);
+                $this->start_javascript_collection();
+                define('TOOL_MULIB_AJAX_FORM_INITIALISED', true);
             }
             // There may be a form on the current page already, so use random html element ids.
             $attributes = (array)$attributes;
@@ -93,37 +93,28 @@ trait ajax_form_trait {
      *
      * @return void
      */
-    private static function start_output_collection(): void {
+    private function start_javascript_collection(): void {
         global $PAGE;
 
         // This dark magic matches the fragments API hackery in Moodle core.
 
         define('PREFERRED_RENDERER_TARGET', RENDERER_TARGET_GENERAL);
         $PAGE->start_collecting_javascript_requirements();
-        ob_start();
     }
 
     /**
      * End collecting form javascript and html.
      *
-     * @return array
+     * @return string
      */
-    private static function stop_output_collection(): array {
+    private function stop_javascript_collection(): string {
         global $PAGE;
 
-        if (!defined('MOD_BOARD_AJAX_FORM_INITIALISED')) {
+        if (!defined('TOOL_MULIB_AJAX_FORM_INITIALISED')) {
             throw new \core\exception\coding_exception('modal form is not collecting output');
         }
 
-        $html = ob_get_contents();
-        ob_end_clean();
-
-        $result = [
-            'html' => $html,
-            'javascript' => $PAGE->requires->get_end_code(),
-        ];
-
-        return $result;
+        return $PAGE->requires->get_end_code();
     }
 
     /**
@@ -134,7 +125,7 @@ trait ajax_form_trait {
      * @param \moodle_url $redirecturl
      * @return never
      */
-    final public static function ajax_form_cancelled(\moodle_url $redirecturl): never {
+    final public function ajax_form_cancelled(\moodle_url $redirecturl): never {
         $data = [
             'status' => 'cancelled',
             'redirecturl' => $redirecturl->out(false),
@@ -150,7 +141,7 @@ trait ajax_form_trait {
      * @param array $callbackdata data passed to JS submission callback from formSubmittedAction
      * @return never
      */
-    final public static function ajax_form_submitted(\moodle_url $redirecturl, array $callbackdata = []): never {
+    final public function ajax_form_submitted(\moodle_url $redirecturl, array $callbackdata = []): never {
         $data = [
             'status' => 'submitted',
             'redirecturl' => $redirecturl->out(false),
@@ -163,30 +154,22 @@ trait ajax_form_trait {
     /**
      * Called when form is to be rendered.
      *
-     * @param string $dialogtitle title of form dialog
-     * @param string|null $submittext submit button text
-     * @param string|null $canceltext cancel button text
-     * @param string|null $submitarialabel
-     * @param string|null $cancelarialabel
+     * @param string $modaltitle title of modal form
      * @return never
      */
-    final public static function ajax_form_render(
-        string $dialogtitle,
-        ?string $submittext = null,
-        ?string $canceltext = null,
-        ?string $submitarialabel = null,
-        ?string $cancelarialabel = null
-    ): never {
-        ['html' => $html, 'javascript' => $javascript] = self::stop_output_collection();
+    final public function ajax_form_render(string $modaltitle): never {
+        global $OUTPUT;
+        $html = $this->render();
+        $javascript = $this->stop_javascript_collection();
+
+        $html .= '<span class="hidden" style="float: left" data-region="submitting-icon-container">'
+            . $OUTPUT->render_from_template('core/loading', []) . '</span>';
+
         $data = [
             'status' => 'render',
             'html' => $html,
             'javascript' => $javascript,
-            'dialogtitle' => $dialogtitle,
-            'submittext' => $submittext ?? get_string('submit'),
-            'canceltext' => $canceltext ?? get_string('cancel'),
-            'submitarialabel' => $submitarialabel ?? '',
-            'cancelarialabel' => $cancelarialabel ?? '',
+            'dialogtitle' => $modaltitle,
         ];
         echo json_encode(['data' => $data]);
         die;
