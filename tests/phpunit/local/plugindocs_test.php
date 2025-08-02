@@ -62,7 +62,8 @@ final class plugindocs_test extends \advanced_testcase {
         plugindocs::set_path('tool_mulib', 'non_existent_page.md');
         $this->assertSame(
             'https://www.example.com/moodle/admin/tool/mulib/plugindocs.php/tool_mulib/non_existent_page.md',
-            $PAGE->docspath);
+            $PAGE->docspath
+        );
         $this->assertDebuggingCalled('plugin docs file does not exist: non_existent_page.md');
     }
 

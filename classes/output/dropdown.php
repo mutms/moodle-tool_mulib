@@ -27,7 +27,7 @@ namespace tool_mulib\output;
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dropdown implements \core\output\renderable, \core\output\named_templatable {
+class dropdown implements \core\output\named_templatable, \core\output\renderable {
     /** @var array $items links, dividers or custom html fragments */
     private $items = [];
     /** @var string */

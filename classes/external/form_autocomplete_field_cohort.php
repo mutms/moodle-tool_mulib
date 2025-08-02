@@ -106,7 +106,7 @@ abstract class form_autocomplete_field_cohort extends form_autocomplete_field {
      * @return callable
      */
     public static function get_label_callback(array $arguments): callable {
-        return function($value) use ($arguments): string {
+        return function ($value) use ($arguments): string {
             global $DB;
 
             $cohort = $DB->get_record('cohort', ['id' => $value]);

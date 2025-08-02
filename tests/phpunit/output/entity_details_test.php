@@ -53,6 +53,7 @@ final class entity_details_test extends \advanced_testcase {
         $details->add('Hello', 'World');
         $this->assertSame(
             "<dl class=\"row\">\n    <dt class=\"col-3\">Hello</dt><dd class=\"col-9\">World</dd>\n</dl>",
-            $OUTPUT->render($details));
+            $OUTPUT->render($details)
+        );
     }
 }

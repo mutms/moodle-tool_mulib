@@ -243,8 +243,8 @@ final class util {
             $replace = [];
             foreach (array_unique($matches[2]) as $placeholder) {
                 if (array_key_exists($placeholder, $a)) {
-                    $search[]  = '{$a->'.$placeholder.'}';
-                    $search[]  = '{$a-&gt;'.$placeholder.'}';
+                    $search[]  = '{$a->' . $placeholder . '}';
+                    $search[]  = '{$a-&gt;' . $placeholder . '}';
                      $value = $a[$placeholder];
                     if (is_object($value) && get_class($value) === \Closure::class) {
                         $value = $value();

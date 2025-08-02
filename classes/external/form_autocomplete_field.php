@@ -50,8 +50,13 @@ abstract class form_autocomplete_field extends \core_external\external_api {
      */
     final public static function execute_returns(): external_description {
         return new external_single_structure([
-            'notice' => new external_value(PARAM_RAW, 'Notice message when data cannot be returned, NULl means success.',
-                VALUE_OPTIONAL, null, NULL_ALLOWED),
+            'notice' => new external_value(
+                PARAM_RAW,
+                'Notice message when data cannot be returned, NULl means success.',
+                VALUE_OPTIONAL,
+                null,
+                NULL_ALLOWED
+            ),
             'list' => new external_multiple_structure(
                 new external_single_structure([
                     'value' => new external_value(PARAM_RAW, 'Value of item'),
@@ -68,7 +73,7 @@ abstract class form_autocomplete_field extends \core_external\external_api {
      * @return callable
      */
     public static function get_label_callback(array $arguments): callable {
-        return function($value) use ($arguments): string {
+        return function ($value) use ($arguments): string {
             return "get_label_callback() not implemented: $value";
         };
     }

@@ -249,7 +249,7 @@ final class util_test extends \advanced_testcase {
     public function test_replace_placeholders(): void {
         $this->assertSame('abc', \tool_mulib\local\notification\util::replace_placeholders('abc', ['opr' => 'OPR']));
 
-        $def = function() {
+        $def = function () {
             return 'DEF';
         };
         $return = \tool_mulib\local\notification\util::replace_placeholders('abc {$a->opr} ({$a-&gt;def}) {$a}', ['opr' => 'OPR', 'abc' => 'ABC', 'def' => $def]);

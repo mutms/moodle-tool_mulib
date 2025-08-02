@@ -25,7 +25,7 @@ namespace tool_mulib\output;
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class entity_details implements \core\output\renderable, \core\output\named_templatable {
+class entity_details implements \core\output\named_templatable, \core\output\renderable {
     /** @var array */
     protected $rows = [];
 

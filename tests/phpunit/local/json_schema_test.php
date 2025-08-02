@@ -73,7 +73,7 @@ JSON;
             'someint' => 15,
             'somedate' => '2020-11-13T23:10:05+02:00',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertTrue($valid);
         $this->assertSame([], $errors);
 
@@ -82,21 +82,21 @@ JSON;
             'someint' => 15,
             'somedate' => '2020-11-13T23:10:05+02:00',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertTrue($valid);
         $this->assertSame([], $errors);
 
         $data = (object)[
             'somename' => 'abc',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertTrue($valid);
         $this->assertSame([], $errors);
 
         $data = (object)[
             'noname' => 'abc',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertFalse($valid);
         $this->assertSame(['/' => ['The required properties (somename) are missing']], $errors);
 
@@ -105,7 +105,7 @@ JSON;
             'someint' => 15,
             'somedate' => '2020-11-13T23:10:05+02:00',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertFalse($valid);
         $this->assertSame(['/somename' => ['Minimum string length is 1, found 0']], $errors);
 
@@ -114,7 +114,7 @@ JSON;
             'someint' => 100,
             'somedate' => '2020-11-13T23:10:05+02:00',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertFalse($valid);
         $this->assertSame(['/someint' => ['Number must be lower than or equal to 20']], $errors);
 
@@ -123,7 +123,7 @@ JSON;
             'someint' => 15,
             'somedate' => '2020-02-30T23:10:05+02:00',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertFalse($valid);
         $this->assertSame(['/somedate' => ['The data must match the \'date-time\' format']], $errors);
 
@@ -132,7 +132,7 @@ JSON;
             'someint' => 15,
             'somedate' => '2020/02/02 23:10:05',
         ];
-        list($valid, $errors) = \tool_mulib\local\json_schema::validate($data, $schema);
+        [$valid, $errors] = \tool_mulib\local\json_schema::validate($data, $schema);
         $this->assertFalse($valid);
         $this->assertSame(['/somedate' => ['The data must match the \'date-time\' format']], $errors);
     }

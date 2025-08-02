@@ -27,7 +27,7 @@ namespace tool_mulib\output\dialog_form;
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class action implements \core\output\renderable, \core\output\templatable, \core\output\named_templatable {
+abstract class action implements \core\output\named_templatable, \core\output\renderable, \core\output\templatable {
     /** @var string reload the current page */
     public const AFTER_SUBMIT_RELOAD = 'reload';
     /** @var string go to page that the legacy form would redirect to */

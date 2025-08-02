@@ -50,6 +50,7 @@ final class role_util_test extends \advanced_testcase {
         $DB->insert_record('role_context_levels', ['roleid' => $manager->id, 'contextlevel' => CONTEXT_USER]);
         $this->assertSame(
             [$manager->id => 'Manager', $roleid => 'Some role'],
-            role_util::get_contextlevel_roles_menu(CONTEXT_USER));
+            role_util::get_contextlevel_roles_menu(CONTEXT_USER)
+        );
     }
 }

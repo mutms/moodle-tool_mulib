@@ -96,8 +96,11 @@ class behat_tool_mulib extends behat_base {
             'HEADER' => 0,
         ];
 
-        $content = $ch->get("$CFG->wwwroot/admin/tool/mulib/tests/behat/task_runner.php",
-            ['behat_task' => $taskname], $options);
+        $content = $ch->get(
+            "$CFG->wwwroot/admin/tool/mulib/tests/behat/task_runner.php",
+            ['behat_task' => $taskname],
+            $options
+        );
 
         if (!str_contains($content, "Scheduled task '$taskname' completed")) {
             throw new ExpectationException("Scheduled task '$taskname' did not complete successfully, content : " . $content, $this->getSession());
@@ -203,7 +206,7 @@ class behat_tool_mulib extends behat_base {
         // We also check the element visibility when running JS tests. Using microsleep as this
         // is a repeated step and global performance is important.
         $this->spin(
-            function($context, $args) {
+            function ($context, $args) {
 
                 foreach ($args['nodes'] as $node) {
                     if ($node->isVisible()) {

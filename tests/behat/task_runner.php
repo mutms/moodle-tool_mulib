@@ -42,7 +42,7 @@ ini_set('display_errors', '1');
 $CFG->debug = (E_ALL | E_STRICT);
 $CFG->debugdisplay = 1;
 
-require_once($CFG->libdir.'/clilib.php');
+require_once($CFG->libdir . '/clilib.php');
 
 \core\session\manager::write_close();
 
@@ -84,7 +84,6 @@ try {
     \core\task\manager::scheduled_task_complete($task);
 
     echo "\nScheduled task '$taskname' completed";
-
 } catch (Throwable $e) {
     // Restore the previous renderer.
     \core\cron::prepare_core_renderer();

@@ -16,8 +16,6 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-use tool_mulib\local\plugindocs;
-
 /**
  * Plugin documentation rendering.
  *
@@ -25,6 +23,8 @@ use tool_mulib\local\plugindocs;
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+use tool_mulib\local\plugindocs;
 
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */

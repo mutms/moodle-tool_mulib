@@ -58,15 +58,22 @@ final class notification_import_confirmation extends \tool_mulib\local\dialog_fo
 
         $types = $manager::get_all_types();
 
-        $notifications = $DB->get_records('tool_mulib_notification',
-            ['instanceid' => $frominstance, 'component' => $component, 'enabled' => 1]);
+        $notifications = $DB->get_records(
+            'tool_mulib_notification',
+            ['instanceid' => $frominstance, 'component' => $component, 'enabled' => 1]
+        );
         foreach ($notifications as $notification) {
             if (!isset($types[$notification->notificationtype])) {
                 continue;
             }
             $classname = $types[$notification->notificationtype];
-            $mform->addElement('advcheckbox', 'notificationid_'.$notification->id, $classname::get_name(), null,
-                ['group' => 1]);
+            $mform->addElement(
+                'advcheckbox',
+                'notificationid_' . $notification->id,
+                $classname::get_name(),
+                null,
+                ['group' => 1]
+            );
         }
         $this->add_checkbox_controller(1);
 

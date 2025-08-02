@@ -265,7 +265,11 @@ abstract class notificationtype {
      * @return void
      */
     final protected static function message_send(
-        \core\message\message $message, int $notificationid, int $userid, ?int $otherid1 = null, ?int $otherid2 = null,
+        \core\message\message $message,
+        int $notificationid,
+        int $userid,
+        ?int $otherid1 = null,
+        ?int $otherid2 = null,
         bool $allowmultiple = false
     ): void {
         global $DB;
@@ -275,8 +279,11 @@ abstract class notificationtype {
             debugging('invalid notification id', DEBUG_DEVELOPER);
             return;
         }
-        if (!$allowmultiple && $DB->record_exists('tool_mulib_notification_user',
-            ['notificationid' => $notificationid, 'userid' => $userid, 'otherid1' => $otherid1, 'otherid2' => $otherid2])
+        if (
+            !$allowmultiple && $DB->record_exists(
+                'tool_mulib_notification_user',
+                ['notificationid' => $notificationid, 'userid' => $userid, 'otherid1' => $otherid1, 'otherid2' => $otherid2]
+            )
         ) {
             // Likely caused by two concurrently running cron tasks.
             debugging('Duplicate notification prevented', DEBUG_DEVELOPER);
