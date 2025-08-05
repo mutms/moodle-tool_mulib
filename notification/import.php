@@ -33,10 +33,8 @@
 
 use tool_mulib\local\notification\util;
 
-// phpcs:ignoreFile moodle.Files.MoodleInternal.MoodleInternalGlobalState
-if (!empty($_SERVER['HTTP_X_MULIB_DIALOG_FORM_REQUEST'])) {
-    define('AJAX_SCRIPT', true);
-}
+define('AJAX_SCRIPT', true);
+
 require('../../../../config.php');
 
 $component = required_param('component', PARAM_COMPONENT);
@@ -59,9 +57,6 @@ $context = $manager::get_instance_context($instanceid);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/admin/tool/mulib/notification/import.php', ['component' => 'component', 'instanceid' => $instanceid]);
-$PAGE->set_pagelayout('admin');
-$PAGE->set_heading(get_string('notification_import', 'tool_mulib'));
-$PAGE->set_title(get_string('notification_import', 'tool_mulib'));
 
 $form = null;
 if (!$manager::validate_import_frominstance($instanceid, $frominstance)) {
@@ -71,7 +66,7 @@ if (!$manager::validate_import_frominstance($instanceid, $frominstance)) {
         'manager' => $manager,
     ]);
     if ($form->is_cancelled()) {
-        redirect($returnurl);
+        $form->ajax_form_cancelled($returnurl);
     } else if ($data = $form->get_data()) {
         $frominstance = $data->frominstance;
         unset($data);
@@ -88,7 +83,7 @@ if (!$form) {
     ]);
 
     if ($form->is_cancelled()) {
-        redirect($returnurl);
+        $form->ajax_form_cancelled($returnurl);
     }
 
     if ($data = $form->get_data()) {
@@ -100,11 +95,8 @@ if (!$form) {
         }
         util::notification_import($data, $notificationids);
 
-        $form->redirect_submitted($returnurl);
+        $form->ajax_form_submitted($returnurl);
     }
 }
 
-echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('notification_import', 'tool_mulib'));
-echo $form->render();
-echo $OUTPUT->footer();
+$form->ajax_form_render();

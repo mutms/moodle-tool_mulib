@@ -33,10 +33,8 @@ use tool_mulib\local\notification\util;
 /** @var core_renderer $OUTPUT */
 /** @var stdClass $CFG */
 
-// phpcs:ignoreFile moodle.Files.MoodleInternal.MoodleInternalGlobalState
-if (!empty($_SERVER['HTTP_X_MULIB_DIALOG_FORM_REQUEST'])) {
-    define('AJAX_SCRIPT', true);
-}
+define('AJAX_SCRIPT', true);
+
 require('../../../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -60,19 +58,13 @@ $context = $manager::get_instance_context($notification->instanceid);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
-$PAGE->set_pagelayout('admin');
-$PAGE->set_heading(get_string('notification_delete', 'tool_mulib'));
-$PAGE->set_title(get_string('notification_delete', 'tool_mulib'));
 
 $form = new \tool_mulib\local\form\notification_delete(null, ['notification' => $notification, 'manager' => $manager]);
 if ($form->is_cancelled()) {
-    redirect($returnurl);
+    $form->ajax_form_cancelled($returnurl);
 } else if ($data = $form->get_data()) {
     util::notification_delete($data->id);
-    $form->redirect_submitted($returnurl);
+    $form->ajax_form_submitted($returnurl);
 }
 
-echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('notification_delete', 'tool_mulib'));
-echo $form->render();
-echo $OUTPUT->footer();
+$form->ajax_form_render();

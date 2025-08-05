@@ -50,27 +50,6 @@ class behat_tool_mulib extends behat_base {
     }
 
     /**
-     * Submit modal form dialog.
-     *
-     * @Given I press dialog form button :element
-     *
-     * @param string $element Element we look for
-     */
-    public function i_press_dialog_form_button($element) {
-        if (!$this->running_javascript()) {
-            $node = $this->get_node_in_container('button', $element, 'css_element', '.mform');
-            $node->click();
-            return;
-        }
-
-        $node = $this->get_node_in_container('button', $element, 'css_element', '.tool_mulib-dialog_form');
-        $node->focus(); // Scroll to the button, it might be outside the dialog viewport.
-        $this->ensure_node_is_visible($node);
-
-        $node->click();
-    }
-
-    /**
      * Execute a scheduled task via CURL.
      *
      * @Given I run the :taskname task
