@@ -1,7 +1,3 @@
-.tool_mulib-dialog_form .modal-footer {
-    display: none;
-}
-
 /* temporary fix for MDL-85206 */
 .mform .fitem .felement[data-fieldtype=static] {
     padding-top: 0.5rem;

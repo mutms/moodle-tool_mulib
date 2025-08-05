@@ -59,7 +59,7 @@ final class header_actions_test extends \advanced_testcase {
         $actions = new header_actions('some title');
         $button1 = '<a href="https://example.com/page.php">text</a>';
         $actions->add_button($button1);
-        $button2 = new \tool_mulib\output\dialog_form\button(new \moodle_url('/'), 'other title');
+        $button2 = new \tool_mulib\output\ajax_form\button(new \moodle_url('/'), 'other title');
         $actions->add_button($button2);
 
         $this->assertDebuggingNotCalled();

@@ -26,17 +26,11 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\local\notification\util;
-
 /** @var moodle_database $DB */
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var stdClass $CFG */
 
-// phpcs:ignoreFile moodle.Files.MoodleInternal.MoodleInternalGlobalState
-if (!empty($_SERVER['HTTP_X_MULIB_DIALOG_FORM_REQUEST'])) {
-    define('AJAX_SCRIPT', true);
-}
 require('../../../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -99,12 +93,12 @@ $buttons = [];
 
 if ($manager::can_manage($notification->instanceid)) {
     $url = new \moodle_url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
-    $button = new \tool_mulib\output\dialog_form\button($url, get_string('notification_delete', 'tool_mulib'));
-    $button->set_after_submit($button::AFTER_SUBMIT_REDIRECT);
+    $button = new \tool_mulib\output\ajax_form\button($url, get_string('notification_delete', 'tool_mulib'));
+    $button->set_submitted_action($button::SUBMITTED_ACTION_REDIRECT);
     $buttons[] = $OUTPUT->render($button);
     if ($classname) {
         $url = new \moodle_url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
-        $button = new \tool_mulib\output\dialog_form\button($url, get_string('notification_update', 'tool_mulib'));
+        $button = new \tool_mulib\output\ajax_form\button($url, get_string('notification_update', 'tool_mulib'));
         $buttons[] = $OUTPUT->render($button);
     }
 }

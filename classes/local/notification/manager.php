@@ -211,12 +211,12 @@ abstract class manager {
                     // we do not want to encourage users to randomly deleting notification and loosing
                     // track of who was already notified.
                     $url = new \moodle_url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
-                    $icon = new \tool_mulib\output\dialog_form\icon($url, get_string('notification_delete', 'tool_mulib'), 'i/delete');
+                    $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_delete', 'tool_mulib'), 'i/delete');
                     $actions[] = $OUTPUT->render($icon);
                 }
                 if ($classname) {
                     $url = new \moodle_url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
-                    $icon = new \tool_mulib\output\dialog_form\icon($url, get_string('notification_update', 'tool_mulib'), 'i/edit');
+                    $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_update', 'tool_mulib'), 'i/edit');
                     $actions[] = $OUTPUT->render($icon);
                 }
                 $row[] = implode('', $actions);
@@ -226,7 +226,7 @@ abstract class manager {
 
         if (static::get_candidate_types($instanceid)) {
             $url = new \moodle_url('/admin/tool/mulib/notification/create.php', ['instanceid' => $instanceid, 'component' => $component]);
-            $icon = new \tool_mulib\output\dialog_form\icon($url, get_string('notification_create', 'tool_mulib'), 'e/insert');
+            $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_create', 'tool_mulib'), 'e/insert');
             $icon = $OUTPUT->render($icon);
             $cell = new \html_table_cell($icon);
             if ($canmanage) {
@@ -272,8 +272,8 @@ abstract class manager {
 
         $component = static::get_component();
         $url = new \moodle_url('/admin/tool/mulib/notification/import.php', ['instanceid' => $instanceid, 'component' => $component]);
-        $link = new \tool_mulib\output\dialog_form\link($url, get_string('notification_import', 'tool_mulib'));
-        $actions->get_dropdown()->add_dialog_form($link);
+        $link = new \tool_mulib\output\ajax_form\link($url, get_string('notification_import', 'tool_mulib'));
+        $actions->get_dropdown()->add_ajax_form($link);
 
         return $actions;
     }
