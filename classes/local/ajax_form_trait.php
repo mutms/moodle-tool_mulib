@@ -154,11 +154,12 @@ trait ajax_form_trait {
     /**
      * Called when form is to be rendered.
      *
-     * @param string $modaltitle title of modal form
+     * @param string $modaltitle title of modal form, '' means no change from launch action
      * @return never
      */
-    final public function ajax_form_render(string $modaltitle): never {
+    final public function ajax_form_render(string $modaltitle = ''): never {
         global $OUTPUT;
+
         $html = $this->render();
         $javascript = $this->stop_javascript_collection();
 

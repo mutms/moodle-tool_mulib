@@ -62,6 +62,19 @@ class dropdown implements \core\output\named_templatable, \core\output\renderabl
     /**
      * Add link that opens dialog_form.
      *
+     * @param \tool_mulib\output\ajax_form\link $link
+     */
+    final public function add_ajax_form(\tool_mulib\output\ajax_form\link $link): void {
+        global $OUTPUT;
+        $oldclasses = $link->get_classes();
+        $link->set_classes(['dropdown-item']);
+        $this->items[] = ['customhtml' => $OUTPUT->render($link)];
+        $link->set_classes($oldclasses);
+    }
+
+    /**
+     * Add link that opens dialog_form.
+     *
      * @param \tool_mulib\output\dialog_form\link $link
      */
     final public function add_dialog_form(\tool_mulib\output\dialog_form\link $link): void {

@@ -62,9 +62,7 @@ final class link extends action {
 
         $attributes['onclick'] = "
 let link = this;
-require([
-    'tool_mulib/ajax_form/modal',
-], function(AjaxFormModal) {
+require(['tool_mulib/ajax_form/modal'], function(AjaxFormModal) {
     AjaxFormModal.create({
         formUrl: link.href,
         formSize: $formsize,
@@ -73,13 +71,14 @@ require([
     });
 });
 return false;";
+        $attributes['title'] = $this->label;
 
         $action = new \core_reportbuilder\local\report\action(
             $this->formurl,
             $this->icon,
             $attributes,
             false,
-            $this->label
+            null
         );
 
         return $action;

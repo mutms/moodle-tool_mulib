@@ -63,6 +63,15 @@ abstract class action implements \core\output\named_templatable, \core\output\re
     }
 
     /**
+     * Returns classes.
+     *
+     * @return array
+     */
+    public function get_classes(): array {
+        return $this->classes;
+    }
+
+    /**
      * Reset CSS classes.
      *
      * @param array $classes
