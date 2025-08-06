@@ -57,8 +57,10 @@ $context = $manager::get_instance_context($instanceid);
 $PAGE->set_context($context);
 $PAGE->set_url('/admin/tool/mulib/notification/add.php', ['component' => 'component', 'instanceid' => $instanceid]);
 
-$form = new \tool_mulib\local\form\notification_create(null,
-    ['instanceid' => $instanceid, 'component' => $component, 'manager' => $manager]);
+$form = new \tool_mulib\local\form\notification_create(
+    null,
+    ['instanceid' => $instanceid, 'component' => $component, 'manager' => $manager]
+);
 if ($form->is_cancelled()) {
     $form->ajax_form_cancelled($returnurl);
 } else if ($data = $form->get_data()) {
