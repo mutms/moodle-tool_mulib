@@ -153,6 +153,21 @@ abstract class base extends external_api {
     }
 
     /**
+     * Prepare ws result.
+     *
+     * @param stdClass[] $items
+     * @param \context $context
+     * @return array
+     */
+    final public static function prepare_result(array $items, \context $context): array {
+        if (count($items) > static::MAX_RESULTS) {
+            return static::get_overflow_result();
+        } else {
+            return static::get_list_result($items, $context);
+        }
+    }
+
+    /**
      * Returns external method name for ajax request.
      *
      * @return string
