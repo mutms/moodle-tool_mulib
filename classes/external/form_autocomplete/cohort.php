@@ -42,32 +42,7 @@ abstract class cohort extends base {
      * @return array
      */
     public static function get_cohort_search_query(string $search, string $tablealias = ''): array {
-        global $DB;
-
-        if ($tablealias !== '' && !str_ends_with($tablealias, '.')) {
-            $tablealias .= '.';
-        }
-
-        $conditions = [];
-        $params = [];
-
-        if (trim($search) !== '') {
-            $searchparam = '%' . $DB->sql_like_escape($search) . '%';
-            $fields = ['name', 'idnumber', 'description'];
-            $cnt = 0;
-            foreach ($fields as $field) {
-                $conditions[] = $DB->sql_like($tablealias . $field, ':chsearch' . $cnt, false);
-                $params['chsearch' . $cnt] = $searchparam;
-                $cnt++;
-            }
-        }
-
-        if ($conditions) {
-            $sql = '(' . implode(' OR ', $conditions) . ') ';
-            return [$sql, $params];
-        } else {
-            return ['1=1 ', $params];
-        }
+        return static::get_search_query($search, ['name', 'idnumber', 'description'], $tablealias);
     }
 
     /**
