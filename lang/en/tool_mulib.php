@@ -54,5 +54,5 @@ $string['privacy:metadata:notificationid'] = 'Notification id';
 $string['privacy:metadata:timenotified'] = 'Time user notified';
 $string['privacy:metadata:tool_mulib_notification_user:tableexplanation'] = 'Tracked user notifications';
 $string['privacy:metadata:userid'] = 'User';
-$string['toomanyitemsfound'] = 'Too many items ({$a}) found';
+$string['toomanyitemsfound'] = 'Too many items found (maximum {$a})';
 $string['toomanyrecords'] = 'Too many records found';

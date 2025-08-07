@@ -52,7 +52,7 @@ export async function transport(selector, query, callback, failure) {
     try {
         const response = await Ajax.call([request])[0];
         if (response.overflow) {
-            const msg = await getString('toomanyitemsfound', 'tool_mulib', '>' + response.maxitems);
+            const msg = await getString('toomanyitemsfound', 'tool_mulib', response.maxitems);
             callback(msg);
         } else {
             callback(response.list);
