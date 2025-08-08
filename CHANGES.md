@@ -1,10 +1,11 @@
 # Changelog
 
-## mu-4.5.5-03
+## mu-4.5.6-01
 
-Release date: xx/08/2025
+Release date: 09/08/2025
 
 * New modal ajax forms helper replacing dialog forms.
+* Moodle 4.5.6 support.
 
 ## mu-4.5.5-02
 
