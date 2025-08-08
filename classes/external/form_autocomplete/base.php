@@ -300,10 +300,15 @@ abstract class base extends external_api {
             }
             return static::get_label($value, $args, $context);
         };
+        // Do not pass special 'currentValue' argument to web services,
+        // it is used for data validation in PHP only.
+        $wsargs = $args;
+        unset($wsargs['currentValue']);
+        $wsargs = json_encode($wsargs);
         $attributes = [
             'ajax' => 'tool_mulib/form_autocomplete/ajax_handler',
             'data-methodname' => static::get_methodname(),
-            'data-args' => json_encode($args),
+            'data-args' => $wsargs,
             'multiple' => static::get_multiple(),
             'valuehtmlcallback' => $valuehtmlcallback,
             'noselectionstring' => static::get_noselectionstring(),
