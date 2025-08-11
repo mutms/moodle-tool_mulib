@@ -37,9 +37,9 @@ if (!defined('BEHAT_SITE_RUNNING')) {
     die;
 }
 
-error_reporting(E_ALL | E_STRICT);
+error_reporting(E_ALL | 2048);
 ini_set('display_errors', '1');
-$CFG->debug = (E_ALL | E_STRICT);
+$CFG->debug = (E_ALL | 2048);
 $CFG->debugdisplay = 1;
 
 require_once($CFG->libdir . '/clilib.php');
