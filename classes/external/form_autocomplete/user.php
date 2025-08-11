@@ -20,6 +20,7 @@
 namespace tool_mulib\external\form_autocomplete;
 
 use stdClass;
+use tool_mulib\local\mulib;
 
 /**
  * Base class for user auto-completion fields.
@@ -58,5 +59,61 @@ abstract class user extends base {
         }
 
         return clean_text($OUTPUT->render_from_template('core_user/form_user_selector_suggestion', $data));
+    }
+
+    /**
+     * If tenant context add limit query to tenant and related users.
+     *
+     * @param string $useridfield for example usr.id
+     * @param \context $context
+     * @param string $glue
+     * @return string
+     */
+    public static function get_tenant_related_users_where(string $useridfield, \context $context, string $glue = "AND"): string {
+        if (!mulib::is_mutenancy_active() || !$context->tenantid) {
+            if ($glue === '') {
+                // Return something always true as WHERE condition.
+                return "1=1";
+            } else {
+                // This is expected to be appended to existing WHERE conditions.
+                return "";
+            }
+        }
+
+        return \tool_mutenancy\local\tenancy::get_related_users_exists($useridfield, $context, $glue);
+    }
+
+    /**
+     * Returns string if context is from tenant and user is not related to it.
+     *
+     * @param stdClass $user
+     * @param \context $context
+     * @return string|null error or NULL if ok
+     */
+    public static function validate_tenant_relation(stdClass $user, \context $context): ?string {
+        global $DB;
+
+        if (!mulib::is_mutenancy_active() || !$context->tenantid) {
+            return null;
+        }
+
+        if ($user->tenantid) {
+            if ($context->tenantid == $user->tenantid) {
+                return null;
+            } else {
+                return get_string('error');
+            }
+        }
+
+        $sql = "SELECT 'x'
+                  FROM {cohort_members} cm
+                  JOIN {tool_mutenancy_tenant} t ON t.assoccohortid = cm.cohortid
+                 WHERE cm.userid = :userid AND t.id = :tenantid";
+        $params = ['tenantid' => $context->tenantid, 'userid' => $user->id];
+        if ($DB->record_exists_sql($sql, $params)) {
+            return null;
+        }
+
+        return get_string('error');
     }
 }
