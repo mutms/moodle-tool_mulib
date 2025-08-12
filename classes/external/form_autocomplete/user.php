@@ -70,7 +70,7 @@ abstract class user extends base {
      * @return string
      */
     public static function get_tenant_related_users_where(string $useridfield, \context $context, string $glue = "AND"): string {
-        if (!mulib::is_mutenancy_active() || !$context->tenantid) {
+        if (!mulib::is_mutenancy_active()) {
             if ($glue === '') {
                 // Return something always true as WHERE condition.
                 return "1=1";
@@ -88,28 +88,25 @@ abstract class user extends base {
      *
      * @param stdClass $user
      * @param \context $context
-     * @return string|null error or NULL if ok
+     * @return string|null error string or NULL if ok
      */
     public static function validate_tenant_relation(stdClass $user, \context $context): ?string {
         global $DB;
 
-        if (!mulib::is_mutenancy_active() || !$context->tenantid) {
+        if (!mulib::is_mutenancy_active()) {
             return null;
         }
 
-        if ($user->tenantid) {
-            if ($context->tenantid == $user->tenantid) {
-                return null;
-            } else {
-                return get_string('error');
-            }
+        $select = self::get_tenant_related_users_where('u.id', $context, 'AND');
+
+        if ($select === "") {
+            return null;
         }
 
         $sql = "SELECT 'x'
-                  FROM {cohort_members} cm
-                  JOIN {tool_mutenancy_tenant} t ON t.assoccohortid = cm.cohortid
-                 WHERE cm.userid = :userid AND t.id = :tenantid";
-        $params = ['tenantid' => $context->tenantid, 'userid' => $user->id];
+                  FROM {user} u
+                 WHERE u.id = :userid $select";
+        $params = ['userid' => $user->id];
         if ($DB->record_exists_sql($sql, $params)) {
             return null;
         }
