@@ -88,6 +88,29 @@ final class user_test extends \advanced_testcase {
                  WHERE $result
               ORDER BY u.id ASC";
         $this->assertEquals([$user0->id, $user2->id], array_keys($DB->get_records_sql($sql)));
+
+        \tool_mutenancy\local\tenancy::force_current_tenantid($tenant2->id);
+
+        $result = user::get_tenant_related_users_where('u.id', $syscontext, '');
+        $sql = "SELECT u.id
+                  FROM {user} u
+                 WHERE $result
+              ORDER BY u.id ASC";
+        $this->assertEquals([$user0->id, $user2->id], array_keys($DB->get_records_sql($sql)));
+
+        $result = user::get_tenant_related_users_where('u.id', $tenantcontext1, '');
+        $sql = "SELECT u.id
+                  FROM {user} u
+                 WHERE $result
+              ORDER BY u.id ASC";
+        $this->assertEquals([$user1->id], array_keys($DB->get_records_sql($sql)));
+
+        $result = user::get_tenant_related_users_where('u.id', $tenantcontext2, '');
+        $sql = "SELECT u.id
+                  FROM {user} u
+                 WHERE $result
+              ORDER BY u.id ASC";
+        $this->assertEquals([$user0->id, $user2->id], array_keys($DB->get_records_sql($sql)));
     }
 
     public function test_validate_tenant_relation(): void {
@@ -119,6 +142,23 @@ final class user_test extends \advanced_testcase {
         $this->assertNull(user::validate_tenant_relation($admin, $syscontext));
         $this->assertNull(user::validate_tenant_relation($user0, $syscontext));
         $this->assertNull(user::validate_tenant_relation($user1, $syscontext));
+        $this->assertNull(user::validate_tenant_relation($user2, $syscontext));
+
+        $this->assertSame('Error', user::validate_tenant_relation($admin, $tenantcontext1));
+        $this->assertSame('Error', user::validate_tenant_relation($user0, $tenantcontext1));
+        $this->assertNull(user::validate_tenant_relation($user1, $tenantcontext1));
+        $this->assertSame('Error', user::validate_tenant_relation($user2, $tenantcontext1));
+
+        $this->assertSame('Error', user::validate_tenant_relation($admin, $tenantcontext2));
+        $this->assertNull(user::validate_tenant_relation($user0, $tenantcontext2));
+        $this->assertSame('Error', user::validate_tenant_relation($user1, $tenantcontext2));
+        $this->assertNull(user::validate_tenant_relation($user2, $tenantcontext2));
+
+        \tool_mutenancy\local\tenancy::force_current_tenantid($tenant2->id);
+
+        $this->assertSame('Error', user::validate_tenant_relation($admin, $syscontext));
+        $this->assertNull(user::validate_tenant_relation($user0, $syscontext));
+        $this->assertSame('Error', user::validate_tenant_relation($user1, $syscontext));
         $this->assertNull(user::validate_tenant_relation($user2, $syscontext));
 
         $this->assertSame('Error', user::validate_tenant_relation($admin, $tenantcontext1));
