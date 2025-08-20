@@ -2,11 +2,11 @@
 
 ![Moodle Plugin CI](https://github.com/mutms/moodle-tool_mulib/actions/workflows/moodle-ci.yml/badge.svg)
 
-This plugin is required by all other MuTMS plugins.
+This plugin is required by other MuTMS plugins.
 
 ## Known Limitations
 
-- Supported databases: PostgreSQL and MariaDB (MySQL Server is not recommended).
+- Supported databases: PostgreSQL and MariaDB (MS SQL Server is not fully supported).
 - 64-bit PHP is required.
 - PHP for Windows is not supported, use WSL 2 or Docker if necessary.
 

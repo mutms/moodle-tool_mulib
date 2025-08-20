@@ -1,5 +1,11 @@
 # Changelog
 
+## mu-4.5.6-02
+
+Release date: xx/08/2025
+
+* Fixed compatibility with unsupported MS SQL databases.
+
 ## mu-4.5.6-01
 
 Release date: 09/08/2025
