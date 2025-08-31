@@ -2,7 +2,7 @@
 
 ## mu-5.0.2-02
 
-Release date: xx/08/2025
+Release date: 31/08/2025
 
 * Fixed compatibility with unsupported MS SQL databases.
 
