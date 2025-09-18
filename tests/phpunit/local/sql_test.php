@@ -186,7 +186,7 @@ final class sql_test extends \advanced_testcase {
         $sql = new sql('');
         $result = $sql->wrap('(', ')');
         $this->assertSame($sql, $result);
-        $this->assertSame('()', $sql->sql);
+        $this->assertSame('', $sql->sql);
         $this->assertSame([], $sql->params);
 
         $sql = new sql('a = :param1', ['param1' => 2]);
