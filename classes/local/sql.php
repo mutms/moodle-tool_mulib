@@ -90,11 +90,16 @@ final class sql implements \ArrayAccess {
     /**
      * Wrap SQL fragment in between two strings.
      *
+     * NOTE: if query is empty string then nothing changes.
+     *
      * @param string $pre
      * @param string $post
      * @return sql $this
      */
     public function wrap(string $pre, string $post): self {
+        if ($this->sql === '') {
+            return $this;
+        }
         $parts = self::normalise_merge_sqls([$pre, $this, $post]);
         [$this->sql, $this->params] = self::merge_sqls($parts, '');
         return $this;
