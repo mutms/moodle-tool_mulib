@@ -1,9 +1,10 @@
 # Changelog
 
-## mu-5.0.2-04
+## mu-5.0.3-01
 
 Release date: xx/10/2025
 
+* Added support for Moodle 5.1.
 * Added support for creation of buttons and icons from action links.
 
 ## mu-5.0.2-03
