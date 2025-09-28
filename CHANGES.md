@@ -1,5 +1,11 @@
 # Changelog
 
+## mu-5.0.2-04
+
+Release date: xx/10/2025
+
+* Added support for creation of buttons and icons from action links.
+
 ## mu-5.0.2-03
 
 Release date: 24/09/2025
