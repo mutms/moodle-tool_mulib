@@ -4,6 +4,7 @@
 
 Release date: xx/10/2025
 
+* Added support for outline AJAX form buttons. 
 * Fixed rendering of actions dropdown.
 
 ## mu-4.5.7-01
