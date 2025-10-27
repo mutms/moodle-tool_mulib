@@ -4,6 +4,7 @@
 
 Release date: xx/10/2025
 
+* Plugin documentation was move to GitHub wikis and removed Parsedown library
 * Added support for outline AJAX form buttons. 
 * Fixed rendering of actions dropdown.
 
