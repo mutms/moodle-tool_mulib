@@ -2,7 +2,7 @@
 
 ## mu-5.0.3-02
 
-Release date: xx/10/2025
+Release date: 08/11/2025
 
 * Added \tool_mulib\local\mulib::clean_string() to help with Mustache double encoding
 * Plugin documentation was move to GitHub wikis and removed Parsedown library
