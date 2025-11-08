@@ -39,6 +39,6 @@ Release date: 09/08/2025
 
 ## mu-5.0.1-01
 
-Release date: xx/xx/2025
+Release date: 30/06/2025
 
 * Fixed compatibility with Moodle 5.0.1 release.
