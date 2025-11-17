@@ -15,23 +15,46 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
 
 /**
- * Additional tools library plugin version.
+ * Create a new external database server.
  *
  * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
  * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+use tool_mulib\local\extdb\server;
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111850;
-$plugin->requires = 2025041400;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [500, 501];
-$plugin->release = 'mu-5.0.3-02+';
+/** @var moodle_page $PAGE */
+/** @var core_renderer $OUTPUT */
+/** @var moodle_database $DB */
+
+define('AJAX_SCRIPT', true);
+
+require(__DIR__ . '/../../../../config.php');
+
+require_login();
+
+$context = context_system::instance();
+require_capability('moodle/site:config', $context);
+
+$PAGE->set_url('/admin/tool/mulib/extdb/server_create.php');
+$PAGE->set_context($context);
+
+$returnurl = new moodle_url('/admin/tool/mulib/extdb/servers.php');
+
+$form = new \tool_mulib\local\extdb\form\server_create();
+
+if ($form->is_cancelled()) {
+    $form->ajax_form_cancelled($returnurl);
+}
+
+$data = $form->get_data();
+if ($data && empty($data->check)) {
+    $server = server::create($data);
+    $form->ajax_form_submitted($returnurl);
+}
+
+$form->ajax_form_render();

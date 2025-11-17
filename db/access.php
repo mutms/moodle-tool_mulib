@@ -17,21 +17,23 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
 /**
- * Additional tools library plugin version.
+ * MuTMS additional tools capabilities.
  *
  * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
  * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111850;
-$plugin->requires = 2025041400;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [500, 501];
-$plugin->release = 'mu-5.0.3-02+';
+$capabilities = [
+    // Use queries in plugins, at system level also allows viewing of all queries.
+    'tool/mulib:useextdb' => [
+        'captype' => 'read',
+        'riskbitmask' => RISK_PERSONAL,
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+];

@@ -43,5 +43,42 @@
         <INDEX NAME="otherid1-otherid2" UNIQUE="false" FIELDS="otherid1, otherid2" COMMENT="Performance improvement"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="tool_mulib_extdb_server" COMMENT="External database server">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Server name"/>
+        <FIELD NAME="dsn" TYPE="char" LENGTH="1333" NOTNULL="true" SEQUENCE="false" COMMENT="PDO connection string"/>
+        <FIELD NAME="dbuser" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="DB user name"/>
+        <FIELD NAME="dbpass" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="DB user password"/>
+        <FIELD NAME="dboptions" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON encoded PDO connection options"/>
+        <FIELD NAME="note" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional server note"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="name" UNIQUE="true" FIELDS="name" COMMENT="make names unique to prevent confusion"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="tool_mulib_extdb_query" COMMENT="External database query">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Query name"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Query is usable in this context and sub-contexts"/>
+        <FIELD NAME="serverid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="External database server id"/>
+        <FIELD NAME="component" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Plugin where query is usable"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Type of plugin query"/>
+        <FIELD NAME="sql" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="SQL query with named parameters"/>
+        <FIELD NAME="note" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional query note"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="contextid" TYPE="foreign" FIELDS="contextid" REFTABLE="context" REFFIELDS="id"/>
+        <KEY NAME="serverid" TYPE="foreign" FIELDS="serverid" REFTABLE="tool_mulib_extdb_server" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="name" UNIQUE="true" FIELDS="name" COMMENT="make names unique to prevent confusion"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>
