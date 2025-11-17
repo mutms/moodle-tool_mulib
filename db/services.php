@@ -17,22 +17,21 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
 /**
- * Additional tools library plugin version.
+ * Shared additional library services.
  *
  * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
  * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111845;
-$plugin->requires = 2024100700;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [405, 405];
-$plugin->incompatible = 500;
-$plugin->release = 'mu-4.5.7-02+';
+$functions = [
+    'tool_mulib_form_autocomplete_extdb_query_contextid' => [
+        'classname' => tool_mulib\external\form_autocomplete\extdb_query_contextid::class,
+        'description' => 'Returns list of category context ids for extdb query.',
+        'type' => 'read',
+        'ajax' => true,
+        'loginrequired' => true,
+    ],
+];

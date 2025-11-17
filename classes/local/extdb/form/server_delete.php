@@ -15,24 +15,32 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
+
+namespace tool_mulib\local\extdb\form;
 
 /**
- * Additional tools library plugin version.
+ * Delete server form.
  *
  * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
  * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class server_delete extends \tool_mulib\local\ajax_form {
+    #[\Override]
+    protected function definition(): void {
+        $mform = $this->_form;
+        $server = $this->_customdata['server'];
 
-defined('MOODLE_INTERNAL') || die();
+        $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111845;
-$plugin->requires = 2024100700;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [405, 405];
-$plugin->incompatible = 500;
-$plugin->release = 'mu-4.5.7-02+';
+        $mform->addElement('static', 'staticname', get_string('name'), s($server->name));
+
+        $mform->addElement('static', 'staticdsn', get_string('extdb_server_dsn', 'tool_mulib'), s($server->dsn));
+
+        $this->add_action_buttons(true, get_string('extdb_server_delete', 'tool_mulib'));
+
+        $this->set_data($server);
+    }
+}

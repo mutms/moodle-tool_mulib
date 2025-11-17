@@ -15,24 +15,24 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
+
+namespace tool_mulib\local\extdb;
 
 /**
- * Additional tools library plugin version.
+ * General external database exception.
  *
- * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
- * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_mulib
+ * @copyright  2025 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111845;
-$plugin->requires = 2024100700;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [405, 405];
-$plugin->incompatible = 500;
-$plugin->release = 'mu-4.5.7-02+';
+final class exception extends \moodle_exception {
+    /**
+     * Constructor.
+     *
+     * @param string $debuginfo
+     */
+    public function __construct(string $debuginfo) {
+        parent::__construct('extdb_exception', 'tool_mulib', '', null, $debuginfo);
+    }
+}

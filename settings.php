@@ -17,22 +17,29 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
 /**
- * Additional tools library plugin version.
+ * MuTMS lib settings.
  *
- * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
- * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_mulib
+ * @copyright  2025 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025111845;
-$plugin->requires = 2024100700;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [405, 405];
-$plugin->incompatible = 500;
-$plugin->release = 'mu-4.5.7-02+';
+/** @var admin_root $ADMIN */
+
+$ADMIN->add('server', new admin_category('tool_mulib_extdb', get_string('extdb', 'tool_mulib')));
+
+$ADMIN->add('tool_mulib_extdb', new admin_externalpage(
+    'tool_mulib_extdb_servers',
+    get_string('extdb_servers', 'tool_mulib'),
+    new moodle_url('/admin/tool/mulib/extdb/servers.php'),
+    'moodle/site:config'
+));
+
+$ADMIN->add('tool_mulib_extdb', new admin_externalpage(
+    'tool_mulib_extdb_queries',
+    get_string('extdb_queries', 'tool_mulib'),
+    new moodle_url('/admin/tool/mulib/extdb/queries.php'),
+    'tool/mulib:useextdb'
+));
