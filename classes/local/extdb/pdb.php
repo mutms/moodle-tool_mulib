@@ -199,6 +199,9 @@ final class pdb {
             throw new \core\exception\coding_exception('Unknown db driver family: ' . $dbfamily);
         }
         $dsn .= "host={$CFG->dbhost};dbname={$CFG->dbname}";
+        if (!empty($CFG->dboptions['dbport'])) {
+            $dsn .= ';port=' . $CFG->dboptions['dbport'];
+        }
         if ($dbfamily === 'mysql') {
             $dsn .= ";charset=utf8mb4";
         }
