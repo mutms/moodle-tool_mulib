@@ -137,16 +137,21 @@ final class server_test extends \advanced_testcase {
             'dboptions' => '',
             'note' => 'Some test',
         ]);
+
+        server::delete($server1->id);
+        server::delete($server1->id);
+        $this->assertFalse($DB->record_exists('tool_mulib_extdb_server', ['id' => $server1->id]));
+
+        if (!get_config('tool_muprog', 'version')) {
+            return;
+        }
+
         $query = $generator->create_extdb_query([
             'serverid' => $server2->id,
             'component' => 'tool_muprog',
             'type' => 'allocation',
             'sql' => 'SELECT * FROM m_user',
         ]);
-
-        server::delete($server1->id);
-        server::delete($server1->id);
-        $this->assertFalse($DB->record_exists('tool_mulib_extdb_server', ['id' => $server1->id]));
 
         try {
             server::delete($server2->id);
