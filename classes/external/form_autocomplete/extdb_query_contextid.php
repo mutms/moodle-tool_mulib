@@ -75,7 +75,7 @@ final class extdb_query_contextid extends categorycontext {
             self::get_categorycontext_search_query($query, 'cat')->wrap('AND ', '')
         );
 
-        if (\tool_muprog\local\util::is_mutenancy_active()) {
+        if (\tool_mulib\local\mulib::is_mutenancy_active()) {
             $tenantid = \tool_mutenancy\local\tenancy::get_current_tenantid();
             if ($tenantid) {
                 $sql->replace_comment(
