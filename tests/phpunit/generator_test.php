@@ -80,14 +80,14 @@ final class generator_test extends \advanced_testcase {
             'serverid' => $server->id,
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
         ]);
         $this->assertSame($server->id, $query->serverid);
         $this->assertSame((string)$syscontext->id, $query->contextid);
         $this->assertSame('External query 1', $query->name);
         $this->assertSame('tool_muprog', $query->component);
         $this->assertSame('allocation', $query->type);
-        $this->assertSame('SELECT * FROM m_user', $query->sql);
+        $this->assertSame('SELECT * FROM m_user', $query->sqlquery);
         $this->assertSame(null, $query->note);
 
         $query = $generator->create_extdb_query([
@@ -96,7 +96,7 @@ final class generator_test extends \advanced_testcase {
             'name' => 'Other query',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
             'note' => 'some note',
         ]);
         $this->assertSame($server->id, $query->serverid);
@@ -104,7 +104,7 @@ final class generator_test extends \advanced_testcase {
         $this->assertSame('Other query', $query->name);
         $this->assertSame('tool_muprog', $query->component);
         $this->assertSame('allocation', $query->type);
-        $this->assertSame('SELECT * FROM m_user', $query->sql);
+        $this->assertSame('SELECT * FROM m_user', $query->sqlquery);
         $this->assertSame('some note', $query->note);
 
         $query = $generator->create_extdb_query([
@@ -112,7 +112,7 @@ final class generator_test extends \advanced_testcase {
             'serverid' => $server->id,
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
         ]);
         $this->assertSame($server->id, $query->serverid);
         $this->assertSame((string)$catcontext->id, $query->contextid);

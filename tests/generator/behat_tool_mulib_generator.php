@@ -39,7 +39,7 @@ class behat_tool_mulib_generator extends behat_generator_base {
             'extdb_queries' => [
                 'singular' => 'extdb_query',
                 'datagenerator' => 'extdb_query',
-                'required' => ['name', 'server', 'component', 'type', 'sql'],
+                'required' => ['name', 'server', 'component', 'type', 'sqlquery'],
             ],
         ];
     }
@@ -58,13 +58,13 @@ class behat_tool_mulib_generator extends behat_generator_base {
 
         // Use the same table name hackery as in regular database driver
         // to help with testing in current database.
-        $query['sql'] = preg_replace_callback(
+        $query['sqlquery'] = preg_replace_callback(
             '/\{([a-z][a-z0-9_]*)}/',
             function ($matches) {
                 global $CFG;
                 return $CFG->prefix . $matches[1];
             },
-            $query['sql']
+            $query['sqlquery']
         );
 
         return $query;

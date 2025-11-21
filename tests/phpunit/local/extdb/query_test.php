@@ -61,7 +61,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Query 1',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
             'note' => 'some note',
         ]);
         $this->assertSame($server->id, $query1->serverid);
@@ -69,7 +69,7 @@ final class query_test extends \advanced_testcase {
         $this->assertSame('Query 1', $query1->name);
         $this->assertSame('tool_muprog', $query1->component);
         $this->assertSame('allocation', $query1->type);
-        $this->assertSame('SELECT * FROM m_user', $query1->sql);
+        $this->assertSame('SELECT * FROM m_user', $query1->sqlquery);
         $this->assertSame('some note', $query1->note);
 
         $query2 = query::create((object)[
@@ -78,7 +78,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Other query',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user WHERE deleted = 0',
+            'sqlquery' => 'SELECT * FROM m_user WHERE deleted = 0',
             'note' => 'other note',
         ]);
         $this->assertSame($server->id, $query2->serverid);
@@ -86,7 +86,7 @@ final class query_test extends \advanced_testcase {
         $this->assertSame('Other query', $query2->name);
         $this->assertSame('tool_muprog', $query2->component);
         $this->assertSame('allocation', $query2->type);
-        $this->assertSame('SELECT * FROM m_user WHERE deleted = 0', $query2->sql);
+        $this->assertSame('SELECT * FROM m_user WHERE deleted = 0', $query2->sqlquery);
         $this->assertSame('other note', $query2->note);
 
         try {
@@ -96,7 +96,7 @@ final class query_test extends \advanced_testcase {
                 'name' => 'Query 1',
                 'component' => 'tool_muprog',
                 'type' => 'allocation',
-                'sql' => 'SELECT * FROM m_user',
+                'sqlquery' => 'SELECT * FROM m_user',
                 'note' => 'some note',
             ]);
             $this->fail('Exception expected');
@@ -123,7 +123,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Query 1',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
             'note' => 'some note',
         ]);
         $query2 = query::create((object)[
@@ -132,7 +132,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Other query',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user WHERE deleted = 0',
+            'sqlquery' => 'SELECT * FROM m_user WHERE deleted = 0',
             'note' => 'other note',
         ]);
 
@@ -143,7 +143,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Query 1x',
             'component' => 'tool_muprogx',
             'type' => 'allocationx',
-            'sql' => 'SELECT * FROM m_course',
+            'sqlquery' => 'SELECT * FROM m_course',
             'note' => 'X note',
         ]);
         $this->assertSame($server2->id, $query1->serverid);
@@ -151,7 +151,7 @@ final class query_test extends \advanced_testcase {
         $this->assertSame('Query 1x', $query1->name);
         $this->assertSame('tool_muprog', $query1->component);
         $this->assertSame('allocation', $query1->type);
-        $this->assertSame('SELECT * FROM m_course', $query1->sql);
+        $this->assertSame('SELECT * FROM m_course', $query1->sqlquery);
         $this->assertSame('X note', $query1->note);
 
         try {
@@ -184,7 +184,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Query 1',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
             'note' => 'some note',
         ]);
         $query2 = query::create((object)[
@@ -193,7 +193,7 @@ final class query_test extends \advanced_testcase {
             'name' => 'Other query',
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user WHERE deleted = 0',
+            'sqlquery' => 'SELECT * FROM m_user WHERE deleted = 0',
             'note' => 'other note',
         ]);
 

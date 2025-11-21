@@ -137,16 +137,16 @@ final class query extends base {
             });
 
         $columns[] = (new column(
-            'sql',
-            new lang_string('extdb_query_sql', 'tool_mulib'),
+            'sqlquery',
+            new lang_string('extdb_query_sqlquery', 'tool_mulib'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
-            ->add_fields("{$queryalias}.sql")
+            ->add_fields("{$queryalias}.sqlquery")
             ->set_is_sortable(false)
             ->set_callback(static function (?string $value, \stdClass $row): string {
-                return '<pre>' . s($row->sql) . '</pre>';
+                return '<pre>' . s($row->sqlquery) . '</pre>';
             });
 
         $columns[] = (new column(

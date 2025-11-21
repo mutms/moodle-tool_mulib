@@ -86,7 +86,7 @@ final class queries extends system_report {
         $this->add_column($column);
 
         $columns = [
-            'query:sql',
+            'query:sqlquery',
             'query:note',
         ];
         $this->add_columns_from_entities($columns);

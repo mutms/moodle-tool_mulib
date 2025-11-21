@@ -69,9 +69,9 @@ final class query_update extends \tool_mulib\local\ajax_form {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('required'), 'required', null, 'client');
 
-        $mform->addElement('textarea', 'sql', get_string('extdb_query_sql', 'tool_mulib'), ['rows' => '5', 'cols' => '50']);
-        $mform->setType('sql', PARAM_RAW);
-        $mform->addRule('sql', get_string('required'), 'required', null, 'client');
+        $mform->addElement('textarea', 'sqlquery', get_string('extdb_query_sqlquery', 'tool_mulib'), ['rows' => '5', 'cols' => '50']);
+        $mform->setType('sqlquery', PARAM_RAW);
+        $mform->addRule('sqlquery', get_string('required'), 'required', null, 'client');
 
         $mform->addElement('hidden', 'showstatus');
         $mform->setType('showstatus', PARAM_INT);
