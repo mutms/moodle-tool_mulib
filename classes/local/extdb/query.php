@@ -64,7 +64,7 @@ abstract class query {
      * @return rs
      */
     final public function query(): rs {
-        return $this->pdb->query($this->record->sql, $this->parameters);
+        return $this->pdb->query($this->record->sqlquery, $this->parameters);
     }
 
     /**
