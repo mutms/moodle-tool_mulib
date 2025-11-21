@@ -33,10 +33,10 @@ Feature: Test tool_mulib external database generator
       | Test server 1 |
       | Test server 2 |
     When the following "tool_mulib > extdb_queries" exist:
-      | name         | server        | component   | type       | sql                    |
+      | name         | server        | component   | type       | sqlquery               |
       | Test query 1 | Test server 1 | tool_muprog | allocation | SELECT * FROM m_user   |
     And the following "tool_mulib > extdb_queries" exist:
-      | name         | server        | component   | type       | sql                    | contextlevel | reference | note      |
+      | name         | server        | component   | type       | sqlquery               | contextlevel | reference | note      |
       | Test query 2 | Test server 2 | tool_muprog | allocation | SELECT * FROM m_course | Category     | CAT1      | Some note |
 
     And I log in as "admin"

@@ -150,7 +150,7 @@ final class server_test extends \advanced_testcase {
             'serverid' => $server2->id,
             'component' => 'tool_muprog',
             'type' => 'allocation',
-            'sql' => 'SELECT * FROM m_user',
+            'sqlquery' => 'SELECT * FROM m_user',
         ]);
 
         try {

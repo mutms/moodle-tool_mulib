@@ -66,7 +66,7 @@ function xmldb_tool_mulib_upgrade($oldversion): bool {
         $table->add_field('serverid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('component', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
         $table->add_field('type', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('sql', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sqlquery', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
         $table->add_field('note', XMLDB_TYPE_TEXT, null, null, null, null, null);
 
         // Adding keys to table tool_mulib_extdb_query.

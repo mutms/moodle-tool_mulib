@@ -76,7 +76,7 @@ Feature: Test external database queries management
       | name          |
       | Test server 1 |
     And the following "tool_mulib > extdb_queries" exist:
-      | name         | server        | component   | type       | sql                    |
+      | name         | server        | component   | type       | sqlquery               |
       | Test query 1 | Test server 1 | tool_muprog | allocation | SELECT * FROM m_user   |
     And the following "users" exist:
       | username  | firstname | lastname  | email                 |
