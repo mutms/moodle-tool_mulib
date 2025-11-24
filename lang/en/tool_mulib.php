@@ -59,6 +59,7 @@ $string['lang_string_a'] = '{$a}';
 $string['mulib:useextdb'] = 'Use external queries';
 $string['notification'] = 'Notification';
 $string['notification_body'] = 'Message';
+$string['notification_cc_supervisor'] = 'Send copy to supervisor';
 $string['notification_create'] = 'Add notification';
 $string['notification_custom'] = 'Customised';
 $string['notification_delete'] = 'Delete notification';

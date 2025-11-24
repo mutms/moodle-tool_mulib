@@ -83,5 +83,21 @@ function xmldb_tool_mulib_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2025111845, 'tool', 'mulib');
     }
 
+    if ($oldversion < 2025112345) {
+        $table = new xmldb_table('tool_mulib_notification');
+
+        $field = new xmldb_field('supervisorframeworkid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'instanceid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('supervisorframeworkid', XMLDB_INDEX_NOTUNIQUE, ['supervisorframeworkid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2025112345, 'tool', 'mulib');
+    }
+
     return true;
 }
