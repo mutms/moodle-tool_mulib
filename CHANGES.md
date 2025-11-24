@@ -4,6 +4,8 @@
 
 Release date: xx/11/2025
 
+* Fixed custom notification editor.
+* Added option to send copy of subordinate notifications to supervisors.
 * Added management of reusable external PDO databases.
 
 ## mu-4.5.7-02

@@ -30,6 +30,27 @@ namespace tool_mulib\local;
  */
 final class mulib {
     /**
+     * Are teams and supervisors available?
+     *
+     * @return bool
+     */
+    public static function is_murelatio_available(): bool {
+        return class_exists(\tool_murelation\local\supervisor::class);
+    }
+
+    /**
+     * Are teams and supervisors active?
+     *
+     * @return bool
+     */
+    public static function is_murelatio_active(): bool {
+        if (!self::is_murelatio_available()) {
+            return false;
+        }
+        return \tool_murelation\local\util::is_murelation_active();
+    }
+
+    /**
      * Is multi-tenancy available?
      *
      * @return bool
