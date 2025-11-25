@@ -99,5 +99,38 @@ function xmldb_tool_mulib_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2025112345, 'tool', 'mulib');
     }
 
+    if ($oldversion < 2025112545) {
+        $table = new xmldb_table('tool_mulib_context_parent');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('parentcontextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('contextid', XMLDB_KEY_UNIQUE, ['contextid'], 'context', ['id']);
+        $table->add_key('parentcontextid', XMLDB_KEY_FOREIGN, ['parentcontextid'], 'context', ['id']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('tool_mulib_context_map');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('relatedcontextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('distance', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('contextid', XMLDB_KEY_FOREIGN, ['contextid'], 'context', ['id']);
+        $table->add_key('relatedcontextid', XMLDB_KEY_FOREIGN, ['relatedcontextid'], 'context', ['id']);
+        $table->add_index('contextid-distance', XMLDB_INDEX_UNIQUE, ['contextid', 'distance']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2025112545, 'tool', 'mulib');
+    }
+
+    if ($oldversion < 2025112745) {
+        \tool_mulib\local\context_map_builder::build();
+        upgrade_plugin_savepoint(true, 2025112745, 'tool', 'mulib');
+    }
+
     return true;
 }

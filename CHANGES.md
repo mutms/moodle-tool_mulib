@@ -4,6 +4,8 @@
 
 Release date: xx/11/2025
 
+* Added get_contexts_by_capability_join() implementing fast user permissions lookup via database query. 
+* Added context parents and map database table for fast context relationship lookups.
 * Fixed custom notification editor.
 * Added option to send copy of subordinate notifications to supervisors.
 * Added management of reusable external PDO databases.
