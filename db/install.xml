@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mulib/db" VERSION="20251123" COMMENT="XMLDB file for tool_mulib"
+<XMLDB PATH="admin/tool/mulib/db" VERSION="20251127" COMMENT="XMLDB file for tool_mulib"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -80,6 +80,34 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="name" UNIQUE="true" FIELDS="name" COMMENT="make names unique to prevent confusion"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="tool_mulib_context_parent" COMMENT="Cache of context parents - it does not include activities and blocks for performance reasons">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Context id"/>
+        <FIELD NAME="parentcontextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Parent context id"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="contextid" TYPE="foreign-unique" FIELDS="contextid" REFTABLE="context" REFFIELDS="id"/>
+        <KEY NAME="parentcontextid" TYPE="foreign" FIELDS="parentcontextid" REFTABLE="context" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="tool_mulib_context_map" COMMENT="Cache of context relationships - it does not include activities and blocks for performance reasons">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Context id"/>
+        <FIELD NAME="relatedcontextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Related context id"/>
+        <FIELD NAME="distance" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="0 for the same context, 1 for immediate parent, 2 parent of parent, etc"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="contextid" TYPE="foreign" FIELDS="contextid" REFTABLE="context" REFFIELDS="id"/>
+        <KEY NAME="relatedcontextid" TYPE="foreign" FIELDS="relatedcontextid" REFTABLE="context" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="contextid-distance" UNIQUE="true" FIELDS="contextid, distance" COMMENT="there is only one parent going up the context tree"/>
       </INDEXES>
     </TABLE>
   </TABLES>

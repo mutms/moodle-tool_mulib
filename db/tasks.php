@@ -17,21 +17,23 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
 /**
- * Additional tools library plugin version.
+ * Additional tools tasks.
  *
- * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
- * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_mulib
+ * @copyright  2025 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025112750;
-$plugin->requires = 2025041400;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [500, 501];
-$plugin->release = 'mu-5.0.3-02+';
+$tasks = [
+    [
+        'classname' => tool_mulib\task\context_map_cron::class,
+        'minute' => 'R',
+        'hour' => '1',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+        'disabled' => 0,
+    ],
+];

@@ -16,22 +16,35 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
+namespace tool_mulib\task;
+
 /**
- * Additional tools library plugin version.
+ * Context map rebuild cron.
  *
- * @package     tool_mulib
- * @copyright   2022 Open LMS (https://www.openlms.net/)
- * @copyright   2025 Petr Skoda
- * @author      Petr Skoda
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_mulib
+ * @copyright  2025 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class context_map_cron extends \core\task\scheduled_task {
+    /**
+     * Name for this task.
+     *
+     * @return string
+     */
+    public function get_name() {
+        return get_string('task_context_map_cron', 'tool_mulib');
+    }
 
-defined('MOODLE_INTERNAL') || die();
+    /**
+     * Run context map rebuild task.
+     */
+    public function execute() {
+        \tool_mulib\local\context_map_builder::build();
+        \tool_mulib\local\context_map_builder::analyze();
 
-/** @var stdClass $plugin */
-$plugin->component = 'tool_mulib';
-$plugin->version = 2025112750;
-$plugin->requires = 2025041400;
-$plugin->maturity = MATURITY_BETA;
-$plugin->supported = [500, 501];
-$plugin->release = 'mu-5.0.3-02+';
+        $error = \tool_mulib\local\context_map_builder::map_check();
+        if ($error !== null) {
+            mtrace($error);
+        }
+    }
+}
