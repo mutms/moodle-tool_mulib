@@ -190,20 +190,16 @@ final class pdb {
         $dbfamily = $DB->get_dbfamily();
 
         if ($dbfamily === 'postgres') {
-            $dsn = 'pgsql:';
+            $dsn = "pgsql:host={$CFG->dbhost};dbname={$CFG->dbname}";
         } else if ($dbfamily === 'mysql') {
-            $dsn = 'mysql:';
+            $dsn = "mysql:host={$CFG->dbhost};dbname={$CFG->dbname};charset=utf8mb4";
         } else if ($dbfamily === 'mssql') {
-            $dsn = 'sqlsrv:';
+            $dsn = "sqlsrv:server={$CFG->dbhost};database={$CFG->dbname}";
         } else {
             throw new \core\exception\coding_exception('Unknown db driver family: ' . $dbfamily);
         }
-        $dsn .= "host={$CFG->dbhost};dbname={$CFG->dbname}";
         if (!empty($CFG->dboptions['dbport'])) {
             $dsn .= ';port=' . $CFG->dboptions['dbport'];
-        }
-        if ($dbfamily === 'mysql') {
-            $dsn .= ";charset=utf8mb4";
         }
 
         return (object)['dsn' => $dsn, 'dbuser' => $CFG->dbuser, 'dbpass' => $CFG->dbpass, 'dboptions' => json_encode([])];
