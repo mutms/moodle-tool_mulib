@@ -326,8 +326,8 @@ abstract class manager {
 
         if (mulib::is_mutenancy_active()) {
             if ($context->tenantid) {
-                $sql->replace_comment('tenantjoin', "LEFT JOIN {tool_murelation_tenant_allow} ta ON ta.frameworkid = f.id");
-                $sql->replace_comment('tenantwhere', "AND (ta.id IS NOT NULL OR f.alltenants = 1)");
+                $sql = $sql->replace_comment('tenantjoin', "LEFT JOIN {tool_murelation_tenant_allow} ta ON ta.frameworkid = f.id");
+                $sql = $sql->replace_comment('tenantwhere', "AND (ta.id IS NOT NULL OR f.alltenants = 1)");
             }
         }
 
