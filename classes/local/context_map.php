@@ -59,11 +59,11 @@ final class context_map {
 
         $join = self::get_contexts_by_capability_join($capability, $userorid, 'ctx', $doanything, 'ctx_');
 
-        $sql->replace_comment('join', $join['join']);
+        $sql = $sql->replace_comment('join', $join['join']);
         if ($join['join'] === '') {
-            $sql->replace_comment('groupby', "");
+            $sql = $sql->replace_comment('groupby', "");
         } else {
-            $sql->replace_comment('groupby', "GROUP BY ctx.id");
+            $sql = $sql->replace_comment('groupby', "GROUP BY ctx.id");
         }
 
         $wheres = [];
@@ -73,9 +73,9 @@ final class context_map {
         }
         if ($wheres) {
             $wheres = sql::join(' AND ', $wheres);
-            $sql->replace_comment('where', $wheres->wrap('WHERE ', ''));
+            $sql = $sql->replace_comment('where', $wheres->wrap('WHERE ', ''));
         } else {
-            $sql->replace_comment('where', "");
+            $sql = $sql->replace_comment('where', "");
         }
 
         return $sql;
@@ -210,10 +210,10 @@ final class context_map {
                       ) AS {$p}pbt ON {$p}pbt.contextid = {$contextalias}.id",
                 ['capability' => $capability, 'userid' => $userid, 'prohibit' => CAP_PROHIBIT]
             );
-            $join->replace_comment('prohibitjoin', $prohibitjoin);
+            $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
             $wheres[] = "{$p}pbt.contextid IS NULL";
         } else {
-            $join->replace_comment('prohibitjoin', "");
+            $join = $join->replace_comment('prohibitjoin', "");
         }
 
         return ['join' => $join, 'where' => '(' . implode(" AND ", $wheres) . ')'];
@@ -282,10 +282,10 @@ final class context_map {
                       ) AS {$p}pbt ON {$p}pbt.contextid = {$contextalias}.id",
                 ['capability' => $capability, 'prohibit' => CAP_PROHIBIT]
             );
-            $join->replace_comment('prohibitjoin', $prohibitjoin);
+            $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
             $wheres[] = "{$p}pbt.contextid IS NULL";
         } else {
-            $join->replace_comment('prohibitjoin', "");
+            $join = $join->replace_comment('prohibitjoin', "");
         }
 
         return ['join' => $join, 'where' => '(' . implode(" AND ", $wheres) . ')'];

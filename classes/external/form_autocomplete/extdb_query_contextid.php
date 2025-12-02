@@ -70,7 +70,7 @@ final class extdb_query_contextid extends categorycontext {
            ORDER BY cat.name ASC",
             ['catlevel' => CONTEXT_COURSECAT]
         );
-        $sql->replace_comment(
+        $sql = $sql->replace_comment(
             'search',
             self::get_categorycontext_search_query($query, 'cat')->wrap('AND ', '')
         );
@@ -78,7 +78,7 @@ final class extdb_query_contextid extends categorycontext {
         if (\tool_mulib\local\mulib::is_mutenancy_active()) {
             $tenantid = \tool_mutenancy\local\tenancy::get_current_tenantid();
             if ($tenantid) {
-                $sql->replace_comment(
+                $sql = $sql->replace_comment(
                     'tenant',
                     "AND (ctx.tenantid IS NULL OR ctx.tenantid = ?)",
                     [$tenantid]
