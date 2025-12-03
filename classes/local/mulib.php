@@ -30,12 +30,21 @@ namespace tool_mulib\local;
  */
 final class mulib {
     /**
+     * Are training frameworks available?
+     *
+     * @return bool
+     */
+    public static function is_mutrain_available(): bool {
+        return class_exists(\tool_mutrain\local\util::class);
+    }
+
+    /**
      * Are teams and supervisors available?
      *
      * @return bool
      */
     public static function is_murelatio_available(): bool {
-        return class_exists(\tool_murelation\local\supervisor::class);
+        return class_exists(\tool_murelation\local\util::class);
     }
 
     /**
