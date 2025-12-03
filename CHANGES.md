@@ -4,6 +4,7 @@
 
 Release date: xx/11/2025
 
+* Changed \tool_mulib\external\form_autocomplete\user API to use sql fragments.
 * Changed \tool_mulib\local\sql methods to never modify existing instance.
 * Added get_contexts_by_capability_join() implementing fast user permissions lookup via database query. 
 * Added context parents and map database table for fast context relationship lookups.
