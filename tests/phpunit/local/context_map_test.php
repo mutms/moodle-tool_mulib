@@ -480,11 +480,14 @@ final class context_map_test extends \advanced_testcase {
             $this->markTestSkipped('multi-tenancy not available');
         }
 
+        $this->assertSame('0', get_config('tool_mutenancy', 'allowguests'));
+
         /** @var \tool_mutenancy_generator $tenantgenerator */
         $tenantgenerator = $this->getDataGenerator()->get_plugin_generator('tool_mutenancy');
 
         $tenant1 = $tenantgenerator->create_tenant();
         $tenant2 = $tenantgenerator->create_tenant();
+        $guest = guest_user();
         $user0 = $this->getDataGenerator()->create_user();
         $user1 = $this->getDataGenerator()->create_user(['tenantid' => $tenant1->id]);
         $user2 = $this->getDataGenerator()->create_user(['tenantid' => $tenant2->id]);
@@ -502,7 +505,7 @@ final class context_map_test extends \advanced_testcase {
 
         assign_capability('moodle/course:view', CAP_ALLOW, $CFG->defaultuserroleid, $syscontext->id);
 
-        $sql = new sql(
+        $sql0 = new sql(
             "SELECT DISTINCT ctx.id
                FROM {context} ctx
              /* capjoin */
@@ -510,39 +513,97 @@ final class context_map_test extends \advanced_testcase {
            ORDER BY ctx.id ASC",
             ['contextlevel' => context_course::LEVEL]
         );
+
         $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user0->id, 'ctx', false);
-        $sql = $sql->replace_comment('capjoin', $joins['join']);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
         $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
         $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
         $this->assertEquals([$coursecontext0->id, $coursecontext1->id, $coursecontext2->id], $contextids);
 
-        $sql = new sql(
-            "SELECT DISTINCT ctx.id
-               FROM {context} ctx
-             /* capjoin */
-              WHERE ctx.contextlevel = :contextlevel /* capwhere */
-           ORDER BY ctx.id ASC",
-            ['contextlevel' => context_course::LEVEL]
-        );
         $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user1->id, 'ctx', false);
-        $sql = $sql->replace_comment('capjoin', $joins['join']);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
         $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
         $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
         $this->assertEquals([$coursecontext0->id, $coursecontext1->id], $contextids);
 
-        $sql = new sql(
-            "SELECT DISTINCT ctx.id
-               FROM {context} ctx
-             /* capjoin */
-              WHERE ctx.contextlevel = :contextlevel /* capwhere */
-           ORDER BY ctx.id ASC",
-            ['contextlevel' => context_course::LEVEL]
-        );
         $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user2->id, 'ctx', false);
-        $sql = $sql->replace_comment('capjoin', $joins['join']);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
         $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
         $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
         $this->assertEquals([$coursecontext0->id, $coursecontext2->id], $contextids);
+
+        assign_capability('moodle/course:view', CAP_ALLOW, $CFG->guestroleid, $syscontext->id);
+        assign_capability('moodle/course:update', CAP_ALLOW, $CFG->guestroleid, $syscontext->id);
+        assign_capability('moodle/course:view', CAP_ALLOW, $CFG->notloggedinroleid, $syscontext->id);
+        assign_capability('moodle/course:update', CAP_ALLOW, $CFG->notloggedinroleid, $syscontext->id);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', 0, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:update', 0, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $guest->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:update', $guest->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([], $contextids);
+
+        set_config('allowguests', '1', 'tool_mutenancy');
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user0->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id, $coursecontext1->id, $coursecontext2->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user1->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id, $coursecontext1->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $user2->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id, $coursecontext2->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', 0, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id, $coursecontext1->id, $coursecontext2->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:update', 0, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:view', $guest->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([$coursecontext0->id, $coursecontext1->id, $coursecontext2->id], $contextids);
+
+        $joins = context_map::get_contexts_by_capability_join('moodle/course:update', $guest->id, 'ctx', false);
+        $sql = $sql0->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', "AND " . $joins['where']);
+        $contextids = $DB->get_fieldset_sql($sql->sql, $sql->params);
+        $this->assertEquals([], $contextids);
     }
 
     /**
