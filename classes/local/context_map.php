@@ -267,8 +267,9 @@ final class context_map {
         $wheres[] = "{$p}pvt.contextid IS NULL";
 
         if (mulib::is_mutenancy_active()) {
-            // NOTE: in the future there could be a setting to allow guest access to tenant contexts.
-            $wheres[] = "{$contextalias}.tenantid IS NULL";
+            if (!get_config('tool_mutenancy', 'allowguests')) {
+                $wheres[] = "{$contextalias}.tenantid IS NULL";
+            }
         };
 
         if ($hasprohibits) {
