@@ -1,8 +1,8 @@
 # Changelog
 
-## mu-5.0.3-03
+## mu-5.0.4-01
 
-Release date: xx/11/2025
+Release date: 08/12/2025
 
 * Changed \tool_mulib\external\form_autocomplete\user API to use sql fragments.
 * Changed \tool_mulib\local\sql methods to never modify existing instance.
