@@ -44,6 +44,18 @@ final class mulib_test extends \advanced_testcase {
         );
     }
 
+    public function test_is_mutrain_active(): void {
+        $this->assertFalse(mulib::is_mutrain_active());
+
+        set_config('active', '1', 'tool_mutrain');
+
+        if (mulib::is_mutrain_available()) {
+            $this->assertTrue(mulib::is_mutrain_active());
+        } else {
+            $this->assertFalse(mulib::is_mutrain_active());
+        }
+    }
+
     public function test_is_mutenancy_available(): void {
         $this->assertSame(
             file_exists(__DIR__ . '/../../../../../tool/mutenancy/version.php'),
