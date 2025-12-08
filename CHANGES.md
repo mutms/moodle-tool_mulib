@@ -1,5 +1,11 @@
 # Changelog
 
+## mu-4.5.8-02
+
+Release date: xx/12/2025
+
+* Updated tool_mutrain helper.
+
 ## mu-4.5.8-01
 
 Release date: 08/12/2025

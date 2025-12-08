@@ -30,12 +30,24 @@ namespace tool_mulib\local;
  */
 final class mulib {
     /**
-     * Are training frameworks available?
+     * Is training credits plugin available?
      *
      * @return bool
      */
     public static function is_mutrain_available(): bool {
         return class_exists(\tool_mutrain\local\util::class);
+    }
+
+    /**
+     * Are any credit frameworks active/present?
+     *
+     * @return bool
+     */
+    public static function is_mutrain_active(): bool {
+        if (!self::is_mutrain_available()) {
+            return false;
+        }
+        return (bool)get_config('tool_mutrain', 'active');
     }
 
     /**
