@@ -4,7 +4,8 @@
 
 Release date: xx/12/2025
 
-* Updated tool_mutrain helper.
+* Added \tool_mulib\local\mudb::upsert_record() helper.
+* Updated MuTMS plugin helpers.
 
 ## mu-5.0.4-01
 
