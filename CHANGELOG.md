@@ -1,0 +1,63 @@
+# Change log
+
+Plugin versioning is derived from Moodle releases, it does not comply with the semantic versioning standard.
+
+The format of this change log follows the advice given at [Keep a CHANGELOG](https://keepachangelog.com).
+
+## [Unreleased]
+
+### Changed
+
+- Switched to new change log format
+
+## [mu-4.5.8-02] - 2025-12-16
+
+- Added \tool_mulib\local\mudb::upsert_record() helper.
+- Updated MuTMS plugin helpers.
+
+## [mu-4.5.8-01] - 2025-12-08
+
+- Changed \tool_mulib\external\form_autocomplete\user API to use sql fragments.
+- Changed \tool_mulib\local\sql methods to never modify existing instance.
+- Added get_contexts_by_capability_join() implementing fast user permissions lookup via database query. 
+- Added context parents and map database table for fast context relationship lookups.
+- Fixed custom notification editor.
+- Added option to send copy of subordinate notifications to supervisors.
+- Added management of reusable external PDO databases.
+
+## [mu-4.5.7-02] - 2025-11-08
+
+- Added \tool_mulib\local\mulib::clean_string() to help with Mustache double encoding
+- Plugin documentation was move to GitHub wikis and removed Parsedown library
+- Added support for outline AJAX form buttons. 
+- Fixed rendering of actions dropdown.
+
+## [mu-4.5.7-01] - 2025-10-06
+
+- Added support for creation of buttons and icons from action links.
+
+## [mu-4.5.6-03] - 2025-09-24
+
+- Added support for dropdown action icon and class.
+- Added SQL fragments. 
+
+## [mu-4.5.6-02] - 2025-08-31
+
+- Fixed compatibility with unsupported MS SQL databases.
+
+## [mu-4.5.6-01] - 2025-08-09
+
+- New modal ajax forms helper replacing dialog forms.
+- Moodle 4.5.6 support.
+
+## [mu-4.5.5-02] - 2025-06-30
+
+- New plugin versioning.
+
+## [mu-4.5.5-01] - 2025-06-09
+
+- Added shared "Not set" string.
+- Added role_util helper.
+- Added support for user autocomplete errors.
+- Added entity details output component.
+- Improved docs and added acknowledgements.
