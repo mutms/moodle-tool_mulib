@@ -20,6 +20,10 @@
 namespace tool_mulib\external\form_autocomplete;
 
 use tool_mulib\local\sql;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use tool_mulib\local\context_map;
+use tool_mulib\local\mulib;
 
 /**
  * Base class for category context auto-completion fields.
@@ -29,19 +33,133 @@ use tool_mulib\local\sql;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class categorycontext extends base {
-    /** @var string|null user table */
+    /** @var string course category table */
     protected const ITEM_TABLE = 'course_categories';
-    /** @var string|null not used, there is custom format_label() method */
+    /** @var string field used in format_label() method */
     protected const ITEM_FIELD = 'name';
 
     /**
-     * Returns category query data.
-     *
-     * @param string $search
-     * @param string $tablealias
-     * @return sql
+     * Returns required capability.
+     * @return string
      */
-    public static function get_categorycontext_search_query(string $search, string $tablealias = ''): sql {
-        return static::get_search_query($search, ['name', 'idnumber', 'description'], $tablealias);
+    abstract public static function get_required_capability(): string;
+
+    #[\Override]
+    public static function get_multiple(): bool {
+        return false;
+    }
+
+    #[\Override]
+    public static function get_noselectionstring(): string {
+        return get_string('coresystem');
+    }
+
+    #[\Override]
+    public static function execute_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'query' => new external_value(PARAM_RAW, 'The search query', VALUE_REQUIRED),
+        ]);
+    }
+
+    /**
+     * Gets list of available category contexts.
+     *
+     * @param string $query The search request.
+     * @return array
+     */
+    public static function execute(string $query): array {
+        global $DB, $USER;
+
+        ['query' => $query] = self::validate_parameters(self::execute_parameters(), ['query' => $query]);
+
+        $context = \context_system::instance();
+        self::validate_context($context);
+
+        $sql = new sql(
+            "SELECT ctx.id, cat.name
+               FROM {course_categories} cat
+               JOIN {context} ctx ON ctx.instanceid = cat.id
+               /* capjoin */
+              WHERE ctx.contextlevel = :catlevel /* capwhere */
+                    /* search */ /* tenant */
+           GROUP BY ctx.id, cat.name
+           ORDER BY cat.name ASC",
+            ['catlevel' => CONTEXT_COURSECAT]
+        );
+        $sql = $sql->replace_comment(
+            'search',
+            static::get_search_query($query, ['name', 'idnumber', 'description'], 'cat')->wrap('AND ', '')
+        );
+        $joins = context_map::get_contexts_by_capability_join(static::get_required_capability(), $USER->id, 'ctx');
+        $sql = $sql->replace_comment('capjoin', $joins['join']);
+        $sql = $sql->replace_comment('capwhere', $joins['where']->wrap("AND ", ""));
+
+        if (mulib::is_mutenancy_active()) {
+            $tenantid = \tool_mutenancy\local\tenancy::get_current_tenantid();
+            if ($tenantid) {
+                $sql = $sql->replace_comment(
+                    'tenant',
+                    "AND (ctx.tenantid IS NULL OR ctx.tenantid = ?)",
+                    [$tenantid]
+                );
+            }
+        }
+
+        $rs = $DB->get_recordset_sql($sql->sql, $sql->params);
+
+        $categories = [];
+        $i = 0;
+        foreach ($rs as $category) {
+            $categories[$category->id] = $category;
+            $i++;
+            if ($i > self::MAX_RESULTS) {
+                break;
+            }
+        }
+        $rs->close();
+
+        return self::prepare_result($categories, $context);
+    }
+
+    #[\Override]
+    public static function validate_value(mixed $value, array $args, \context $context): ?string {
+        global $DB;
+        $syscontext = \context_system::instance();
+        if (!$value || $value == $syscontext->id) {
+            // Special case - system context id and empty value are allowed.
+            if (!isset($args['currentValue']) || $args['currentValue'] != $value) {
+                if (!has_capability(static::get_required_capability(), $syscontext)) {
+                    return get_string('required');
+                }
+            }
+            return null;
+        }
+
+        $valuecontext = \context::instance_by_id($value, IGNORE_MISSING);
+        if (!$valuecontext || $valuecontext->contextlevel != CONTEXT_COURSECAT) {
+            return get_string('invalidcontext', 'error');
+        }
+
+        if (!isset($args['currentValue']) || $args['currentValue'] != $value) {
+            if (!has_capability(static::get_required_capability(), $valuecontext)) {
+                return get_string('invalidcontext', 'error');
+            }
+        }
+
+        $category = $DB->get_record('course_categories', ['id' => $valuecontext->instanceid]);
+        if (!$category) {
+            return get_string('invalidcontext', 'error');
+        }
+
+        return null;
+    }
+
+    #[\Override]
+    public static function get_label(int $value, array $args, \context $context): string {
+        $syscontext = \context_system::instance();
+        if (!$value || $value == $syscontext->id) {
+            return get_string('coresystem');
+        }
+        return parent::get_label($value, $args, $context);
     }
 }

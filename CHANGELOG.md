@@ -10,6 +10,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 - Switched to new change log format
 - Changed returned 'where' from \tool_mulib\local\context_map::get_contexts_by_capability_join() to be a sql instance
+- Improved \tool_mulib\external\form_autocomplete\categorycontext base class
 
 ## [mu-4.5.8-02] - 2025-12-16
 

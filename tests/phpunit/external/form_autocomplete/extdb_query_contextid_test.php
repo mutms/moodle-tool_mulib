@@ -55,7 +55,16 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         ]);
         $catcontext2 = \context_coursecat::instance($category2->id);
 
-        $this->setAdminUser();
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $user3 = $this->getDataGenerator()->create_user();
+        $syscontext = \context_system::instance();
+        $managerroleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/site:config', CAP_ALLOW, $managerroleid, $syscontext);
+        role_assign($managerroleid, $user1->id, $syscontext->id);
+        role_assign($managerroleid, $user2->id, $catcontext1->id);
+
+        $this->setUser($user1);
 
         $result = extdb_query_contextid::execute('');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
@@ -74,6 +83,22 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $this->assertCount(1, $result['list']);
         $this->assertSame($catcontext1->id, $result['list'][0]['value']);
         $this->assertSame($category1->name, $result['list'][0]['label']);
+
+        $this->setUser($user2);
+
+        $result = extdb_query_contextid::execute('');
+        $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
+        $this->assertSame(false, $result['overflow']);
+        $this->assertCount(1, $result['list']);
+        $this->assertSame($catcontext1->id, $result['list'][0]['value']);
+        $this->assertSame($category1->name, $result['list'][0]['label']);
+
+        $this->setUser($user3);
+
+        $result = extdb_query_contextid::execute('');
+        $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
+        $this->assertSame(false, $result['overflow']);
+        $this->assertCount(0, $result['list']);
     }
 
     public function test_execute_tenant(): void {
@@ -110,5 +135,61 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
         $this->assertSame(false, $result['overflow']);
         $this->assertCount(2, $result['list']);
+    }
+
+    public function test_validate_value(): void {
+        global $DB;
+
+        $category0 = $DB->get_record('course_categories', []);
+        $catcontext0 = \context_coursecat::instance($category0->id);
+        $category1 = $this->getDataGenerator()->create_category([
+            'name' => 'Kategorie 1',
+            'idnumber' => 'KAT1',
+            'description' => 'Popis 1',
+        ]);
+        $catcontext1 = \context_coursecat::instance($category1->id);
+        $category2 = $this->getDataGenerator()->create_category([
+            'name' => 'Kategorie 2',
+            'idnumber' => 'KAT2',
+            'description' => 'Popis 2',
+        ]);
+        $catcontext2 = \context_coursecat::instance($category2->id);
+
+        $course1 = $this->getDataGenerator()->create_course(['category' => $category1->id]);
+        $coursecontext1 = \context_course::instance($course1->id);
+
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $user3 = $this->getDataGenerator()->create_user();
+        $syscontext = \context_system::instance();
+        $managerroleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/site:config', CAP_ALLOW, $managerroleid, $syscontext);
+        role_assign($managerroleid, $user1->id, $syscontext->id);
+        role_assign($managerroleid, $user2->id, $catcontext1->id);
+
+        $this->setUser($user1);
+
+        $this->assertSame(null, extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
+        $this->assertSame(null, extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
+        $this->assertSame(null, extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
+        $this->assertSame(null, extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($coursecontext1->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value(-1, ['query' => ''], $syscontext));
+
+        $this->setUser($user2);
+
+        $this->assertSame('Required', extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
+        $this->assertSame('Required', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
+        $this->assertSame(null, extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($coursecontext1->id, ['query' => ''], $syscontext));
+
+        $this->setUser($user3);
+
+        $this->assertSame('Required', extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
+        $this->assertSame('Required', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($coursecontext1->id, ['query' => ''], $syscontext));
     }
 }
