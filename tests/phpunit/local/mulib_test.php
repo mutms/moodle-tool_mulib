@@ -56,6 +56,25 @@ final class mulib_test extends \advanced_testcase {
         }
     }
 
+    public function test_is_mucertify_available(): void {
+        $this->assertSame(
+            file_exists(__DIR__ . '/../../../../../tool/mucertify/version.php'),
+            mulib::is_mucertify_available()
+        );
+    }
+
+    public function test_is_mucertify_active(): void {
+        $this->assertFalse(mulib::is_mucertify_active());
+
+        set_config('active', '1', 'tool_mucertify');
+
+        if (mulib::is_mucertify_available()) {
+            $this->assertTrue(mulib::is_mucertify_active());
+        } else {
+            $this->assertFalse(mulib::is_mucertify_active());
+        }
+    }
+
     public function test_is_mutrain_available(): void {
         $this->assertSame(
             file_exists(__DIR__ . '/../../../../../tool/mutrain/version.php'),

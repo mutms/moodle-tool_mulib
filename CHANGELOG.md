@@ -6,6 +6,10 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ## [Unreleased]
 
+### Added
+
+- Added Certification helpers.
+
 ### Changed
 
 - Switched to new change log format
