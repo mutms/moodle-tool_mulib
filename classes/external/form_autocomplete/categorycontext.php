@@ -128,7 +128,11 @@ abstract class categorycontext extends base {
         if (!$value || $value == $syscontext->id) {
             return get_string('coresystem');
         }
-        $contexts = \context::instance_by_id($value)->get_parent_contexts(true);
+        $valuecontext = \context::instance_by_id($value, IGNORE_MISSING);
+        if (!$valuecontext) {
+            return get_string('invalidcontext', 'error');
+        }
+        $contexts = $valuecontext->get_parent_contexts(true);
         $contexts = array_reverse($contexts);
         $result = [];
         foreach ($contexts as $c) {
