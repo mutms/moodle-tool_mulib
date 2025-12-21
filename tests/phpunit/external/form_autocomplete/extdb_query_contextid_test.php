@@ -52,6 +52,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
             'name' => 'Kategorie 2',
             'idnumber' => 'KAT2',
             'description' => 'Popis 2',
+            'parent' => $category1->id,
         ]);
         $catcontext2 = \context_coursecat::instance($category2->id);
 
@@ -69,13 +70,15 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $result = extdb_query_contextid::execute('');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
         $this->assertSame(false, $result['overflow']);
-        $this->assertCount(3, $result['list']);
-        $this->assertSame($catcontext0->id, $result['list'][0]['value']);
-        $this->assertSame($category0->name, $result['list'][0]['label']);
-        $this->assertSame($catcontext1->id, $result['list'][1]['value']);
-        $this->assertSame($category1->name, $result['list'][1]['label']);
-        $this->assertSame($catcontext2->id, $result['list'][2]['value']);
-        $this->assertSame($category2->name, $result['list'][2]['label']);
+        $this->assertCount(4, $result['list']);
+        $this->assertSame($syscontext->id, $result['list'][0]['value']);
+        $this->assertSame('System', $result['list'][0]['label']);
+        $this->assertSame($catcontext0->id, $result['list'][1]['value']);
+        $this->assertSame($category0->name, $result['list'][1]['label']);
+        $this->assertSame($catcontext1->id, $result['list'][2]['value']);
+        $this->assertSame('Kategorie 1', $result['list'][2]['label']);
+        $this->assertSame($catcontext2->id, $result['list'][3]['value']);
+        $this->assertSame('Kategorie 1 / Kategorie 2', $result['list'][3]['label']);
 
         $result = extdb_query_contextid::execute('AT1');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
@@ -89,7 +92,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $result = extdb_query_contextid::execute('');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
         $this->assertSame(false, $result['overflow']);
-        $this->assertCount(1, $result['list']);
+        $this->assertCount(2, $result['list']);
         $this->assertSame($catcontext1->id, $result['list'][0]['value']);
         $this->assertSame($category1->name, $result['list'][0]['label']);
 
@@ -117,6 +120,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $tenant1 = $tenantgenerator->create_tenant();
         $tenant2 = $tenantgenerator->create_tenant();
 
+        $syscontext = \context_system::instance();
         $category1 = $DB->get_record('course_categories', ['id' => $tenant1->categoryid]);
         $catcontext1 = \context_coursecat::instance($category1->id);
         $category2 = $DB->get_record('course_categories', ['id' => $tenant2->categoryid]);
@@ -127,14 +131,21 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $result = extdb_query_contextid::execute('');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
         $this->assertSame(false, $result['overflow']);
-        $this->assertCount(3, $result['list']);
+        $this->assertCount(4, $result['list']);
+        $this->assertSame($syscontext->id, $result['list'][0]['value']);
+        $this->assertSame($catcontext0->id, $result['list'][1]['value']);
+        $this->assertSame($catcontext1->id, $result['list'][2]['value']);
+        $this->assertSame($catcontext2->id, $result['list'][3]['value']);
 
         \tool_mutenancy\local\tenancy::switch($tenant1->id);
 
         $result = extdb_query_contextid::execute('');
         $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
         $this->assertSame(false, $result['overflow']);
-        $this->assertCount(2, $result['list']);
+        $this->assertCount(3, $result['list']);
+        $this->assertSame($syscontext->id, $result['list'][0]['value']);
+        $this->assertSame($catcontext0->id, $result['list'][1]['value']);
+        $this->assertSame($catcontext1->id, $result['list'][2]['value']);
     }
 
     public function test_validate_value(): void {

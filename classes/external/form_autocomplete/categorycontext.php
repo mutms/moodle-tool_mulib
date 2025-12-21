@@ -24,6 +24,7 @@ use core_external\external_function_parameters;
 use core_external\external_value;
 use tool_mulib\local\context_map;
 use tool_mulib\local\mulib;
+use stdClass;
 
 /**
  * Base class for category context auto-completion fields.
@@ -33,11 +34,6 @@ use tool_mulib\local\mulib;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class categorycontext extends base {
-    /** @var string course category table */
-    protected const ITEM_TABLE = 'course_categories';
-    /** @var string field used in format_label() method */
-    protected const ITEM_FIELD = 'name';
-
     /**
      * Returns required capability.
      * @return string
@@ -72,8 +68,8 @@ abstract class categorycontext extends base {
 
         ['query' => $query] = self::validate_parameters(self::execute_parameters(), ['query' => $query]);
 
-        $context = \context_system::instance();
-        self::validate_context($context);
+        $syscontext = \context_system::instance();
+        self::validate_context($syscontext);
 
         $sql = new sql(
             "SELECT ctx.id, cat.name
@@ -86,10 +82,12 @@ abstract class categorycontext extends base {
            ORDER BY cat.name ASC",
             ['catlevel' => CONTEXT_COURSECAT]
         );
-        $sql = $sql->replace_comment(
-            'search',
-            static::get_search_query($query, ['name', 'idnumber', 'description'], 'cat')->wrap('AND ', '')
-        );
+        if (trim($query) !== '') {
+            $sql = $sql->replace_comment(
+                'search',
+                static::get_search_query($query, ['name', 'idnumber', 'description'], 'cat')->wrap('AND ', '')
+            );
+        }
         $joins = context_map::get_contexts_by_capability_join(static::get_required_capability(), $USER->id, 'ctx');
         $sql = $sql->replace_comment('capjoin', $joins['join']);
         $sql = $sql->replace_comment('capwhere', $joins['where']->wrap("AND ", ""));
@@ -105,20 +103,42 @@ abstract class categorycontext extends base {
             }
         }
 
-        $rs = $DB->get_recordset_sql($sql->sql, $sql->params);
-
-        $categories = [];
-        $i = 0;
-        foreach ($rs as $category) {
-            $categories[$category->id] = $category;
-            $i++;
-            if ($i > self::MAX_RESULTS) {
-                break;
-            }
+        $categories = $DB->get_records_sql($sql->sql, $sql->params, 0, self::MAX_RESULTS + 1);
+        foreach ($categories as $category) {
+            $categories[$category->id]->name = self::get_label($category->id, [], $syscontext);
         }
-        $rs->close();
+        \core_collator::asort_objects_by_property($categories, 'name');
 
-        return self::prepare_result($categories, $context);
+        if (trim($query) === '' && has_capability(static::get_required_capability(), $syscontext)) {
+            $categories = [$syscontext->id => (object)['id' => $syscontext->id, 'name' => self::get_label(0, [], $syscontext)]] + $categories;
+        }
+
+        return self::prepare_result($categories, $syscontext);
+    }
+
+    #[\Override]
+    public static function format_label(stdClass $item, \context $context): string {
+        // Already formatted in execute().
+        return $item->name;
+    }
+
+    #[\Override]
+    public static function get_label(int $value, array $args, \context $context): string {
+        $syscontext = \context_system::instance();
+        if (!$value || $value == $syscontext->id) {
+            return get_string('coresystem');
+        }
+        $contexts = \context::instance_by_id($value)->get_parent_contexts(true);
+        $contexts = array_reverse($contexts);
+        $result = [];
+        foreach ($contexts as $c) {
+            if ($c->id == $syscontext->id) {
+                continue;
+            }
+            $result[] = $c->get_context_name(false);
+        }
+
+        return implode(' / ', $result);
     }
 
     #[\Override]
@@ -152,14 +172,5 @@ abstract class categorycontext extends base {
         }
 
         return null;
-    }
-
-    #[\Override]
-    public static function get_label(int $value, array $args, \context $context): string {
-        $syscontext = \context_system::instance();
-        if (!$value || $value == $syscontext->id) {
-            return get_string('coresystem');
-        }
-        return parent::get_label($value, $args, $context);
     }
 }
