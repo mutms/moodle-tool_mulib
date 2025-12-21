@@ -54,6 +54,27 @@ final class mulib {
     }
 
     /**
+     * Is Certifications plugin available?
+     *
+     * @return bool
+     */
+    public static function is_mucertify_available(): bool {
+        return class_exists(\tool_mucertify\local\util::class);
+    }
+
+    /**
+     * Are any certifications present?
+     *
+     * @return bool
+     */
+    public static function is_mucertify_active(): bool {
+        if (!self::is_mucertify_available()) {
+            return false;
+        }
+        return (bool)get_config('tool_mucertify', 'active');
+    }
+
+    /**
      * Is training credits plugin available?
      *
      * @return bool
