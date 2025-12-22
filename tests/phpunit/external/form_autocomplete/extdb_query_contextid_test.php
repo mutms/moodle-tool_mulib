@@ -24,12 +24,16 @@ use tool_mulib\external\form_autocomplete\extdb_query_contextid;
 /**
  * External database query contextid autocomplete tests.
  *
+ * NOTE: this serves as the test of categorycontext base class so that
+ * we do not have to test each class that extends it.
+ *
  * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * @covers \tool_mulib\external\form_autocomplete\extdb_query_contextid
+ * @covers \tool_mulib\external\form_autocomplete\categorycontext
  */
 final class extdb_query_contextid_test extends \advanced_testcase {
     protected function setUp(): void {
@@ -87,6 +91,13 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $this->assertSame($catcontext1->id, $result['list'][0]['value']);
         $this->assertSame($category1->name, $result['list'][0]['label']);
 
+        $result = extdb_query_contextid::execute('syst');
+        $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
+        $this->assertSame(false, $result['overflow']);
+        $this->assertCount(1, $result['list']);
+        $this->assertSame($syscontext->id, $result['list'][0]['value']);
+        $this->assertSame('System', $result['list'][0]['label']);
+
         $this->setUser($user2);
 
         $result = extdb_query_contextid::execute('');
@@ -95,6 +106,11 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $this->assertCount(2, $result['list']);
         $this->assertSame($catcontext1->id, $result['list'][0]['value']);
         $this->assertSame($category1->name, $result['list'][0]['label']);
+
+        $result = extdb_query_contextid::execute('syst');
+        $result = extdb_query_contextid::clean_returnvalue(extdb_query_contextid::execute_returns(), $result);
+        $this->assertSame(false, $result['overflow']);
+        $this->assertCount(0, $result['list']);
 
         $this->setUser($user3);
 
@@ -180,7 +196,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
 
         $this->setUser($user1);
 
-        $this->assertSame(null, extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
+        $this->assertSame('Required', extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
         $this->assertSame(null, extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
         $this->assertSame(null, extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
         $this->assertSame(null, extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
@@ -190,7 +206,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $this->setUser($user2);
 
         $this->assertSame('Required', extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
-        $this->assertSame('Required', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
         $this->assertSame(null, extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
         $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
         $this->assertSame('Invalid context', extdb_query_contextid::validate_value($coursecontext1->id, ['query' => ''], $syscontext));
@@ -198,7 +214,7 @@ final class extdb_query_contextid_test extends \advanced_testcase {
         $this->setUser($user3);
 
         $this->assertSame('Required', extdb_query_contextid::validate_value(0, ['query' => ''], $syscontext));
-        $this->assertSame('Required', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
+        $this->assertSame('Invalid context', extdb_query_contextid::validate_value($syscontext->id, ['query' => ''], $syscontext));
         $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext1->id, ['query' => ''], $syscontext));
         $this->assertSame('Invalid context', extdb_query_contextid::validate_value($catcontext2->id, ['query' => ''], $syscontext));
         $this->assertSame('Invalid context', extdb_query_contextid::validate_value($coursecontext1->id, ['query' => ''], $syscontext));

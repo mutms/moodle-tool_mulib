@@ -25,9 +25,10 @@ use core_external\external_value;
 use tool_mulib\local\context_map;
 use tool_mulib\local\mulib;
 use stdClass;
+use core_text;
 
 /**
- * Base class for category context auto-completion fields.
+ * Base class for required category context (or system context) auto-completion fields.
  *
  * @package    tool_mulib
  * @copyright  2025 Petr Skoda
@@ -46,8 +47,9 @@ abstract class categorycontext extends base {
     }
 
     #[\Override]
-    public static function get_noselectionstring(): string {
-        return get_string('coresystem');
+    public static function is_required(): bool {
+        // Override to return true if element values required.
+        return true;
     }
 
     #[\Override]
@@ -58,7 +60,7 @@ abstract class categorycontext extends base {
     }
 
     /**
-     * Gets list of available category contexts.
+     * Gets list of available category contexts and system context.
      *
      * @param string $query The search request.
      * @return array
@@ -109,8 +111,12 @@ abstract class categorycontext extends base {
         }
         \core_collator::asort_objects_by_property($categories, 'name');
 
-        if (trim($query) === '' && has_capability(static::get_required_capability(), $syscontext)) {
-            $categories = [$syscontext->id => (object)['id' => $syscontext->id, 'name' => self::get_label(0, [], $syscontext)]] + $categories;
+        if (has_capability(static::get_required_capability(), $syscontext)) {
+            $systemname = $syscontext->get_context_name(false);
+            if (trim($query) === '' || str_contains(core_text::strtolower($systemname), core_text::strtolower($query))) {
+                $sysoption = (object)['id' => $syscontext->id, 'name' => self::get_label($syscontext->id, [], $syscontext)];
+                $categories = [$syscontext->id => $sysoption] + $categories;
+            }
         }
 
         return self::prepare_result($categories, $syscontext);
@@ -124,10 +130,15 @@ abstract class categorycontext extends base {
 
     #[\Override]
     public static function get_label(int $value, array $args, \context $context): string {
+        if (!$value) {
+            return get_string('invalidcontext', 'error');
+        }
+
         $syscontext = \context_system::instance();
-        if (!$value || $value == $syscontext->id) {
+        if ($value == $syscontext->id) {
             return get_string('coresystem');
         }
+
         $valuecontext = \context::instance_by_id($value, IGNORE_MISSING);
         if (!$valuecontext) {
             return get_string('invalidcontext', 'error');
@@ -141,19 +152,23 @@ abstract class categorycontext extends base {
             }
             $result[] = $c->get_context_name(false);
         }
-
         return implode(' / ', $result);
     }
 
     #[\Override]
     public static function validate_value(mixed $value, array $args, \context $context): ?string {
         global $DB;
+
+        if (!$value) {
+            return get_string('required');
+        }
+
         $syscontext = \context_system::instance();
-        if (!$value || $value == $syscontext->id) {
+        if ($value == $syscontext->id) {
             // Special case - system context id and empty value are allowed.
             if (!isset($args['currentValue']) || $args['currentValue'] != $value) {
                 if (!has_capability(static::get_required_capability(), $syscontext)) {
-                    return get_string('required');
+                    return get_string('invalidcontext', 'error');
                 }
             }
             return null;
