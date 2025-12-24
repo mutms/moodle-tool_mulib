@@ -94,6 +94,25 @@ final class mulib_test extends \advanced_testcase {
         }
     }
 
+    public function test_is_muhome_available(): void {
+        $this->assertSame(
+            file_exists(__DIR__ . '/../../../../../tool/muhome/version.php'),
+            mulib::is_muhome_available()
+        );
+    }
+
+    public function test_is_muhome_active(): void {
+        $this->assertFalse(mulib::is_muhome_active());
+
+        set_config('active', '1', 'tool_muhome');
+
+        if (mulib::is_muhome_available()) {
+            $this->assertTrue(mulib::is_muhome_active());
+        } else {
+            $this->assertFalse(mulib::is_muhome_active());
+        }
+    }
+
     public function test_is_mutenancy_available(): void {
         $this->assertSame(
             file_exists(__DIR__ . '/../../../../../tool/mutenancy/version.php'),

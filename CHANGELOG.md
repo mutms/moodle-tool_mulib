@@ -8,7 +8,8 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Added
 
-- Added Certification helpers.
+- Added Certification availability helpers
+- Added Custom home pages availability helpers
 
 ### Changed
 
