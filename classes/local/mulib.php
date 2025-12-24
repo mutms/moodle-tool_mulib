@@ -117,6 +117,27 @@ final class mulib {
     }
 
     /**
+     * Is cusotm homepages plugin available?
+     *
+     * @return bool
+     */
+    public static function is_muhome_available(): bool {
+        return class_exists(\tool_muhome\local\util::class);
+    }
+
+    /**
+     * Are any home pages present?
+     *
+     * @return bool
+     */
+    public static function is_muhome_active(): bool {
+        if (!self::is_muhome_available()) {
+            return false;
+        }
+        return (bool)get_config('tool_muhome', 'active');
+    }
+
+    /**
      * Is multi-tenancy available?
      *
      * @return bool
