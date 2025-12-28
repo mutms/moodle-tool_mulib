@@ -18,6 +18,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Changed returned 'where' from \tool_mulib\local\context_map::get_contexts_by_capability_join() to be a sql instance
 - Improved \tool_mulib\external\form_autocomplete\categorycontext base class
 - Fixed category selection in external PDO query editing
+- Description lists created via entity_details renderable are responsive on small screens
 
 ## [mu-4.5.8-02] - 2025-12-16
 
