@@ -10,6 +10,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 - Added Certification availability helpers
 - Added Custom home pages availability helpers
+- Added \tool_muhome\output\url_clipboard renderable element for links with "copy to clipboard" action icon
 
 ### Changed
 
