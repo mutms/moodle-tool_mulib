@@ -1,4 +1,7 @@
 {
+  "config": {
+    "vendor-dir": "."
+  },
   "require": {
     "opis/json-schema": "^2.6"
   }
