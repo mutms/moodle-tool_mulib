@@ -9,6 +9,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 ### Added
 
 - Added composer metadata
+- Added Universal catalogue helpers
 
 ### Changed
 
