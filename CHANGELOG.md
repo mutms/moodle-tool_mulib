@@ -4,23 +4,23 @@ Plugin versioning is derived from Moodle releases, it does not comply with the s
 
 The format of this change log follows the advice given at [Keep a CHANGELOG](https://keepachangelog.com).
 
-## [Unreleased]
+## [Unreleased](https://github.com/mutms/moodle-tool_mulib/compare/v4.5.10.01...HEAD)
 
 ### Added
 
 - New method for ensuring no comments are left in SQL queries
 
-## [v4.5.10.01] - 2026-02-12
+## [v4.5.10.01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.9-01...v4.5.10.01) - 2026-02-12
 
 ### Changed
 
 - Switched to new release number format to prepare for composer support
 
-## [mu-4.5.9-01] - 2026-02-08
+## [mu-4.5.9-01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.8-04...mu-4.5.9-01) - 2026-02-08
 
 - No changes
 
-## [mu-4.5.8-04] - 2026-01-25
+## [mu-4.5.8-04](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.8-03...mu-4.5.8-04) - 2026-01-25
 
 ### Added
 
@@ -31,7 +31,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 - Updated required libraries
 
-## [mu-4.5.8-03] - 2025-12-31
+## [mu-4.5.8-03](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.8-02...mu-4.5.8-03) - 2025-12-31
 
 ### Added
 
@@ -47,12 +47,12 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Fixed category selection in external PDO query editing
 - Description lists created via entity_details renderable are responsive on small screens
 
-## [mu-4.5.8-02] - 2025-12-16
+## [mu-4.5.8-02](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.8-01...mu-4.5.8-02) - 2025-12-16
 
 - Added \tool_mulib\local\mudb::upsert_record() helper.
 - Updated MuTMS plugin helpers.
 
-## [mu-4.5.8-01] - 2025-12-08
+## [mu-4.5.8-01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.7-02...mu-4.5.8-01) - 2025-12-08
 
 - Changed \tool_mulib\external\form_autocomplete\user API to use sql fragments.
 - Changed \tool_mulib\local\sql methods to never modify existing instance.
@@ -62,36 +62,36 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Added option to send copy of subordinate notifications to supervisors.
 - Added management of reusable external PDO databases.
 
-## [mu-4.5.7-02] - 2025-11-08
+## [mu-4.5.7-02](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.7-01...mu-4.5.7-02) - 2025-11-08
 
 - Added \tool_mulib\local\mulib::clean_string() to help with Mustache double encoding
 - Plugin documentation was move to GitHub wikis and removed Parsedown library
 - Added support for outline AJAX form buttons. 
 - Fixed rendering of actions dropdown.
 
-## [mu-4.5.7-01] - 2025-10-06
+## [mu-4.5.7-01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.6-03...mu-4.5.7-01) - 2025-10-06
 
 - Added support for creation of buttons and icons from action links.
 
-## [mu-4.5.6-03] - 2025-09-24
+## [mu-4.5.6-03](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.6-02...mu-4.5.6-03) - 2025-09-24
 
 - Added support for dropdown action icon and class.
 - Added SQL fragments. 
 
-## [mu-4.5.6-02] - 2025-08-31
+## [mu-4.5.6-02](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.6-01...mu-4.5.6-02) - 2025-08-31
 
 - Fixed compatibility with unsupported MS SQL databases.
 
-## [mu-4.5.6-01] - 2025-08-09
+## [mu-4.5.6-01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.5-02...mu-4.5.6-01) - 2025-08-09
 
 - New modal ajax forms helper replacing dialog forms.
 - Moodle 4.5.6 support.
 
-## [mu-4.5.5-02] - 2025-06-30
+## [mu-4.5.5-02](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.5-01...mu-4.5.5-02) - 2025-06-30
 
 - New plugin versioning.
 
-## [mu-4.5.5-01] - 2025-06-09
+## [mu-4.5.5-01](https://github.com/mutms/moodle-tool_mulib/tree/mu-4.5.5-01) - 2025-06-09
 
 - Added shared "Not set" string.
 - Added role_util helper.
