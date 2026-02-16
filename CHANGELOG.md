@@ -6,7 +6,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ## [Unreleased]
 
-- No changes
+### Added
+
+- New method for ensuring no comments are left in SQL queries
 
 ## [v4.5.10.01] - 2026-02-12
 
