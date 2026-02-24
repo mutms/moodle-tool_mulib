@@ -9,6 +9,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 ### Added
 
 - New method for ensuring no comments are left in SQL queries
+- Added new default form field name method to ajax autocomplete elements
 
 ## [v4.5.10.01](https://github.com/mutms/moodle-tool_mulib/compare/mu-4.5.9-01...v4.5.10.01) - 2026-02-12
 
