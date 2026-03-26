@@ -390,4 +390,17 @@ class behat_tool_mulib extends behat_base {
 
         file_put_contents("$basedir/wiki/$image", $this->getSession()->getScreenshot());
     }
+
+    /**
+     * Helper for adding of custom fields.
+     *
+     * @When I click add custom field of type :field
+     *
+     * @param string $field
+     * @return void
+     */
+    public function add_custom_field(string $field) {
+        $this->execute("behat_general::i_click_on", [get_string('createnewcustomfield', 'core_customfield'), 'link']);
+        $this->execute("behat_general::i_click_on", [$field, 'link']);
+    }
 }
