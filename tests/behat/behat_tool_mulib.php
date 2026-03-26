@@ -403,4 +403,60 @@ class behat_tool_mulib extends behat_base {
         $this->execute("behat_general::i_click_on", [get_string('createnewcustomfield', 'core_customfield'), 'link']);
         $this->execute("behat_general::i_click_on", [$field, 'link']);
     }
+
+    /**
+     * Helper for editing of custom fields.
+     *
+     * @When I click Edit custom field :field
+     *
+     * @param string $field
+     * @return void
+     */
+    public function edit_custom_field(string $field) {
+        global $CFG;
+
+        if ($CFG->version >= 2026032000) {
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Actions', 'link', $field, 'table_row']
+            );
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Edit', 'link', $field, 'table_row']
+            );
+        } else {
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Edit custom field: Test field', 'button', $field, 'table_row']
+            );
+        }
+    }
+
+    /**
+     * Helper for deleting of custom fields.
+     *
+     * @When I click Delete custom field :field
+     *
+     * @param string $field
+     * @return void
+     */
+    public function delete_custom_field(string $field) {
+        global $CFG;
+
+        if ($CFG->version >= 2026032000) {
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Actions', 'link', $field, 'table_row']
+            );
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Delete', 'link', $field, 'table_row']
+            );
+        } else {
+            $this->execute(
+                'behat_general::i_click_on_in_the',
+                ['Delete custom field: Test field', 'button', $field, 'table_row']
+            );
+        }
+    }
 }
