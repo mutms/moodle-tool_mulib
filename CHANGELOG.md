@@ -8,6 +8,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Added
 
+- Added composer.json for Packagist distribution
 - Added "@When I click add custom field of type :field" behat step to work around string change in 5.2
 
 ## [v5.0.6.03](https://github.com/mutms/moodle-tool_mulib/compare/v5.0.6.02...v5.0.6.03) - 2026-03-26
