@@ -1,7 +1,7 @@
 {
   "name": "mutms/moodle-tool_mulib",
   "type": "moodle-tool",
-  "description": "Additional MuTMS tools library plugin for Moodle LMS",
+  "description": "Additional MuTMS libraries plugin for Moodle LMS",
   "homepage": "https://github.com/mutms/moodle-tool_mulib",
   "license": "GPL-3.0-or-later",
   "require": {
