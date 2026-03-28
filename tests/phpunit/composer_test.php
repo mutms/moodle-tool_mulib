@@ -51,6 +51,9 @@ final class composer_test extends \core\tests\plugin_checks_testcase {
             return;
         }
 
+        $plugin = new \stdClass();
+        require("$dir/version.php");
+
         $readme = file_get_contents("$dir/README.md");
         preg_match('/^# (.*)$/m', $readme, $matches);
         $description = str_replace('™', '', $matches[1]);
@@ -60,7 +63,22 @@ final class composer_test extends \core\tests\plugin_checks_testcase {
         $this->assertSame($description, $composer['description']);
         $this->assertSame("https://github.com/mutms/moodle-{$component}", $composer['homepage']);
         $this->assertSame('GPL-3.0-or-later', $composer['license']);
-        $this->assertSame(["composer/installers" => "*"], $composer['require']);
+        $this->assertSame('*', $composer['require']['composer/installers']);
+        if (!empty($plugin->dependencies)) {
+            foreach ($plugin->dependencies as $dependency => $version) {
+                if ($dependency === 'tool_mfa' || $dependency === 'tool_certificate') {
+                    continue;
+                }
+                $this->assertSame('4.5.*', $composer['require']["mutms/moodle-$dependency"]);
+            }
+        }
+        foreach ($composer['require'] as $dependency => $version) {
+            if (!str_starts_with($dependency, 'mutms/moodle-')) {
+                continue;
+            }
+            $depname = substr($dependency, strlen('mutms/moodle-'));
+            $this->assertArrayHasKey($depname, $plugin->dependencies);
+        }
         $this->assertSame(["installer-name" => $pluginname], $composer['extra']);
         $this->assertSame(
             [
