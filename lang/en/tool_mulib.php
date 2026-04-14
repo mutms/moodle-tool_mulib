@@ -53,6 +53,7 @@ $string['extdb_server_status'] = 'Connection status';
 $string['extdb_server_update'] = 'Update server';
 $string['extdb_servers'] = 'External database servers';
 $string['lang_string_a'] = '{$a}';
+$string['mulib:generatecontent'] = 'Generate courses and activities';
 $string['mulib:useextdb'] = 'Use external queries';
 $string['notification'] = 'Notification';
 $string['notification_body'] = 'Message';

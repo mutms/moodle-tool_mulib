@@ -36,4 +36,14 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // Generate courses, activities, and other content via the generator API.
+    'tool/mulib:generatecontent' => [
+        'captype' => 'write',
+        'riskbitmask' => RISK_DATALOSS | RISK_XSS,
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];
