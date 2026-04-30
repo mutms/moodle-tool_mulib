@@ -20,6 +20,7 @@
 namespace tool_mulib\phpunit\local\generator;
 
 use tool_mulib\local\generator;
+use core\exception\coding_exception;
 
 /**
  * Generator base class tests (defaults, placeholders, reset).
@@ -59,7 +60,7 @@ final class base_test extends \advanced_testcase {
         try {
             $gen->create_course(['fullname' => 'No Cat', 'shortname' => 'NC1']);
             $this->fail('Exception expected');
-        } catch (\coding_exception $e) {
+        } catch (coding_exception $e) {
             $this->assertStringContainsString('category', $e->getMessage());
         }
     }
@@ -89,7 +90,7 @@ final class base_test extends \advanced_testcase {
         try {
             $gen->set_placeholders('create_course', ['fullname' => 'No placeholder here']);
             $this->fail('Exception expected');
-        } catch (\coding_exception $e) {
+        } catch (coding_exception $e) {
             $this->assertStringContainsString('%d', $e->getMessage());
         }
     }
@@ -104,7 +105,7 @@ final class base_test extends \advanced_testcase {
         $gen->set_placeholders('create_course', ['shortname' => 'CUSTOM_%d']);
 
         $course = $gen->create_course(['category' => $category->id]);
-        $this->assertStringContainsString('Generated course', $course->fullname);
+        $this->assertStringContainsString('Sample course', $course->fullname);
         $this->assertStringStartsWith('CUSTOM_', $course->shortname);
 
         $gen->clear_defaults();
@@ -124,7 +125,7 @@ final class base_test extends \advanced_testcase {
         try {
             $gen->create_course(['fullname' => 'After Reset', 'shortname' => 'AR1']);
             $this->fail('Exception expected');
-        } catch (\coding_exception $e) {
+        } catch (coding_exception $e) {
             $this->assertStringContainsString('category', $e->getMessage());
         }
     }

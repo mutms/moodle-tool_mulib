@@ -34,7 +34,6 @@ use tool_mulib\local\generator\base;
 #[\core\attribute\label('Generator classes for production data creation')]
 #[\core\attribute\tags('tool_mulib')]
 final class generator_classes {
-
     /** @var array<string, class-string<base>> component => generator class */
     private array $classes = [];
 

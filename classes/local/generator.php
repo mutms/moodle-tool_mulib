@@ -18,6 +18,7 @@
 
 namespace tool_mulib\local;
 
+use core\exception\coding_exception;
 use tool_mulib\local\generator\base;
 use tool_mulib\local\generator\core_course_generator;
 use tool_mulib\local\generator\mod_page_generator;
@@ -48,6 +49,8 @@ use tool_mulib\local\generator\mod_wiki_generator;
  * @copyright  2026 Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
+ * NOTE: generators registered via hooks do not have autocompleteion here.
+ *
  * @property-read core_course_generator $core_course
  * @property-read mod_page_generator $mod_page
  * @property-read mod_book_generator $mod_book
@@ -66,7 +69,6 @@ use tool_mulib\local\generator\mod_wiki_generator;
  * @property-read mod_wiki_generator $mod_wiki
  */
 final class generator {
-
     /** @var array<string, base> cached generator instances */
     private array $generators = [];
 
@@ -109,14 +111,15 @@ final class generator {
      *
      * @param string $component e.g. 'core_course', 'mod_page', 'tool_muprog'
      * @return base
-     * @throws \coding_exception if no generator registered for this component
+     *
+     * @throws coding_exception if no generator registered for this component
      */
     public function get_generator(string $component): base {
         if (isset($this->generators[$component])) {
             return $this->generators[$component];
         }
         if (!isset($this->classes[$component])) {
-            throw new \coding_exception("No generator registered for component '$component'");
+            throw new coding_exception("No generator registered for component '$component'");
         }
         $this->generators[$component] = new $this->classes[$component]($this);
         return $this->generators[$component];

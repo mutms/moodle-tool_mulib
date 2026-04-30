@@ -28,7 +28,11 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_page_generator extends mod_base {
-
+    /**
+     * Module name.
+     *
+     * @return string always 'page'
+     */
     public function get_modulename(): string {
         return 'page';
     }
@@ -81,8 +85,13 @@ final class mod_page_generator extends mod_base {
             $context = \context_module::instance($cmid);
             require_once($CFG->dirroot . '/mod/page/locallib.php');
             $instance->content = file_save_draft_area_files(
-                $draftitemid, $context->id, 'mod_page', 'content', 0,
-                \page_get_editor_options($context), $instance->content,
+                $draftitemid,
+                $context->id,
+                'mod_page',
+                'content',
+                0,
+                \page_get_editor_options($context),
+                $instance->content,
             );
             $DB->update_record('page', $instance);
             $instance = $DB->get_record('page', ['id' => $instance->id], '*', MUST_EXIST);

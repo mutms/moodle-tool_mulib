@@ -19,6 +19,7 @@
 namespace tool_mulib\local\generator;
 
 use tool_mulib\local\generator;
+use core\exception\coding_exception;
 
 /**
  * Abstract base for all generators.
@@ -28,6 +29,8 @@ use tool_mulib\local\generator;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class base {
+    /** @var int Maximum length for filepath and filename in mdl_files */
+    private const FILE_FIELD_MAX_LENGTH = 255;
 
     /** @var generator */
     protected generator $generator;
@@ -74,16 +77,16 @@ abstract class base {
      * These override the defaults returned by the create_*_placeholders() methods.
      *
      * Example:
-     *   $gen->set_placeholders('create_course', ['fullname' => 'UHK Course %d', 'shortname' => 'UHK%d']);
+     *   $gen->set_placeholders('create_course', ['fullname' => 'Uni Course %d', 'shortname' => 'UC%d']);
      *
      * @param string $method method name, e.g. 'create_course', 'create_activity', 'create_chapter'
      * @param array<string, string> $patterns field => sprintf pattern with %d
-     * @throws \coding_exception if any pattern does not contain %d
+     * @throws coding_exception if any pattern does not contain %d
      */
     public function set_placeholders(string $method, array $patterns): void {
         foreach ($patterns as $field => $pattern) {
             if (!str_contains($pattern, '%d')) {
-                throw new \coding_exception("Placeholder pattern for '$field' must contain %d");
+                throw new coding_exception("Placeholder pattern for '$field' must contain %d");
             }
         }
         $this->placeholders[$method] = $patterns;
@@ -134,7 +137,7 @@ abstract class base {
      * Fill missing $record fields using auto-name patterns from the database.
      *
      * Uses a single sequence number for all placeholder fields, so that
-     * e.g. 'Generated course 5' and 'GC5' always get the same number.
+     * e.g. 'Sample course 5' and 'SC5' always get the same number.
      * The number is the highest found across all fields + 1, then
      * incremented until all generated values are unused.
      *
@@ -246,9 +249,6 @@ abstract class base {
      * @param array<string, \stored_file|string|array{content: string}> $files
      * @return int draft area itemid
      */
-    /** @var int Maximum length for filepath and filename in mdl_files */
-    private const FILE_FIELD_MAX_LENGTH = 255;
-
     protected function prepare_draft_area(array $files): int {
         global $USER;
 
@@ -259,33 +259,37 @@ abstract class base {
         foreach ($files as $targetpath => $source) {
             $filename = basename($targetpath);
             if ($filename === '' || $filename === '.') {
-                throw new \coding_exception("File target path must include filename: '$targetpath'");
+                throw new coding_exception("File target path must include filename: '$targetpath'");
             }
             $dir = dirname($targetpath);
             $filepath = ($dir === '.') ? '/' : '/' . ltrim($dir, '/') . '/';
 
             // Validate length limits — mdl_files columns are VARCHAR(255).
             if (strlen($filename) > self::FILE_FIELD_MAX_LENGTH) {
-                throw new \coding_exception(
-                    "Filename exceeds " . self::FILE_FIELD_MAX_LENGTH . " characters: '$filename'");
+                throw new coding_exception(
+                    "Filename exceeds " . self::FILE_FIELD_MAX_LENGTH . " characters: '$filename'"
+                );
             }
             if (strlen($filepath) > self::FILE_FIELD_MAX_LENGTH) {
-                throw new \coding_exception(
-                    "File path exceeds " . self::FILE_FIELD_MAX_LENGTH . " characters: '$filepath'");
+                throw new coding_exception(
+                    "File path exceeds " . self::FILE_FIELD_MAX_LENGTH . " characters: '$filepath'"
+                );
             }
 
             // Validate filename contains only safe characters (same as PARAM_FILE).
             $cleanfilename = clean_param($filename, PARAM_FILE);
             if ($cleanfilename !== $filename) {
-                throw new \coding_exception(
-                    "Filename contains invalid characters: '$filename' (cleaned to '$cleanfilename')");
+                throw new coding_exception(
+                    "Filename contains invalid characters: '$filename' (cleaned to '$cleanfilename')"
+                );
             }
 
             // Validate filepath contains only safe characters (same as PARAM_PATH).
             $cleanfilepath = clean_param($filepath, PARAM_PATH);
             if ($cleanfilepath !== $filepath) {
-                throw new \coding_exception(
-                    "File path contains invalid characters: '$filepath'");
+                throw new coding_exception(
+                    "File path contains invalid characters: '$filepath'"
+                );
             }
 
             $filerecord = [
@@ -301,13 +305,13 @@ abstract class base {
                 $fs->create_file_from_storedfile($filerecord, $source);
             } else if (is_string($source)) {
                 if (!is_readable($source)) {
-                    throw new \coding_exception("File not readable: '$source'");
+                    throw new coding_exception("File not readable: '$source'");
                 }
                 $fs->create_file_from_pathname($filerecord, $source);
             } else if (is_array($source) && isset($source['content'])) {
                 $fs->create_file_from_string($filerecord, $source['content']);
             } else {
-                throw new \coding_exception("Invalid file source for '$targetpath'");
+                throw new coding_exception("Invalid file source for '$targetpath'");
             }
         }
 

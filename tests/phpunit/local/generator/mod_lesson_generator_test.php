@@ -32,7 +32,6 @@ use tool_mulib\local\generator;
  * @covers \tool_mulib\local\generator\mod_lesson_generator
  */
 final class mod_lesson_generator_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();

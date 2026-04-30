@@ -43,26 +43,19 @@ final class mod_base_test extends \advanced_testcase {
         parent::tearDown();
     }
 
-    private function create_test_course(): \stdClass {
-        $category = $this->getDataGenerator()->create_category();
-        return \core\di::get(generator::class)->core_course->create_course([
-            'category' => $category->id,
-        ]);
-    }
-
     public function test_create_activity_auto_naming(): void {
-        $course = $this->create_test_course();
+        $course = $this->getDataGenerator()->create_course();
         $gen = \core\di::get(generator::class)->mod_page;
 
         $page1 = $gen->create_activity(['course' => $course]);
-        $this->assertStringContainsString('Generated page', $page1->name);
+        $this->assertStringContainsString('Sample page', $page1->name);
 
         $page2 = $gen->create_activity(['course' => $course]);
         $this->assertNotSame($page1->name, $page2->name);
     }
 
     public function test_create_activity_custom_placeholders(): void {
-        $course = $this->create_test_course();
+        $course = $this->getDataGenerator()->create_course();
         $gen = \core\di::get(generator::class)->mod_page;
 
         $gen->set_placeholders('create_activity', ['name' => 'Migrated page %d']);
@@ -72,7 +65,7 @@ final class mod_base_test extends \advanced_testcase {
     }
 
     public function test_create_activity_with_defaults(): void {
-        $course = $this->create_test_course();
+        $course = $this->getDataGenerator()->create_course();
         $gen = \core\di::get(generator::class)->mod_page;
 
         $gen->set_defaults(['course' => $course, 'visible' => false]);
@@ -93,7 +86,7 @@ final class mod_base_test extends \advanced_testcase {
     }
 
     public function test_create_activity_in_section(): void {
-        $course = $this->create_test_course();
+        $course = $this->getDataGenerator()->create_course();
         $generator = \core\di::get(generator::class);
 
         $section = $generator->core_course->create_section([
@@ -112,7 +105,7 @@ final class mod_base_test extends \advanced_testcase {
     }
 
     public function test_create_activity_hidden(): void {
-        $course = $this->create_test_course();
+        $course = $this->getDataGenerator()->create_course();
 
         $page = \core\di::get(generator::class)->mod_page->create_activity([
             'course' => $course,

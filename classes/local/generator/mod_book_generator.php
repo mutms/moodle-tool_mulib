@@ -28,7 +28,11 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_book_generator extends mod_base {
-
+    /**
+     * Module name.
+     *
+     * @return string always 'book'
+     */
     public function get_modulename(): string {
         return 'book';
     }
@@ -94,8 +98,11 @@ final class mod_book_generator extends mod_base {
         global $DB;
 
         $record = $this->merge_defaults($record);
-        $record = $this->apply_placeholders($record, 'book_chapters',
-            $this->get_placeholders('create_chapter', $this->create_chapter_placeholders()));
+        $record = $this->apply_placeholders(
+            $record,
+            'book_chapters',
+            $this->get_placeholders('create_chapter', $this->create_chapter_placeholders())
+        );
 
         if (empty($record['bookid'])) {
             throw new \coding_exception('create_chapter requires bookid in $record');
@@ -107,8 +114,11 @@ final class mod_book_generator extends mod_base {
 
         // Auto-determine page number if not provided.
         if (!isset($record['pagenum'])) {
-            $maxpagenum = $DB->get_field('book_chapters', 'MAX(pagenum)',
-                ['bookid' => $record['bookid']]);
+            $maxpagenum = $DB->get_field(
+                'book_chapters',
+                'MAX(pagenum)',
+                ['bookid' => $record['bookid']]
+            );
             $record['pagenum'] = ($maxpagenum ?? 0) + 1;
         }
 

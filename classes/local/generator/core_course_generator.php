@@ -28,7 +28,11 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class core_course_generator extends base {
-
+    /**
+     * Component identifier.
+     *
+     * @return string always 'core_course'
+     */
     public function get_component(): string {
         return 'core_course';
     }
@@ -40,8 +44,8 @@ final class core_course_generator extends base {
      */
     protected function create_course_placeholders(): array {
         return [
-            'fullname' => 'Generated course %d',
-            'shortname' => 'GC%d',
+            'fullname' => 'Sample course %d',
+            'shortname' => 'SC%d',
         ];
     }
 
@@ -52,7 +56,7 @@ final class core_course_generator extends base {
      */
     protected function create_section_placeholders(): array {
         return [
-            'name' => 'Generated section %d',
+            'name' => 'Sample section %d',
         ];
     }
 
@@ -63,7 +67,7 @@ final class core_course_generator extends base {
      */
     protected function create_subsection_placeholders(): array {
         return [
-            'name' => 'Generated subsection %d',
+            'name' => 'Sample subsection %d',
         ];
     }
 
@@ -91,15 +95,20 @@ final class core_course_generator extends base {
         require_once($CFG->dirroot . '/course/lib.php');
 
         $record = $this->merge_defaults($record);
-        $record = $this->apply_placeholders($record, 'course',
-            $this->get_placeholders('create_course', $this->create_course_placeholders()));
+        $record = $this->apply_placeholders(
+            $record,
+            'course',
+            $this->get_placeholders('create_course', $this->create_course_placeholders())
+        );
 
         if (empty($record['category'])) {
             throw new \coding_exception('create_course requires category in $record');
         }
 
-        require_capability('tool/mulib:generatecontent',
-            \context_coursecat::instance($record['category']));
+        require_capability(
+            'tool/mulib:generatecontent',
+            \context_coursecat::instance($record['category'])
+        );
 
         $data = new stdClass();
         $data->category = (int)$record['category'];
@@ -121,8 +130,13 @@ final class core_course_generator extends base {
             $draftitemid = $this->prepare_draft_area($record['summaryfiles']);
             $coursecontext = \context_course::instance($result->id);
             $result->summary = file_save_draft_area_files(
-                $draftitemid, $coursecontext->id, 'course', 'summary', 0,
-                ['maxfiles' => -1, 'maxbytes' => 0], $result->summary,
+                $draftitemid,
+                $coursecontext->id,
+                'course',
+                'summary',
+                0,
+                ['maxfiles' => -1, 'maxbytes' => 0],
+                $result->summary,
             );
             $DB->update_record('course', $result);
         }
@@ -148,8 +162,11 @@ final class core_course_generator extends base {
         require_once($CFG->dirroot . '/course/lib.php');
 
         $record = $this->merge_defaults($record);
-        $record = $this->apply_placeholders($record, 'course_sections',
-            $this->get_placeholders('create_section', $this->create_section_placeholders()));
+        $record = $this->apply_placeholders(
+            $record,
+            'course_sections',
+            $this->get_placeholders('create_section', $this->create_section_placeholders())
+        );
 
         if (empty($record['course'])) {
             throw new \coding_exception('create_section requires course in $record');
@@ -172,8 +189,13 @@ final class core_course_generator extends base {
             $draftitemid = $this->prepare_draft_area($record['summaryfiles']);
             $coursecontext = \context_course::instance($courseid);
             $update->summary = file_save_draft_area_files(
-                $draftitemid, $coursecontext->id, 'course', 'section', $sectionrecord->id,
-                ['maxfiles' => -1, 'maxbytes' => 0], $update->summary,
+                $draftitemid,
+                $coursecontext->id,
+                'course',
+                'section',
+                $sectionrecord->id,
+                ['maxfiles' => -1, 'maxbytes' => 0],
+                $update->summary,
             );
             $DB->update_record('course_sections', $update);
         }
@@ -197,8 +219,11 @@ final class core_course_generator extends base {
         require_once($CFG->dirroot . '/course/modlib.php');
 
         $record = $this->merge_defaults($record);
-        $record = $this->apply_placeholders($record, 'course_sections',
-            $this->get_placeholders('create_subsection', $this->create_subsection_placeholders()));
+        $record = $this->apply_placeholders(
+            $record,
+            'course_sections',
+            $this->get_placeholders('create_subsection', $this->create_subsection_placeholders())
+        );
 
         if (empty($record['course'])) {
             throw new \coding_exception('create_subsection requires course in $record');

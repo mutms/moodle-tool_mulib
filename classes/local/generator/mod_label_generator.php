@@ -28,7 +28,11 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_label_generator extends mod_base {
-
+    /**
+     * Module name.
+     *
+     * @return string always 'label'
+     */
     public function get_modulename(): string {
         return 'label';
     }

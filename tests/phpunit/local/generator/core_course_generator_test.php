@@ -107,12 +107,12 @@ final class core_course_generator_test extends \advanced_testcase {
 
         // No fullname/shortname provided — should auto-generate.
         $course1 = $gen->create_course(['category' => $category->id]);
-        $this->assertMatchesRegularExpression('/^Generated course \d+$/', $course1->fullname);
-        $this->assertMatchesRegularExpression('/^GC\d+$/', $course1->shortname);
+        $this->assertMatchesRegularExpression('/^Sample course \d+$/', $course1->fullname);
+        $this->assertMatchesRegularExpression('/^SC\d+$/', $course1->shortname);
 
         // Second course gets different names.
         $course2 = $gen->create_course(['category' => $category->id]);
-        $this->assertMatchesRegularExpression('/^Generated course \d+$/', $course2->fullname);
+        $this->assertMatchesRegularExpression('/^Sample course \d+$/', $course2->fullname);
         $this->assertNotSame($course1->fullname, $course2->fullname);
         $this->assertNotSame($course1->shortname, $course2->shortname);
 
@@ -131,7 +131,7 @@ final class core_course_generator_test extends \advanced_testcase {
         // Manually create a course that matches the auto-naming pattern.
         $this->getDataGenerator()->create_course([
             'category' => $category->id,
-            'fullname' => 'Generated course 1',
+            'fullname' => 'Sample course 1',
             'shortname' => 'GC1',
         ]);
 
@@ -269,7 +269,7 @@ final class core_course_generator_test extends \advanced_testcase {
         $course = $gen->create_course(['category' => $category->id, 'shortname' => 'SA1']);
 
         $section = $gen->create_section(['course' => $course->id]);
-        $this->assertMatchesRegularExpression('/^Generated section \d+$/', $section->name);
+        $this->assertMatchesRegularExpression('/^Sample section \d+$/', $section->name);
     }
 
     public function test_create_subsection(): void {

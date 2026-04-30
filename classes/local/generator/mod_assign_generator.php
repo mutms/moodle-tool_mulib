@@ -28,7 +28,11 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mod_assign_generator extends mod_base {
-
+    /**
+     * Module name.
+     *
+     * @return string always 'assign'
+     */
     public function get_modulename(): string {
         return 'assign';
     }

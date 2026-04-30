@@ -28,7 +28,6 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class mod_base extends base {
-
     /** @var int|null cached module table ID */
     private ?int $moduleid = null;
 
@@ -39,6 +38,11 @@ abstract class mod_base extends base {
      */
     abstract public function get_modulename(): string;
 
+    /**
+     * Returns component.
+     *
+     * @return string
+     */
     public function get_component(): string {
         return 'mod_' . $this->get_modulename();
     }
@@ -60,7 +64,7 @@ abstract class mod_base extends base {
      */
     protected function create_activity_placeholders(): array {
         return [
-            'name' => 'Generated ' . $this->get_modulename() . ' %d',
+            'name' => 'Sample ' . $this->get_modulename() . ' %d',
         ];
     }
 
@@ -72,8 +76,12 @@ abstract class mod_base extends base {
     final protected function get_module_id(): int {
         if ($this->moduleid === null) {
             global $DB;
-            $this->moduleid = (int)$DB->get_field('modules', 'id',
-                ['name' => $this->get_modulename()], MUST_EXIST);
+            $this->moduleid = (int)$DB->get_field(
+                'modules',
+                'id',
+                ['name' => $this->get_modulename()],
+                MUST_EXIST
+            );
         }
         return $this->moduleid;
     }
@@ -145,8 +153,11 @@ abstract class mod_base extends base {
      */
     final protected function prepare_record(array $record): array {
         $record = $this->merge_defaults($record);
-        $record = $this->apply_placeholders($record, $this->get_modulename(),
-            $this->get_placeholders('create_activity', $this->create_activity_placeholders()));
+        $record = $this->apply_placeholders(
+            $record,
+            $this->get_modulename(),
+            $this->get_placeholders('create_activity', $this->create_activity_placeholders())
+        );
 
         if (empty($record['course'])) {
             throw new \coding_exception('create_activity requires course in $record');

@@ -127,11 +127,11 @@ final class core_course_generator_comparison_test extends \advanced_testcase {
         $this->assertMatchesRegularExpression('/^Test course \d+/', $core1->fullname);
         $this->assertMatchesRegularExpression('/^tc_\d+/', $core1->shortname);
 
-        // Mulib generator uses DB-backed naming — names like 'Generated course 1', 'GC1'.
+        // Mulib generator uses DB-backed naming — names like 'Sample course 1', 'GC1'.
         $mulib1 = \core\di::get(generator::class)->core_course->create_course(['category' => $category->id]);
         $mulib2 = \core\di::get(generator::class)->core_course->create_course(['category' => $category->id]);
-        $this->assertMatchesRegularExpression('/^Generated course \d+$/', $mulib1->fullname);
-        $this->assertMatchesRegularExpression('/^GC\d+$/', $mulib1->shortname);
+        $this->assertMatchesRegularExpression('/^Sample course \d+$/', $mulib1->fullname);
+        $this->assertMatchesRegularExpression('/^SC\d+$/', $mulib1->shortname);
 
         // Mulib naming can be customised per-instance.
         \core\di::get(generator::class)->core_course->set_placeholders('create_course', [
@@ -201,7 +201,7 @@ final class core_course_generator_comparison_test extends \advanced_testcase {
 
         // After reset, placeholder is gone — back to default pattern.
         $course = $gen->create_course(['category' => $category->id]);
-        $this->assertMatchesRegularExpression('/^GC\d+$/', $course->shortname);
+        $this->assertMatchesRegularExpression('/^SC\d+$/', $course->shortname);
     }
 
     public function test_mulib_naming_production_safe(): void {
@@ -212,24 +212,24 @@ final class core_course_generator_comparison_test extends \advanced_testcase {
         // fullname has max 5, shortname has max 3 — generator should use max(5, 3) + 1 = 6.
         $this->getDataGenerator()->create_course([
             'category' => $category->id,
-            'fullname' => 'Generated course 1',
+            'fullname' => 'Sample course 1',
             'shortname' => 'GC2',
         ]);
         $this->getDataGenerator()->create_course([
             'category' => $category->id,
-            'fullname' => 'Generated course 5',
+            'fullname' => 'Sample course 5',
             'shortname' => 'GC3',
         ]);
 
         // Uses a single number across all fields — picks max(5, 3) + 1 = 6.
         $course = $gen->create_course(['category' => $category->id]);
-        $this->assertSame('Generated course 6', $course->fullname);
-        $this->assertSame('GC6', $course->shortname);
+        $this->assertSame('Sample course 6', $course->fullname);
+        $this->assertSame('SC6', $course->shortname);
 
         // Next one continues from 7.
         $course2 = $gen->create_course(['category' => $category->id]);
-        $this->assertSame('Generated course 7', $course2->fullname);
-        $this->assertSame('GC7', $course2->shortname);
+        $this->assertSame('Sample course 7', $course2->fullname);
+        $this->assertSame('SC7', $course2->shortname);
     }
 
     public function test_mulib_naming_skips_collisions(): void {
@@ -239,19 +239,19 @@ final class core_course_generator_comparison_test extends \advanced_testcase {
         // Create courses that block the next candidate number.
         $this->getDataGenerator()->create_course([
             'category' => $category->id,
-            'fullname' => 'Generated course 1',
-            'shortname' => 'GC1',
+            'fullname' => 'Sample course 1',
+            'shortname' => 'SC1',
         ]);
         // Block number 2 in shortname only.
         $this->getDataGenerator()->create_course([
             'category' => $category->id,
             'fullname' => 'Something else',
-            'shortname' => 'GC2',
+            'shortname' => 'SC2',
         ]);
 
         // Number 2 collides on shortname, so generator skips to 3.
         $course = $gen->create_course(['category' => $category->id]);
-        $this->assertSame('Generated course 3', $course->fullname);
-        $this->assertSame('GC3', $course->shortname);
+        $this->assertSame('Sample course 3', $course->fullname);
+        $this->assertSame('SC3', $course->shortname);
     }
 }

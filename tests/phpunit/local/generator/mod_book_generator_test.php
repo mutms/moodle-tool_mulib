@@ -32,7 +32,6 @@ use tool_mulib\local\generator;
  * @covers \tool_mulib\local\generator\mod_book_generator
  */
 final class mod_book_generator_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
