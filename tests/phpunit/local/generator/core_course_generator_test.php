@@ -212,7 +212,7 @@ final class core_course_generator_test extends \advanced_testcase {
         }
 
         // All should have unique shortnames.
-        $shortnames = array_map(fn($c) => $c->shortname, $courses);
+        $shortnames = array_column($courses, 'shortname');
         $this->assertSame(count($shortnames), count(array_unique($shortnames)));
 
         // All in the same category.

@@ -1,0 +1,3 @@
+filter-phpdoc:
+  notPaths:
+    - classes/local/generator

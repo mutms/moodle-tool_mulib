@@ -34,7 +34,7 @@ use tool_mulib\local\generator\base;
 #[\core\attribute\label('Generator classes for production data creation')]
 #[\core\attribute\tags('tool_mulib')]
 final class generator_classes {
-    /** @var array<string, class-string<base>> component => generator class */
+    /** @var array component => generator class */
     private array $classes = [];
 
     /**
@@ -48,7 +48,7 @@ final class generator_classes {
      * Register a generator class for a component.
      *
      * @param string $component e.g. 'tool_muprog', 'tool_mucertify'
-     * @param class-string<base> $classname generator class extending base
+     * @param string $classname generator class extending base
      */
     public function register(string $component, string $classname): void {
         if (isset($this->classes[$component])) {
