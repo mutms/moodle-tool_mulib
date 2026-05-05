@@ -89,13 +89,14 @@ final class mod_book_generator extends mod_base {
      *     title?: string,
      *     content?: string,
      *     contentformat?: int,
+     *     contentfiles?: array<string, \stored_file|string|array{content: string}>,
      *     subchapter?: bool,
      *     pagenum?: int,
      * } $record
      * @return stdClass book_chapters record fetched from DB
      */
     public function create_chapter(array $record): stdClass {
-        global $DB;
+        global $CFG, $DB;
 
         $record = $this->merge_defaults($record);
         $record = $this->apply_placeholders(
@@ -109,7 +110,7 @@ final class mod_book_generator extends mod_base {
         }
 
         // Check capability via the book's course context.
-        $book = $DB->get_record('book', ['id' => $record['bookid']], 'course', MUST_EXIST);
+        $book = $DB->get_record('book', ['id' => $record['bookid']], '*', MUST_EXIST);
         require_capability('tool/mulib:generatecontent', \context_course::instance($book->course));
 
         // Auto-determine page number if not provided.
@@ -134,6 +135,27 @@ final class mod_book_generator extends mod_base {
         $chapter->timemodified = $chapter->timecreated;
         $chapter->importsrc = '';
         $chapter->id = $DB->insert_record('book_chapters', $chapter);
+
+        // Save content files if provided. Mirrors mod_page_generator —
+        // standard add_instance for book chapters never got a hook for files
+        // so we plant them into mod_book/chapter ourselves and rewrite any
+        // @@PLUGINFILE@@/… refs in $chapter->content to point at them.
+        if (!empty($record['contentfiles'])) {
+            $cm = get_coursemodule_from_instance('book', $chapter->bookid, $book->course, false, MUST_EXIST);
+            $context = \context_module::instance($cm->id);
+            $draftitemid = $this->prepare_draft_area($record['contentfiles']);
+            $editoroptions = ['noclean' => true, 'subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0];
+            $chapter->content = file_save_draft_area_files(
+                $draftitemid,
+                $context->id,
+                'mod_book',
+                'chapter',
+                $chapter->id,
+                $editoroptions,
+                $chapter->content,
+            );
+            $DB->update_record('book_chapters', $chapter);
+        }
 
         return $DB->get_record('book_chapters', ['id' => $chapter->id], '*', MUST_EXIST);
     }
