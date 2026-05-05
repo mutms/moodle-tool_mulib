@@ -39,8 +39,11 @@ final class mod_resource_generator extends mod_base {
 
     /**
      * Create a resource (file) activity.
-
-
+     *
+     * display/printintro/showsize/showtype/showdate accept overrides; if absent
+     * they fall back to the defaults Moodle's manual create-resource form uses
+     * (display=AUTO, everything else off).
+     *
      * @param array{
      *     course: int|stdClass,
      *     name?: string,
@@ -50,6 +53,11 @@ final class mod_resource_generator extends mod_base {
      *     introfiles?: array<string, \stored_file|string|array{content: string}>,
      *     visible?: bool,
      *     files?: array<string, \stored_file|string|array{content: string}>,
+     *     display?: int,
+     *     printintro?: int,
+     *     showsize?: int,
+     *     showtype?: int,
+     *     showdate?: int,
      * } $record
      * @return stdClass resource record from DB with extra ->cmid field
      */
@@ -69,11 +77,11 @@ final class mod_resource_generator extends mod_base {
         global $CFG;
         require_once($CFG->libdir . '/resourcelib.php');
 
-        $moduleinfo->display = RESOURCELIB_DISPLAY_AUTO;
-        $moduleinfo->printintro = 0;
-        $moduleinfo->showsize = 0;
-        $moduleinfo->showtype = 0;
-        $moduleinfo->showdate = 0;
+        $moduleinfo->display = (int)($record['display'] ?? RESOURCELIB_DISPLAY_AUTO);
+        $moduleinfo->printintro = (int)($record['printintro'] ?? 0);
+        $moduleinfo->showsize = (int)($record['showsize'] ?? 0);
+        $moduleinfo->showtype = (int)($record['showtype'] ?? 0);
+        $moduleinfo->showdate = (int)($record['showdate'] ?? 0);
         $moduleinfo->files = !empty($record['files']) ? $this->prepare_draft_area($record['files']) : 0;
 
         return $this->add($moduleinfo, $course);
