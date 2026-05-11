@@ -131,14 +131,17 @@ final class mod_quiz_generator extends mod_base {
 
         if (!empty($record['slots']) || !empty($record['questionids'])) {
             require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+            $settings = \mod_quiz\quiz_settings::create($instance->id);
+            $structure = \mod_quiz\structure::create_for_quiz($settings);
             // page=0 → append after the current last slot; the quiz's
             // questionsperpage setting drives page assignment.
             foreach ($record['slots'] ?? [] as $slot) {
                 if (isset($slot['specific'])) {
                     quiz_add_quiz_question((int)$slot['specific'], $instance, 0);
                 } else if (isset($slot['random'])) {
-                    quiz_add_random_questions($instance, 0,
-                        (int)$slot['random'], (int)($slot['count'] ?? 1));
+                    $structure->add_random_questions(0,
+                        (int)($slot['count'] ?? 1),
+                        self::build_category_filter((int)$slot['random']));
                 }
             }
             foreach ($record['questionids'] ?? [] as $questionid) {
@@ -147,11 +150,42 @@ final class mod_quiz_generator extends mod_base {
             // Recompute sumgrades from slot maxmarks. Without this the quiz
             // refuses to start attempts: "graded out of 100 but no questions
             // have a grade" (cannotstartgradesmismatch).
-            \mod_quiz\quiz_settings::create($instance->id)
-                ->get_grade_calculator()->recompute_quiz_sumgrades();
+            $settings->get_grade_calculator()->recompute_quiz_sumgrades();
             $instance->sumgrades = (float)$DB->get_field('quiz', 'sumgrades', ['id' => $instance->id]);
         }
 
         return $instance;
+    }
+
+    /**
+     * Build the filtercondition payload expected by
+     * \mod_quiz\structure::add_random_questions(), pinning the random
+     * selection to a single question category.
+     *
+     * Matches the shape used by mod_quiz's own UI flow in
+     * mod_quiz\external\add_random_questions::execute.
+     *
+     * @param int $categoryid question_categories.id
+     * @return array
+     */
+    private static function build_category_filter(int $categoryid): array {
+        global $DB;
+        $cat = $DB->get_record('question_categories', ['id' => $categoryid], 'id, contextid', MUST_EXIST);
+        return [
+            'qpage' => 0,
+            'cat' => "{$cat->id},{$cat->contextid}",
+            'qperpage' => DEFAULT_QUESTIONS_PER_PAGE,
+            'tabname' => 'questions',
+            'sortdata' => [],
+            'filter' => [
+                'category' => [
+                    // JOINTYPE_DEFAULT = 1 (core\table\filter::JOINTYPE_DEFAULT).
+                    // Hardcoded to avoid require_once on the qbank class.
+                    'jointype' => 1,
+                    'values' => [$categoryid],
+                    'filteroptions' => ['includesubcategories' => false],
+                ],
+            ],
+        ];
     }
 }
