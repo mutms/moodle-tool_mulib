@@ -240,6 +240,21 @@ final class core_course_generator extends base {
 
         require_capability('tool/mulib:generatecontent', \context_course::instance($course->id));
 
+        // Moodle's backup system has fixed SUBSECTION_LEVEL / SUBACTIVITY_LEVEL
+        // constants and can't represent a subsection nested inside another
+        // subsection (the resulting setting hierarchy fails the dependency
+        // level check in backup_setting::add_dependency, and the course can
+        // no longer be backed up or even deleted via recyclebin). Refuse here
+        // so callers can never silently create such a structure.
+        $parentcomponent = $DB->get_field('course_sections', 'component',
+            ['course' => $course->id, 'section' => (int)$record['section']]);
+        if ($parentcomponent === 'mod_subsection') {
+            throw new \coding_exception(
+                'create_subsection: cannot nest a subsection inside another subsection '
+                . '(parent section ' . (int)$record['section'] . ' is itself a delegated mod_subsection); '
+                . 'Moodle backup does not support this depth');
+        }
+
         $moduleid = (int)$DB->get_field('modules', 'id', ['name' => 'subsection'], MUST_EXIST);
 
         $moduleinfo = new stdClass();
