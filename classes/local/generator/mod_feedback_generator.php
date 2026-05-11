@@ -147,6 +147,17 @@ final class mod_feedback_generator extends mod_base {
             $item->ignoreempty = $spec['ignoreempty'] ?? 0;
             $item->hidenoselect = $spec['hidenoselect'] ?? 0;
         }
+        // feedback_item_label::save_item() routes the visible text through
+        // file_postupdate_standard_editor, which reads `presentation_editor`
+        // not `presentation`. Without this the second update of the item
+        // ends up writing NULL into the NOT-NULL presentation column.
+        if ($typ === 'label') {
+            $item->presentation_editor = [
+                'text' => (string)($spec['presentation'] ?? ''),
+                'format' => FORMAT_HTML,
+                'itemid' => 0,
+            ];
+        }
         $itemobj->set_data($item);
         $itemobj->save_item();
     }
