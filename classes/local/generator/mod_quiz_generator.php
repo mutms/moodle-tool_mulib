@@ -42,6 +42,18 @@ final class mod_quiz_generator extends mod_base {
     /**
      * Create a quiz activity.
      *
+     * Slot population accepts two equivalent forms — pick whichever fits
+     * the caller:
+     *
+     *  - `questionids`: int[] — each id becomes one specific-question slot
+     *    (added via quiz_add_quiz_question).
+     *  - `slots`: array<int, array> — richer shape supporting both specific
+     *    and random selection from a category. Each entry is either
+     *    `['specific' => questionid]` or `['random' => categoryid, 'count' => n]`.
+     *    Mix freely.
+     *
+     * If both are supplied, `slots` runs first then `questionids` appends.
+     *
      * @param array{
      *     course: int|stdClass,
      *     name?: string,
@@ -52,6 +64,7 @@ final class mod_quiz_generator extends mod_base {
      *     visible?: bool,
      *     grade?: int,
      *     questionids?: int[],
+     *     slots?: array<int, array{specific?: int, random?: int, count?: int}>,
      * } $record
      * @return stdClass quiz record from DB with extra ->cmid field
      */
@@ -116,11 +129,19 @@ final class mod_quiz_generator extends mod_base {
 
         $instance = $this->add($moduleinfo, $course);
 
-        if (!empty($record['questionids'])) {
+        if (!empty($record['slots']) || !empty($record['questionids'])) {
             require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-            // page=0 → append after current last slot; quiz_add_quiz_question
-            // handles page assignment via the quiz's questionsperpage setting.
-            foreach ($record['questionids'] as $questionid) {
+            // page=0 → append after the current last slot; the quiz's
+            // questionsperpage setting drives page assignment.
+            foreach ($record['slots'] ?? [] as $slot) {
+                if (isset($slot['specific'])) {
+                    quiz_add_quiz_question((int)$slot['specific'], $instance, 0);
+                } else if (isset($slot['random'])) {
+                    quiz_add_random_questions($instance, 0,
+                        (int)$slot['random'], (int)($slot['count'] ?? 1));
+                }
+            }
+            foreach ($record['questionids'] ?? [] as $questionid) {
                 quiz_add_quiz_question((int)$questionid, $instance, 0);
             }
         }
