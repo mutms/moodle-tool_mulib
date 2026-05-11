@@ -36,6 +36,7 @@ use tool_mulib\local\generator\mod_lti_generator;
 use tool_mulib\local\generator\mod_glossary_generator;
 use tool_mulib\local\generator\mod_bigbluebutton_generator;
 use tool_mulib\local\generator\mod_wiki_generator;
+use tool_mulib\local\generator\mod_feedback_generator;
 
 /**
  * Generator registry and factory.
@@ -67,6 +68,7 @@ use tool_mulib\local\generator\mod_wiki_generator;
  * @property-read mod_glossary_generator $mod_glossary
  * @property-read mod_bigbluebutton_generator $mod_bigbluebutton
  * @property-read mod_wiki_generator $mod_wiki
+ * @property-read mod_feedback_generator $mod_feedback
  */
 final class generator {
     /** @var array<string, base> cached generator instances */
@@ -97,6 +99,7 @@ final class generator {
             'mod_glossary' => mod_glossary_generator::class,
             'mod_bigbluebutton' => mod_bigbluebutton_generator::class,
             'mod_wiki' => mod_wiki_generator::class,
+            'mod_feedback' => mod_feedback_generator::class,
         ];
 
         // Hook-registered generators from external plugins.
