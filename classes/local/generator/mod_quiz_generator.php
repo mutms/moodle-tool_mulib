@@ -69,7 +69,7 @@ final class mod_quiz_generator extends mod_base {
      * @return stdClass quiz record from DB with extra ->cmid field
      */
     public function create_activity(array $record): stdClass {
-        global $CFG;
+        global $CFG, $DB;
         [$record, $course] = $this->prepare_record($record);
 
         $moduleinfo = $this->build_moduleinfo(
@@ -144,6 +144,12 @@ final class mod_quiz_generator extends mod_base {
             foreach ($record['questionids'] ?? [] as $questionid) {
                 quiz_add_quiz_question((int)$questionid, $instance, 0);
             }
+            // Recompute sumgrades from slot maxmarks. Without this the quiz
+            // refuses to start attempts: "graded out of 100 but no questions
+            // have a grade" (cannotstartgradesmismatch).
+            \mod_quiz\quiz_settings::create($instance->id)
+                ->get_grade_calculator()->recompute_quiz_sumgrades();
+            $instance->sumgrades = (float)$DB->get_field('quiz', 'sumgrades', ['id' => $instance->id]);
         }
 
         return $instance;
