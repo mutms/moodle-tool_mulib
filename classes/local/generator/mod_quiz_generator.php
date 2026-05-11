@@ -51,10 +51,12 @@ final class mod_quiz_generator extends mod_base {
      *     introfiles?: array<string, \stored_file|string|array{content: string}>,
      *     visible?: bool,
      *     grade?: int,
+     *     questionids?: int[],
      * } $record
      * @return stdClass quiz record from DB with extra ->cmid field
      */
     public function create_activity(array $record): stdClass {
+        global $CFG;
         [$record, $course] = $this->prepare_record($record);
 
         $moduleinfo = $this->build_moduleinfo(
@@ -112,6 +114,17 @@ final class mod_quiz_generator extends mod_base {
         $moduleinfo->rightanswerclosed = 1;
         $moduleinfo->overallfeedbackclosed = 1;
 
-        return $this->add($moduleinfo, $course);
+        $instance = $this->add($moduleinfo, $course);
+
+        if (!empty($record['questionids'])) {
+            require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+            // page=0 → append after current last slot; quiz_add_quiz_question
+            // handles page assignment via the quiz's questionsperpage setting.
+            foreach ($record['questionids'] as $questionid) {
+                quiz_add_quiz_question((int)$questionid, $instance, 0);
+            }
+        }
+
+        return $instance;
     }
 }
