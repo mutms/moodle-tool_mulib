@@ -144,7 +144,9 @@ final class mod_book_generator extends mod_base {
             $cm = get_coursemodule_from_instance('book', $chapter->bookid, $book->course, false, MUST_EXIST);
             $context = \context_module::instance($cm->id);
             $draftitemid = $this->prepare_draft_area($record['contentfiles']);
-            $editoroptions = ['noclean' => true, 'subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0];
+            // subdirs=true matches mod_book's own UI editor (mod/book/edit.php)
+            // and lets callers organise contentfiles into subdirectories.
+            $editoroptions = ['noclean' => true, 'subdirs' => true, 'maxfiles' => -1, 'maxbytes' => 0];
             $chapter->content = file_save_draft_area_files(
                 $draftitemid,
                 $context->id,
