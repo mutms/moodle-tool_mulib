@@ -92,6 +92,7 @@ final class mod_book_generator extends mod_base {
      *     contentfiles?: array<string, \stored_file|string|array{content: string}>,
      *     subchapter?: bool,
      *     pagenum?: int,
+     *     hidden?: bool|int,
      * } $record
      * @return stdClass book_chapters record fetched from DB
      */
@@ -130,7 +131,7 @@ final class mod_book_generator extends mod_base {
         $chapter->title = $record['title'] ?? '';
         $chapter->content = $record['content'] ?? '';
         $chapter->contentformat = $record['contentformat'] ?? FORMAT_HTML;
-        $chapter->hidden = 0;
+        $chapter->hidden = !empty($record['hidden']) ? 1 : 0;
         $chapter->timecreated = time();
         $chapter->timemodified = $chapter->timecreated;
         $chapter->importsrc = '';
