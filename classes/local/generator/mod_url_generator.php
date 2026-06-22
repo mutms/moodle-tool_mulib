@@ -49,6 +49,7 @@ final class mod_url_generator extends mod_base {
      *     introformat?: int,
      *     introfiles?: array<string, \stored_file|string|array{content: string}>,
      *     visible?: bool,
+     *     printintro?: int,
      * } $record
      * @return stdClass url record from DB with extra ->cmid field
      */
@@ -70,7 +71,7 @@ final class mod_url_generator extends mod_base {
 
         $moduleinfo->externalurl = $record['externalurl'] ?? 'https://example.com';
         $moduleinfo->display = RESOURCELIB_DISPLAY_AUTO;
-        $moduleinfo->printintro = 0;
+        $moduleinfo->printintro = (int)($record['printintro'] ?? 0);
 
         return $this->add($moduleinfo, $course);
     }
