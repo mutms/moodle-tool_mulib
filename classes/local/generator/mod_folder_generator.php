@@ -68,6 +68,11 @@ final class mod_folder_generator extends mod_base {
 
         $moduleinfo->files = !empty($record['files']) ? $this->prepare_draft_area($record['files']) : 0;
         $moduleinfo->showexpanded = 1;
+        // The schema default (1) was inherited from the era when students
+        // uploaded files to course folders. In the migration use case the
+        // folder is teacher-curated read-only material — preview-in-place
+        // (PDF/image inline) is the desirable behaviour.
+        $moduleinfo->forcedownload = 0;
 
         return $this->add($moduleinfo, $course);
     }
