@@ -60,6 +60,7 @@ final class mod_book_generator extends mod_base {
      *     introfiles?: array<string, \stored_file|string|array{content: string}>,
      *     visible?: bool,
      *     customtitles?: int,
+     *     showdescription?: int,
      * } $record
      * @return stdClass book record from DB with extra ->cmid field
      */
@@ -77,6 +78,9 @@ final class mod_book_generator extends mod_base {
         );
 
         $moduleinfo->customtitles = (int)($record['customtitles'] ?? 0);
+        if (isset($record['showdescription'])) {
+            $moduleinfo->showdescription = (int)$record['showdescription'];
+        }
 
         return $this->add($moduleinfo, $course);
     }
