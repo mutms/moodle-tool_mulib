@@ -63,6 +63,13 @@ final class mod_quiz_generator extends mod_base {
      *     introfiles?: array<string, \stored_file|string|array{content: string}>,
      *     visible?: bool,
      *     grade?: int,
+     *     attempts?: int,
+     *     timelimit?: int,
+     *     timeopen?: int,
+     *     timeclose?: int,
+     *     overduehandling?: string,
+     *     quizpassword?: string,
+     *     shuffleanswers?: int,
      *     questionids?: int[],
      *     slots?: array<int, array{specific?: int, random?: int, count?: int}>,
      * } $record
@@ -85,12 +92,14 @@ final class mod_quiz_generator extends mod_base {
         $moduleinfo->preferredbehaviour = 'deferredfeedback';
         $moduleinfo->grade = (int)($record['grade'] ?? 100);
         $moduleinfo->questionsperpage = 1;
-        $moduleinfo->quizpassword = '';
-        $moduleinfo->timeopen = 0;
-        $moduleinfo->timeclose = 0;
-        $moduleinfo->overduehandling = 'autosubmit';
-        $moduleinfo->attempts = 0;
+        $moduleinfo->quizpassword = (string)($record['quizpassword'] ?? '');
+        $moduleinfo->timeopen = (int)($record['timeopen'] ?? 0);
+        $moduleinfo->timeclose = (int)($record['timeclose'] ?? 0);
+        $moduleinfo->timelimit = (int)($record['timelimit'] ?? 0);
+        $moduleinfo->overduehandling = (string)($record['overduehandling'] ?? 'autosubmit');
+        $moduleinfo->attempts = (int)($record['attempts'] ?? 0);
         $moduleinfo->attemptonlast = 0;
+        $moduleinfo->shuffleanswers = (int)($record['shuffleanswers'] ?? 0);
         $moduleinfo->grademethod = 1; // QUIZ_GRADEHIGHEST.
         $moduleinfo->decimalpoints = 2;
         $moduleinfo->questiondecimalpoints = -1;
