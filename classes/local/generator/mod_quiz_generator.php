@@ -70,6 +70,7 @@ final class mod_quiz_generator extends mod_base {
      *     overduehandling?: string,
      *     quizpassword?: string,
      *     shuffleanswers?: int,
+     *     grademethod?: int,
      *     questionids?: int[],
      *     slots?: array<int, array{specific?: int, random?: int, count?: int}>,
      * } $record
@@ -100,7 +101,7 @@ final class mod_quiz_generator extends mod_base {
         $moduleinfo->attempts = (int)($record['attempts'] ?? 0);
         $moduleinfo->attemptonlast = 0;
         $moduleinfo->shuffleanswers = (int)($record['shuffleanswers'] ?? 0);
-        $moduleinfo->grademethod = 1; // QUIZ_GRADEHIGHEST.
+        $moduleinfo->grademethod = (int)($record['grademethod'] ?? 1); // QUIZ_GRADEHIGHEST default.
         $moduleinfo->decimalpoints = 2;
         $moduleinfo->questiondecimalpoints = -1;
         $moduleinfo->attemptduring = 1;
