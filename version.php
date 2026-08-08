@@ -33,4 +33,4 @@ $plugin->component = 'tool_mulib';
 $plugin->version = 2026060550;
 $plugin->requires = 2025041400;
 $plugin->supported = [500, 502];
-$plugin->release = 'v5.0.8.01+';
+$plugin->release = 'v5.0.9.01';
