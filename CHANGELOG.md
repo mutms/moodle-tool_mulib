@@ -6,7 +6,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ## [Unreleased](https://github.com/mutms/moodle-tool_mulib/compare/v5.0.9.01...MOODLE_500_STABLE)
 
-- No changes
+### Fixed
+
+- Added uninstallation of materialized default user role assignment
 
 ## [v5.0.9.01](https://github.com/mutms/moodle-tool_mulib/compare/v5.0.8.01...v5.0.9.01) - 2026-06-05
 
