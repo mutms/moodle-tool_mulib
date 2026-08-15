@@ -17,7 +17,7 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 // phpcs:disable moodle.Files.LineLength.TooLong
 
-namespace tool_mulib\phpunit\local;
+namespace tool_mulib\phpunit\db;
 
 use tool_mulib\local\context_map;
 
@@ -35,9 +35,14 @@ final class uninstall_test extends \advanced_testcase {
         $this->resetAfterTest();
     }
 
+    /**
+     * Test unisntall.
+     *
+     * @covers \xmldb_tool_mulib_uninstall
+     */
     public function test_uninstall(): void {
         global $DB;
-        require_once __DIR__ . '/../../../db/uninstall.php';
+        require_once(__DIR__ . '/../../../db/uninstall.php');
 
         $this->assertFalse($DB->record_exists('role_assignments', ['userid' => \tool_mulib\local\context_map::MAGIC_DEFAULT_USER_ID]));
 
