@@ -54,14 +54,14 @@ jobs:
           - php: '8.4'
             moodle-branch: 'MOODLE_503_DEV'
             db: pgsql
-            dbversion: 16
+            dbversion: 17
           - php: '8.4'
             moodle-branch: 'MOODLE_503_DEV'
             db: mariadb
-            dbversion: 10.11
+            dbversion: 11.4
           - php: '8.3'
             moodle-branch: 'MOODLE_503_DEV'
-            db: mysql
+            db: mysqli
             dbversion: 8.4
 
     steps:
