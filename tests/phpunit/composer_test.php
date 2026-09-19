@@ -75,7 +75,7 @@ final class composer_test extends \core\tests\plugin_checks_testcase {
         foreach ($composer['require'] as $dependency => $version) {
             if ($dependency === 'moodle/moodle') {
                 if ($component !== 'tool_mutenancy') {
-                    $this->assertSame('5.1.*||5.2.*', $version);
+                    $this->assertSame('5.3.*', $version);
                 }
                 continue;
             }
