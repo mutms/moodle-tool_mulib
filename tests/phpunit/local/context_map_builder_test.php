@@ -928,7 +928,7 @@ final class context_map_builder_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('tool_mulib_context_parent', ['contextid' => $usercontext1->id]));
         $this->assertTrue($DB->record_exists('tool_mulib_context_map', ['contextid' => $usercontext1->id]));
 
-        user_delete_user($user1);
+        \core\user::delete_user($user1);
         $this->assertFalse($DB->record_exists('tool_mulib_context_parent', ['contextid' => $usercontext1->id]));
         $this->assertFalse($DB->record_exists('tool_mulib_context_map', ['contextid' => $usercontext1->id]));
     }
@@ -964,7 +964,7 @@ final class context_map_builder_test extends \advanced_testcase {
         $this->assert_has_parent($tenantcontext1, $usercontext1);
         $this->assert_map_exists($usercontext1, $usercontext1->get_parent_context_ids(true));
 
-        user_delete_user($user1);
+        \core\user::delete_user($user1);
         $this->assertFalse($DB->record_exists('tool_mulib_context_parent', ['contextid' => $usercontext1->id]));
         $this->assertFalse($DB->record_exists('tool_mulib_context_map', ['contextid' => $usercontext1->id]));
 
