@@ -7,3 +7,4 @@ amd/build/** -diff
 .camp export-ignore
 tests export-ignore
 node_modules export-ignore
+AGENTS.md export-ignore
