@@ -36,10 +36,6 @@ Static methods to check if sibling plugins are installed and active:
 
 Use these to conditionally enable features that depend on optional plugins.
 
-### Mustache-safe string encoding (`classes/local/mulib.php`)
-
-`mulib::clean_string()` - encodes all dangerous characters as numeric HTML entities. Safe for both `{{ }}` and `{{{ }}}` Mustache tags because the result is not modified by `s()`.
-
 ### Notification framework (`classes/local/notification/`)
 
 Base classes for configurable email/message notifications across MuTMS plugins:

@@ -52,7 +52,7 @@ final class url_clipboard implements \core\output\named_templatable, \renderable
     public function export_for_template(\renderer_base $output): array {
         return [
             'url' => $this->url->out(false),
-            'copylabel' => \tool_mulib\local\mulib::clean_string($this->copylabel),
+            'copylabel' => clean_string($this->copylabel),
         ];
     }
 
