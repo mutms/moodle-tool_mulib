@@ -43,11 +43,8 @@ $PAGE->set_heading(get_string('extdb_queries', 'tool_mulib'));
 $PAGE->set_secondary_navigation(false);
 
 if ($DB->record_exists('tool_mulib_extdb_server', [])) {
-    $url = new moodle_url('/admin/tool/mulib/extdb/query_create.php');
-    $button = new \tool_mulib\output\ajax_form\button(
-        $url,
-        get_string('extdb_query_create', 'tool_mulib')
-    );
+    $url = new \core\url('/admin/tool/mulib/extdb/query_create.php');
+    $button = new \tool_mulib\output\muform\dialog\button($url, get_string('extdb_query_create', 'tool_mulib'), true);
     $button->set_form_size('xl');
     $PAGE->add_header_action($OUTPUT->render($button));
 }

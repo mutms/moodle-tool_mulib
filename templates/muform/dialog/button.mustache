@@ -1,0 +1,48 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/dialog/button
+
+    Button opening muform handler in a native dialog.
+
+    Context variables required for this template:
+    * url - handler URL
+    * label - element label, already cleaned
+    * title - dialog title, already cleaned
+    * size - dialog size: sm, lg or xl
+    * action - what happens after submission: reload, redirect or nothing
+    * classes - extra CSS classes
+    * iconhtml - optional icon html
+    * is_primary - primary button styling
+    * is_outline - outline button styling
+
+    Example context (json):
+    {
+        "url": "https://example.com/handler.php?id=1",
+        "label": "Edit item",
+        "title": "Edit item",
+        "size": "lg",
+        "action": "reload",
+        "classes": "",
+        "iconhtml": "",
+        "is_primary": true,
+        "is_outline": false
+    }
+}}
+<button type="button" class="btn btn-{{#is_outline}}outline-{{/is_outline}}{{#is_primary}}primary{{/is_primary}}{{^is_primary}}secondary{{/is_primary}} {{classes}}"
+        data-muform-dialog-url="{{url}}" data-muform-dialog-title="{{title}}" data-muform-dialog-size="{{size}}" data-muform-dialog-action="{{action}}">{{{iconhtml}}}{{label}}</button>
+<script type="module">import '@moodle/lms/tool_mulib/muform/dialog';</script>

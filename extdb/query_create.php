@@ -25,13 +25,14 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mulib\local\extdb\form\query_create;
+use tool_mulib\local\extdb\form\query_create_select;
 use tool_mulib\local\extdb\query;
+use tool_mulib\muform\handler;
 
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var moodle_database $DB */
-
-define('AJAX_SCRIPT', true);
 
 require(__DIR__ . '/../../../../config.php');
 
@@ -43,32 +44,47 @@ require_login();
 $context = context_system::instance();
 require_capability('moodle/site:config', $context);
 
-$PAGE->set_url('/admin/tool/mulib/extdb/query_create.php', ['component' => $component, 'type' => $type]);
+$pageurl = new \core\url('/admin/tool/mulib/extdb/query_create.php', ['component' => $component, 'type' => $type]);
+$PAGE->set_url($pageurl);
 $PAGE->set_context($context);
+$PAGE->set_pagelayout('admin');
+$PAGE->set_heading(get_string('extdb_query_create', 'tool_mulib'));
+$PAGE->set_title(get_string('extdb_query_create', 'tool_mulib'));
 
-$returnurl = new moodle_url('/admin/tool/mulib/extdb/queries.php');
+$handler = handler::from_request();
 
-['component' => $component, 'type' => $type]
-    = \tool_mulib\local\extdb\form\query_create_select::decode_type_optmenu($component, $type);
+$returnurl = new \core\url('/admin/tool/mulib/extdb/queries.php');
+
+['component' => $component, 'type' => $type] = query_create_select::decode_type_option($component, $type);
 
 if (!$type) {
-    $form = new \tool_mulib\local\extdb\form\query_create_select();
-} else {
-    $currentdata = [
-        'component' => $component,
-        'type' => $type,
-        'contextid' => $context->id,
-    ];
-    $form = new \tool_mulib\local\extdb\form\query_create(null, ['currentdata' => $currentdata]);
-
+    // First step: pick the type, the second step is the same page with the type in the URL.
+    $form = new query_create_select($pageurl, []);
     if ($form->is_cancelled()) {
-        $form->ajax_form_cancelled($returnurl);
+        $handler->cancelled($returnurl);
     }
-    $data = $form->get_data();
-    if ($data && empty($data->check)) {
-        $query = query::create($data);
-        $form->ajax_form_submitted($returnurl);
+    if ($data = $form->get_data()) {
+        ['component' => $component, 'type' => $type] = query_create_select::decode_type_option('', $data->type);
+        $nexturl = new \core\url($pageurl, ['component' => $component, 'type' => $type]);
+        if ($handler->is_dialog()) {
+            // The dialog continues with the second step, the page gets it from the next URL.
+            $handler->render(function (core_renderer $output) use ($nexturl): string {
+                $form = new query_create($nexturl, ['component' => $nexturl->param('component'), 'type' => $nexturl->param('type'), 'contextid' => context_system::instance()->id]);
+                return $form->render($output);
+            });
+        }
+        redirect($nexturl);
+    }
+} else {
+    $current = ['component' => $component, 'type' => $type, 'contextid' => $context->id];
+    $form = new query_create($pageurl, $current);
+    if ($form->is_cancelled()) {
+        $handler->cancelled($returnurl);
+    }
+    if ($data = $form->get_data()) {
+        query::create($data);
+        $handler->submitted($returnurl);
     }
 }
 
-$form->ajax_form_render();
+$handler->render($form);

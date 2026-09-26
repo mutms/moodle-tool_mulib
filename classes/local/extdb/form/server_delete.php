@@ -19,28 +19,29 @@
 
 namespace tool_mulib\local\extdb\form;
 
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
+
 /**
- * Delete server form.
+ * Delete server form, current data is the server record.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class server_delete extends \tool_mulib\local\ajax_form {
+final class server_delete extends form {
     #[\Override]
     protected function definition(): void {
-        $mform = $this->_form;
-        $server = $this->_customdata['server'];
+        $this->add(new hidden('id'));
+        $this->add(new info('name', get_string('name')));
+        $this->add(new info('dsn', get_string('extdb_server_dsn', 'tool_mulib'), info::PLAIN));
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-
-        $mform->addElement('static', 'staticname', get_string('name'), s($server->name));
-
-        $mform->addElement('static', 'staticdsn', get_string('extdb_server_dsn', 'tool_mulib'), s($server->dsn));
-
-        $this->add_action_buttons(true, get_string('extdb_server_delete', 'tool_mulib'));
-
-        $this->set_data($server);
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('extdb_server_delete', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 }

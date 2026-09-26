@@ -1,0 +1,66 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/autocomplete
+
+    Single value autocomplete element, a text input holding the selected value
+    that the picker island replaces when JavaScript runs.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * widthclass - muform-width-small, muform-width-medium, muform-width-full or empty for auto
+    * attr_required - true if value is validated as required
+    * attributes - list of html attributes with name and value
+    * url - search endpoint url
+    * sourcejson - JSON with source class and constructor args
+    * selected - list of current values with value, label (trusted html) and error
+    * has_selected - true if any value is selected
+    * selectedjson - JSON of selected
+    * keys - the selected value
+
+    Example context (json):
+    {
+        "name": "autocomplete", "id": "id_autocomplete", "errorid": "id_error_autocomplete",
+        "label": "Label", "is_required": false, "attr_required": false, "attributes": [],
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "url": "https://example.com/r.php/api/rest/v2/tool_mulib/muform/autocomplete",
+        "sourcejson": "{\"class\":\"tool_mulib\\\\muform\\\\autocomplete\\\\site_user\",\"args\":[1]}",
+        "selected": [{"value": "2", "label": "Admin User", "error": null}], "has_selected": true,
+        "selectedjson": "[{\"value\":\"2\",\"label\":\"Admin User\",\"error\":null}]", "keys": "2"
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        {{#is_frozen}}
+        <ul class="list-unstyled mb-0" id="{{id}}">
+            {{#selected}}<li>{{{label}}}</li>{{/selected}}
+            {{^has_selected}}<li class="text-muted">{{#str}}muform_notset, tool_mulib{{/str}}</li>{{/has_selected}}
+        </ul>
+        {{/is_frozen}}
+        {{^is_frozen}}
+        <div class="muform-autocomplete w-100" data-muform-autocomplete data-muform-autocomplete-url="{{url}}" data-muform-autocomplete-source="{{sourcejson}}" data-muform-autocomplete-selected="{{selectedjson}}">
+            <input type="text" class="form-control{{#widthclass}} {{widthclass}}{{/widthclass}}{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}" value="{{keys}}" autocomplete="off" aria-describedby="{{errorid}}"{{#attr_required}} required{{/attr_required}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}{{#attributes}} {{name}}="{{value}}"{{/attributes}}>
+            {{#has_selected}}
+            <ul class="list-unstyled small mb-0 mt-1" data-muform-autocomplete-labels>
+                {{#selected}}<li{{#error}} class="text-danger"{{/error}}>{{{label}}}{{#error}}: {{error}}{{/error}}</li>{{/selected}}
+            </ul>
+            {{/has_selected}}
+        </div>
+        {{/is_frozen}}
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

@@ -20,9 +20,20 @@
 namespace tool_mulib\local\form;
 
 use tool_mulib\local\mulib;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\checkbox;
+use tool_mulib\muform\element\editor;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\select;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\text;
+use tool_mulib\muform\form;
 
 /**
- * Notification update form.
+ * Update notification form, current data is the notification record with subject and body
+ * added, extra data holds the manager class name.
  *
  * @package     tool_mulib
  * @copyright   2023 Open LMS
@@ -30,69 +41,37 @@ use tool_mulib\local\mulib;
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class notification_update extends \tool_mulib\local\ajax_form {
+final class notification_update extends form {
     #[\Override]
-    protected function definition() {
-        $mform = $this->_form;
-        $notification = $this->_customdata['notification'];
+    protected function definition(): void {
+        $notification = (object)$this->get_current_data();
         /** @var class-string<\tool_mulib\local\notification\manager> $manager */
-        $manager = $this->_customdata['manager'];
+        $manager = $this->get_extra_data()['manager'];
         /** @var class-string<\tool_mulib\local\notification\notificationtype> $classname */
         $classname = $manager::get_classname($notification->notificationtype);
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-        $mform->setConstant('id', $notification->id);
-
-        $instance = $manager::get_instance_name($notification->instanceid);
-        $mform->addElement('static', 'staticinstance', get_string('notification_instance', 'tool_mulib'), $instance);
-
-        $mform->addElement('static', 'staticnotificationtype', get_string('notification_type', 'tool_mulib'), $classname::get_name());
+        $this->add(new hidden('id'));
+        $instancename = $manager::get_instance_name($notification->instanceid);
+        $this->add(new info('instance', get_string('notification_instance', 'tool_mulib'), $instancename));
+        $this->add(new info('typename', get_string('notification_type', 'tool_mulib'), $classname::get_name()));
 
         if (mulib::is_murelatio_active() && $classname::is_cc_supervisor_supported()) {
             $options = $manager::get_supervisor_options($notification->instanceid, $notification->supervisorframeworkid);
-            $mform->addElement('select', 'supervisorframeworkid', get_string('notification_cc_supervisor', 'tool_mulib'), $options);
-            $mform->setDefault('supervisorframeworkid', $notification->supervisorframeworkid);
+            $this->add(new select('supervisorframeworkid', get_string('notification_cc_supervisor', 'tool_mulib'), $options));
         }
 
-        $mform->addElement('advcheckbox', 'enabled', get_string('notification_enabled', 'tool_mulib'), ' ');
-        $mform->setDefault('enabled', $notification->enabled);
-
+        $this->add(new checkbox('enabled', get_string('notification_enabled', 'tool_mulib')));
         // Note: Add aux data support here.
+        $this->add(new checkbox('custom', get_string('notification_custom', 'tool_mulib')));
+        $this->add(new text('subject', get_string('notification_subject', 'tool_mulib'), ['type' => 'rawtext', 'width' => 'full']));
+        $this->add(new editor('body', get_string('notification_body', 'tool_mulib')));
 
-        $mform->addElement('advcheckbox', 'custom', get_string('notification_custom', 'tool_mulib'), ' ');
-        $mform->setDefault('custom', $notification->custom);
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('notification_update', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
 
-        $subject = '';
-        $body = '';
-        if ($notification->custom) {
-            if ($notification->customjson) {
-                $decoded = json_decode($notification->customjson, true);
-                $subject = $decoded['subject'] ?? '';
-                $body = $decoded['body'] ?? '';
-            }
-        } else {
-            $subject = $classname::get_default_subject();
-            $body = markdown_to_html($classname::get_default_body());
-            $body = str_replace('{$a->', '{$a-&gt;', $body);
-        }
-
-        $mform->addElement('text', 'subject', get_string('notification_subject', 'tool_mulib'), ['size' => 100]);
-        $mform->setType('subject', PARAM_RAW);
-        $mform->setDefault('subject', $subject);
-        $mform->hideIf('subject', 'custom', 'notchecked');
-
-        $mform->addElement('editor', 'body', get_string('notification_body', 'tool_mulib'));
-        $mform->setDefault('body', ['text' => $body, 'format' => FORMAT_HTML]);
-        $mform->hideIf('body', 'custom', 'notchecked');
-
-        $this->add_action_buttons(true, get_string('notification_update', 'tool_mulib'));
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        return $errors;
+        $dm = $this->get_display_manager();
+        $dm->hide_if('subject', 'custom', 'notchecked');
+        $dm->hide_if('body', 'custom', 'notchecked');
     }
 }

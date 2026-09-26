@@ -1,4 +1,182 @@
-/* temporary fix for MDL-85206 */
-.mform .fitem .felement[data-fieldtype=static] {
-    padding-top: 0.5rem;
+/* muform: check boxes and radios start at the text line of the label column. */
+.muform [data-muform-element="checkbox"] > .felement,
+.muform [data-muform-element="checkboxes"] > .felement,
+.muform [data-muform-element="radios"] > .felement {
+    padding-top: calc(0.375rem + var(--bs-border-width));
+}
+
+/* muform: locked elements keep their label readable but clearly inactive. */
+.muform [data-muform-disabled] > .col-form-label {
+    opacity: 0.65;
+}
+
+/* muform: native dialogs, styled like Bootstrap modals. */
+dialog.muform-dialog {
+    --bs-modal-padding: 1rem;
+    --bs-modal-color: var(--bs-body-color);
+    --bs-modal-bg: var(--bs-body-bg);
+    --bs-modal-border-color: var(--bs-border-color-translucent);
+    --bs-modal-border-width: var(--bs-border-width);
+    --bs-modal-border-radius: var(--bs-border-radius-lg);
+    --bs-modal-box-shadow: var(--bs-box-shadow-sm);
+    --bs-modal-inner-border-radius: calc(var(--bs-border-radius-lg) - var(--bs-border-width));
+    --bs-modal-header-padding-x: 1rem;
+    --bs-modal-header-padding-y: 1rem;
+    --bs-modal-header-padding: 1rem 1rem;
+    --bs-modal-header-border-color: var(--bs-border-color);
+    --bs-modal-header-border-width: var(--bs-border-width);
+    --bs-modal-title-line-height: 1.5;
+    --bs-modal-footer-gap: 0.5rem;
+    --bs-modal-footer-bg: transparent;
+    --bs-modal-footer-border-color: var(--bs-border-color);
+    --bs-modal-footer-border-width: var(--bs-border-width);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--bs-modal-color);
+    width: 500px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow: visible;
+}
+/* muform: dialogs sit near the top like Moodle modals instead of the native vertical centring. */
+dialog.muform-dialog {
+    margin-top: 0.5rem;
+    margin-bottom: auto;
+}
+
+@media (min-width: 576px) {
+    dialog.muform-dialog {
+        margin-top: 1.75rem;
+    }
+}
+
+dialog.muform-dialog.muform-dialog-lg {
+    width: 800px;
+}
+dialog.muform-dialog.muform-dialog-xl {
+    width: 1140px;
+}
+dialog.muform-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+dialog.muform-dialog .modal-content {
+    background-color: var(--bs-modal-bg);
+    border: var(--bs-modal-border-width) solid var(--bs-modal-border-color);
+    border-radius: var(--bs-modal-border-radius);
+    box-shadow: var(--bs-modal-box-shadow);
+}
+/* muform: legacy YUI dialogues such as the file picker are moved into the dialog, they must fit the window.
+   YUI sets top and height inline on every show, only !important overrides them. */
+/* stylelint-disable declaration-no-important */
+dialog.muform-dialog > .moodle-dialogue-base > .moodle-dialogue {
+    position: fixed !important;
+    top: 2.5vh !important;
+    height: auto !important;
+    max-height: 95vh;
+    overflow-y: auto;
+}
+/* stylelint-enable declaration-no-important */
+dialog.muform-dialog .modal-body {
+    max-height: calc(95vh - 5rem);
+    overflow: auto;
+}
+
+/* muform: datetime picker island. */
+.muform-datetime-picker {
+    display: inline-flex;
+}
+.muform-datetime-panel {
+    z-index: 1060;
+    min-width: 18rem;
+    background-color: var(--bs-body-bg, #fff);
+}
+.muform-datetime-panel table td,
+.muform-datetime-panel table th {
+    padding: 0;
+}
+.muform-datetime-panel .muform-datetime-day {
+    width: 2.4rem;
+    height: 2.2rem;
+    padding: 0;
+}
+
+/* muform: secrets and shared keys are masked text inputs, never password inputs. */
+.muform-secret-masked,
+.muform-sharedkey-masked {
+    -webkit-text-security: disc;
+}
+.muform-secret-actions,
+.muform-sharedkey-actions {
+    display: inline-flex;
+}
+
+/* muform: equal width digits so dates and numbers line up between rows. */
+[data-muform-element="datetime"] .felement,
+[data-muform-element="number"] .felement {
+    font-variant-numeric: tabular-nums;
+}
+
+/* muform: placeholders must not look like values, italics keep the contrast Bootstrap chose. */
+.muform .form-control::placeholder,
+.muform .muform-autocomplete-input::placeholder {
+    font-style: italic;
+}
+
+/* muform: the core file manager widget cannot be disabled, lock it visually and for pointer input. */
+.muform-filemanager-disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* muform: autocomplete result lists float above editors and other islands, same layer as the datetime panel. */
+.muform-autocomplete-listbox,
+.muform-tags-listbox {
+    z-index: 1060;
+    background-color: var(--bs-body-bg, #fff);
+}
+
+/* muform: token field pills, larger than Bootstrap badges but still compact. */
+.muform-autocompletemany-field .badge {
+    font-size: 0.875em;
+}
+
+/* muform: token field search inputs keep some space around the typed text,
+   the focus ring belongs to the whole field, not to the inner input. */
+.muform-autocompletemany-field .muform-autocomplete-input,
+.muform-tags-field .muform-tags-input {
+    min-width: 8rem;
+    padding: 0.125rem 0.375rem;
+    outline: 0;
+    box-shadow: none;
+}
+.muform-autocompletemany-field:focus-within,
+.muform-tags-field:focus-within {
+    border-color: var(--bs-primary-border-subtle);
+    box-shadow: 0 0 0 var(--bs-focus-ring-width, 0.25rem) var(--bs-focus-ring-color);
+}
+
+/* muform: explicit input widths, small / medium (default) / full; never wider than the column on small screens. */
+.muform .felement .muform-width-small {
+    width: 10rem;
+    max-width: 100%;
+}
+.muform .felement .muform-width-medium {
+    width: 24rem;
+    max-width: 100%;
+}
+.muform .felement .muform-width-full {
+    width: 100%;
+}
+
+/* muform: duration and date interval unit inputs, three digits. */
+.muform .felement .muform-duration-input,
+.muform .felement .muform-dateinterval-input {
+    width: 3.5rem;
+}
+
+/* muform: selected value of the single picker, looks like the input it replaces. */
+.muform .muform-autocomplete-selected {
+    cursor: text;
+    min-height: calc(1.5em + 0.75rem + 2px);
 }

@@ -1,0 +1,58 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{{!
+    @template tool_mulib/muform/element/duration
+
+    Duration element, four number inputs for weeks, days, hours and minutes
+    posted as name[w], name[d], name[h] and name[i], the server adds them up into seconds.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * nolabelfor - always true
+    * attr_required - true if value is validated as required, the group gets data-muform-required
+    * units - list of inputs with unit (w, d, h or i), id, label (already cleaned) and value
+    * value - human readable text for frozen elements
+
+    Example context (json):
+    {
+        "name": "timelimit", "id": "id_timelimit", "errorid": "id_error_timelimit",
+        "label": "Time limit", "nolabelfor": true, "is_required": false, "attr_required": false,
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "value": "1 hour 30 minutes",
+        "units": [
+            {"unit": "w", "id": "id_timelimit_w", "label": "weeks", "value": ""},
+            {"unit": "d", "id": "id_timelimit_d", "label": "days", "value": ""},
+            {"unit": "h", "id": "id_timelimit_h", "label": "hours", "value": "1"},
+            {"unit": "i", "id": "id_timelimit_i", "label": "minutes", "value": "30"}
+        ]
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        {{#is_frozen}}<div class="form-control-plaintext" id="{{id}}">{{value}}</div>{{/is_frozen}}
+        {{^is_frozen}}
+        <div class="muform-duration d-flex flex-wrap align-items-center column-gap-3 row-gap-2 w-100" role="group" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#attr_required}} data-muform-required="1"{{/attr_required}}>
+            {{#units}}
+            <div class="d-flex align-items-center gap-1">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" class="form-control muform-duration-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}[{{unit}}]" value="{{value}}" data-muform-unit="{{unit}}"{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}>
+                <label for="{{id}}" class="mb-0">{{label}}</label>
+            </div>
+            {{/units}}
+        </div>
+        {{/is_frozen}}
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

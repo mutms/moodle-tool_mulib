@@ -19,39 +19,36 @@
 
 namespace tool_mulib\local\extdb\form;
 
-use tool_mulib\external\form_autocomplete\extdb_query_contextid;
+use tool_mulib\local\extdb\query_manager;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
 
 /**
- * Delete query form.
+ * Delete query form, current data is the query record.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class query_delete extends \tool_mulib\local\ajax_form {
+final class query_delete extends form {
     #[\Override]
     protected function definition(): void {
-        $mform = $this->_form;
-        $query = $this->_customdata['query'];
+        $current = $this->get_current_data();
+        $qman = \core\di::get(query_manager::class);
+        $classname = $qman->get_class($current['component'], $current['type']);
 
-        $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
-        $classname = $qman->get_class($query->component, $query->type);
+        $this->add(new hidden('id'));
+        $this->add(new info('querycomponent', get_string('plugin'), get_string('pluginname', $current['component'])));
+        $typename = $classname ? $classname::get_name() : get_string('error');
+        $this->add(new info('querytype', get_string('extdb_query_type', 'tool_mulib'), $typename));
+        $this->add(new info('name', get_string('name')));
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-
-        $mform->addElement('static', 'querycomponent', get_string('plugin'), get_string('pluginname', $query->component));
-
-        if ($classname) {
-            $typename = $classname::get_name();
-        } else {
-            $typename = get_string('error');
-        }
-        $mform->addElement('static', 'querytype', get_string('extdb_query_type', 'tool_mulib'), $typename);
-
-        $mform->addElement('static', 'staticname', get_string('name'), s($query->name));
-
-        $this->add_action_buttons(true, get_string('extdb_query_delete', 'tool_mulib'));
-        $this->set_data($query);
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('extdb_query_delete', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 }

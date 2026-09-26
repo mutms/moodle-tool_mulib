@@ -13,22 +13,26 @@ Feature: Test external database servers management
     And I navigate to "Server > External databases > External database servers" in site administration
 
     When I press "Add server"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Name               | Test server 1                   |
-      | PDO DSN            | pgsql:host=127.0.0.1;dbname=edb |
-      | Database user      | root                            |
-      | Database password  | secret                          |
-    And I click on "Add server" "button" in the ".modal-dialog" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | name   | Test server 1                   |
+      | dsn    | pgsql:host=127.0.0.1;dbname=edb |
+      | dbuser | root                            |
+      | dbpass | secret                          |
+    And I click on "Add server" "button" in the "dialog[open]" "css_element"
     And I press "Add server"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Name               | Test server 2                   |
-      | PDO DSN            | pgsql:host=127.0.0.2;dbname=edb |
-      | Database user      | root                            |
-      | Database password  | secret                          |
-      | PDO options (JSON) | {"3":2}                         |
-      | Note               | Some note                       |
-    And I click on "Check connection" "button" in the ".modal-dialog" "css_element"
-    And I click on "Add server" "button" in the ".modal-dialog" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | name      | Test server 2                   |
+      | dsn       | pgsql:host=127.0.0.2;dbname=edb |
+      | dbuser    | root                            |
+      | dbpass    | secret                          |
+      | dboptions | {"3":2}                         |
+      | note      | Some note                       |
+    And I click on "Check connection" "button" in the "dialog[open]" "css_element"
+    Then I should see "Connection status" in the "dialog[open]" "css_element"
+    And the following muform fields in the "dialog[open]" "css_element" match:
+      | name      | Test server 2 |
+      | dboptions | {"3":2}       |
+    When I click on "Add server" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |
@@ -36,30 +40,47 @@ Feature: Test external database servers management
 
     When I click on "Actions" "link_or_button" in the "Test server 2" "table_row"
     And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
-    And the following fields in the ".modal-dialog" "css_element" match these values:
-      | Name               | Test server 2                   |
-      | PDO DSN            | pgsql:host=127.0.0.2;dbname=edb |
-      | Database user      | root                            |
-      | PDO options (JSON) | {"3":2}                         |
-      | Note               | Some note                       |
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Name               | Test server 3                   |
-      | PDO DSN            | pgsql:host=127.0.0.3;dbname=edb |
-      | Database user      | root3                           |
-      | Use different password | 1                           |
-      | Database password  | secret3                         |
-      | PDO options (JSON) | {"3":3}                         |
-      | Note               | Note 3                          |
-    And I click on "Check connection" "button" in the ".modal-dialog" "css_element"
-    And I click on "Update server" "button" in the ".modal-dialog" "css_element"
+    Then the following muform fields in the "dialog[open]" "css_element" match:
+      | name      | Test server 2                   |
+      | dsn       | pgsql:host=127.0.0.2;dbname=edb |
+      | dbuser    | root                            |
+      | dboptions | {"3":2}                         |
+      | note      | Some note                       |
+    And I should not see "secret" in the "dialog[open]" "css_element"
+    When I set the following muform fields in the "dialog[open]" "css_element":
+      | name      | Test server 3                   |
+      | dsn       | pgsql:host=127.0.0.3;dbname=edb |
+      | dbuser    | root3                           |
+      | dbpass    | secret3                         |
+      | dboptions | {"3":3}                         |
+      | note      | Note 3                          |
+    And I click on "Check connection" "button" in the "dialog[open]" "css_element"
+    Then I should see "Connection status" in the "dialog[open]" "css_element"
+    And the following muform fields in the "dialog[open]" "css_element" match:
+      | name | Test server 3 |
+    When I click on "Update server" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |
       | Test server 3 | pgsql:host=127.0.0.3;dbname=edb | root3         | {"3":3}            | Note 3    |
 
     When I click on "Actions" "link_or_button" in the "Test server 3" "table_row"
+    And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | dboptions | not json |
+    And I click on "Update server" "button" in the "dialog[open]" "css_element"
+    Then I should see "Error" in the "dialog[open] [data-muform-name='dboptions'] .invalid-feedback" "css_element"
+    When I set the following muform fields in the "dialog[open]" "css_element":
+      | dboptions | |
+    And I click on "Update server" "button" in the "dialog[open]" "css_element"
+    Then the following should exist in the "reportbuilder-table" table:
+      | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
+      | Test server 3 | pgsql:host=127.0.0.3;dbname=edb | root3         |                    | Note 3    |
+
+    When I click on "Actions" "link_or_button" in the "Test server 3" "table_row"
     And I click on "Delete" "link" in the ".dropdown-menu.show" "css_element"
-    And I click on "Delete server" "button" in the ".modal-dialog" "css_element"
+    Then I should see "Test server 3" in the "dialog[open]" "css_element"
+    When I click on "Delete server" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |

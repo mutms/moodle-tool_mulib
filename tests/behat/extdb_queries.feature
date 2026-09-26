@@ -18,25 +18,25 @@ Feature: Test external database queries management
     And I navigate to "Server > External databases > External database queries" in site administration
 
     When I press "Add query"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Query type | Program allocation |
-    And I click on "Continue" "button" in the ".modal-dialog" "css_element"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | External database server | Test server 1        |
-      | Name                     | Test query 1         |
-      | SQL query                | SELECT * FROM m_user |
-    And I click on "Add query" "button" in the ".modal-dialog" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | type | Program allocation |
+    And I click on "Continue" "button" in the "dialog[open]" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | serverid | Test server 1        |
+      | name     | Test query 1         |
+      | sqlquery | SELECT * FROM m_user |
+    And I click on "Add query" "button" in the "dialog[open]" "css_element"
     And I press "Add query"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Query type | Program allocation |
-    And I click on "Continue" "button" in the ".modal-dialog" "css_element"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | External database server | Test server 2          |
-      | Name                     | Test query 2           |
-      | SQL query                | SELECT * FROM m_course |
-      | Category                 | Cat 1                  |
-      | Note                     | Some note              |
-    And I click on "Add query" "button" in the ".modal-dialog" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | type | Program allocation |
+    And I click on "Continue" "button" in the "dialog[open]" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | serverid  | Test server 2          |
+      | name      | Test query 2           |
+      | sqlquery  | SELECT * FROM m_course |
+      | contextid | Cat 1                  |
+      | note      | Some note              |
+    And I click on "Add query" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
@@ -44,18 +44,19 @@ Feature: Test external database queries management
 
     When I click on "Actions" "link_or_button" in the "Test query 2" "table_row"
     And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
-    And the following fields in the ".modal-dialog" "css_element" match these values:
-      | External database server | Test server 2          |
-      | Name                     | Test query 2           |
-      | SQL query                | SELECT * FROM m_course |
-      | Note                     | Some note              |
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | External database server | Test server 1          |
-      | Name                     | Test query 3           |
-      | SQL query                | SELECT * FROM m_cours3 |
-      | Category                 | Cat 3                  |
-      | Note                     | Note 3                 |
-    And I click on "Update query" "button" in the ".modal-dialog" "css_element"
+    And the following muform fields in the "dialog[open]" "css_element" match:
+      | serverid  | Test server 2          |
+      | name      | Test query 2           |
+      | sqlquery  | SELECT * FROM m_course |
+      | contextid | Cat 1                  |
+      | note      | Some note              |
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | serverid  | Test server 1          |
+      | name      | Test query 3           |
+      | sqlquery  | SELECT * FROM m_cours3 |
+      | contextid | Cat 3                  |
+      | note      | Note 3                 |
+    And I click on "Update query" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
@@ -63,9 +64,9 @@ Feature: Test external database queries management
 
     When I click on "Actions" "link_or_button" in the "Test query 3" "table_row"
     And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
-    And I set the following fields in the ".modal-dialog" "css_element" to these values:
-      | Category                 | System                  |
-    And I click on "Update query" "button" in the ".modal-dialog" "css_element"
+    And I set the following muform fields in the "dialog[open]" "css_element":
+      | contextid | System |
+    And I click on "Update query" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
@@ -73,7 +74,7 @@ Feature: Test external database queries management
 
     When I click on "Actions" "link_or_button" in the "Test query 3" "table_row"
     And I click on "Delete" "link" in the ".dropdown-menu.show" "css_element"
-    And I click on "Delete query" "button" in the ".modal-dialog" "css_element"
+    And I click on "Delete query" "button" in the "dialog[open]" "css_element"
     Then the following should exist in the "reportbuilder-table" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |

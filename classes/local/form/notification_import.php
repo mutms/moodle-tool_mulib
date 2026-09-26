@@ -18,8 +18,16 @@
 
 namespace tool_mulib\local\form;
 
+use tool_mulib\muform\element\autocomplete;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
+
 /**
- * Notification import form.
+ * Notification import, the first step selects the source instance; extra data holds
+ * instanceid and the manager class name.
  *
  * @package     tool_mulib
  * @copyright   2024 Open LMS
@@ -27,41 +35,33 @@ namespace tool_mulib\local\form;
  * @author      Farhan Karmali
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class notification_import extends \tool_mulib\local\ajax_form {
+final class notification_import extends form {
     #[\Override]
-    protected function definition() {
-        $mform = $this->_form;
-        $component = $this->_customdata['component'];
-        $instanceid = $this->_customdata['instanceid'];
+    protected function definition(): void {
+        $extra = $this->get_extra_data();
+        $instanceid = $extra['instanceid'];
         /** @var class-string<\tool_mulib\local\notification\manager> $manager */
-        $manager = $this->_customdata['manager'];
+        $manager = $extra['manager'];
 
-        $mform->addElement('hidden', 'instanceid');
-        $mform->setType('instanceid', PARAM_INT);
-        $mform->setConstant('instanceid', $instanceid);
+        $instancename = $manager::get_instance_name($instanceid);
+        $this->add(new info('instance', get_string('notification_instance', 'tool_mulib'), $instancename));
 
-        $mform->addElement('hidden', 'component');
-        $mform->setType('component', PARAM_COMPONENT);
-        $mform->setConstant('component', $component);
+        $source = $manager::get_import_frominstance_source($instanceid);
+        $frominstance = (new autocomplete('frominstance', get_string('notification_import_from', 'tool_mulib'), $source))
+            ->set_required(true);
+        $this->add($frominstance);
 
-        $instance = $manager::get_instance_name($instanceid);
-        $mform->addElement('static', 'staticinstance', get_string('notification_instance', 'tool_mulib'), $instance);
-
-        $manager::add_import_frominstance_element($instanceid, $mform);
-
-        $this->add_action_buttons(true, get_string('continue'));
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('continue')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 
     #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        $instanceid = $this->_customdata['instanceid'];
-        $manager = $this->_customdata['manager'];
-
-        if (!$manager::validate_import_frominstance($instanceid, $data['frominstance'])) {
-            $errors['frominstance'] = get_string('error');
+    protected function validation(array $data, array &$allerrors): void {
+        $extra = $this->get_extra_data();
+        $manager = $extra['manager'];
+        if (!$manager::validate_import_frominstance($extra['instanceid'], (int)$data['frominstance'])) {
+            $allerrors['frominstance'][] = get_string('error');
         }
-        return $errors;
     }
 }

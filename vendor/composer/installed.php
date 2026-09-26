@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-MOODLE_405_STABLE',
-        'version' => 'dev-MOODLE_405_STABLE',
-        'reference' => '097110ca6acaefb656f59afc1f8154aec23b13c7',
+        'pretty_version' => 'dev-MOODLE_503_DEV',
+        'version' => 'dev-MOODLE_503_DEV',
+        'reference' => '1ec8fb72a0419f5ab629c2be5fcf4f61113d72f8',
         'type' => 'library',
         'install_path' => __DIR__ . '/../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-MOODLE_405_STABLE',
-            'version' => 'dev-MOODLE_405_STABLE',
-            'reference' => '097110ca6acaefb656f59afc1f8154aec23b13c7',
+            'pretty_version' => 'dev-MOODLE_503_DEV',
+            'version' => 'dev-MOODLE_503_DEV',
+            'reference' => '1ec8fb72a0419f5ab629c2be5fcf4f61113d72f8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../',
             'aliases' => array(),

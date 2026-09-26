@@ -1,0 +1,42 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/button
+
+    Submit, cancel or reload button.
+
+    Context variables required for this template:
+    * name - element name
+    * type - element type, short class name
+    * component - component defining the element
+    * id - html id
+    * label - button label
+    * role - submit, cancel or reload
+    * is_primary - true for primary button styling
+    * is_novalidate - true to skip browser validation
+    * is_download - true to submit to a new window, the response is a file download
+    * is_hidden - true if initially hidden
+    * is_disabled - true if initially disabled
+
+    Example context (json):
+    {
+        "name": "submit", "type": "text", "component": "tool_mulib", "id": "id_submit", "label": "Save changes", "role": "submit",
+        "is_primary": true, "is_novalidate": false, "is_hidden": false, "is_disabled": false
+    }
+}}
+<button type="submit" id="{{id}}" name="{{name}}" value="1" class="btn {{#is_primary}}btn-primary{{/is_primary}}{{^is_primary}}btn-secondary{{/is_primary}}"
+        data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}" data-muform-role="{{role}}"{{#is_novalidate}} formnovalidate{{/is_novalidate}}{{#is_download}} formtarget="_blank" data-muform-download="1"{{/is_download}}{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} disabled data-muform-disabled="1"{{/is_disabled}}>{{label}}</button>

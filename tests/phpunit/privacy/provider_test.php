@@ -96,16 +96,55 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $collection = provider::get_metadata(new \core_privacy\local\metadata\collection('tool_mulib'));
 
         $itemcollection = $collection->get_collection();
-        $this->assertCount(1, $itemcollection);
+        $this->assertCount(2, $itemcollection);
 
-        $table = reset($itemcollection);
-        $this->assertEquals('tool_mulib_notification_user', $table->get_name());
+        $this->assertEquals('tool_mulib_notification_user', $itemcollection[0]->get_name());
+        $this->assertEquals('tool_mulib_muform_wizard', $itemcollection[1]->get_name());
 
         // Make sure lang strings exist.
-        get_string($table->get_summary(), 'tool_mulib');
-        foreach ($table->get_privacy_fields() as $str) {
-            get_string($str, 'tool_mulib');
+        foreach ($itemcollection as $table) {
+            get_string($table->get_summary(), 'tool_mulib');
+            foreach ($table->get_privacy_fields() as $str) {
+                get_string($str, 'tool_mulib');
+            }
         }
+    }
+
+    public function test_wizard_rows(): void {
+        global $DB;
+
+        [$users, $notifications] = $this->set_up_data();
+        $syscontext = \context_system::instance();
+        foreach ([$users[0], $users[0], $users[1]] as $i => $user) {
+            $DB->insert_record('tool_mulib_muform_wizard', [
+                'userid' => $user->id, 'sessionhash' => sha1('x' . $i), 'jsondata' => '{"a": "b"}', 'timecreated' => time(),
+            ]);
+        }
+
+        $subcontexts = [get_string('privacy:metadata:tool_mulib_muform_wizard:tableexplanation', 'tool_mulib')];
+        $writer = writer::with_context($syscontext);
+        $this->export_context_data_for_user($users[0]->id, $syscontext, 'tool_mulib');
+        $data = $writer->get_related_data($subcontexts, 'data');
+        $this->assertCount(2, $data);
+        $this->assertSame('b', $data[0]->data->a);
+
+        $userlist = new \core_privacy\local\request\userlist($syscontext, 'tool_mulib');
+        provider::get_users_in_context($userlist);
+        $this->assertEqualsCanonicalizing([$users[0]->id, $users[1]->id], $userlist->get_userids());
+
+        $contextlist = new \core_privacy\local\request\approved_contextlist($users[0], 'tool_mulib', [$syscontext->id]);
+        provider::delete_data_for_user($contextlist);
+        $this->assertSame(1, $DB->count_records('tool_mulib_muform_wizard', []));
+
+        $userlist = new \core_privacy\local\request\approved_userlist($syscontext, 'tool_mulib', [$users[1]->id]);
+        provider::delete_data_for_users($userlist);
+        $this->assertSame(0, $DB->count_records('tool_mulib_muform_wizard', []));
+
+        $DB->insert_record('tool_mulib_muform_wizard', [
+            'userid' => $users[1]->id, 'sessionhash' => sha1('y'), 'jsondata' => '{}', 'timecreated' => time(),
+        ]);
+        provider::delete_data_for_all_users_in_context($syscontext);
+        $this->assertSame(0, $DB->count_records('tool_mulib_muform_wizard', []));
     }
 
     public function test_get_contexts_for_userid(): void {

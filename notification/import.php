@@ -32,8 +32,7 @@
 /** @var stdClass $CFG */
 
 use tool_mulib\local\notification\util;
-
-define('AJAX_SCRIPT', true);
+use tool_mulib\muform\handler;
 
 require('../../../../config.php');
 
@@ -43,60 +42,65 @@ $frominstance = optional_param('frominstance', 0, PARAM_INT);
 
 require_login();
 
-/** @var class-string<\tool_mulib\local\notification\manager> $manager */
-$manager = \tool_mulib\local\notification\util::get_manager_classname($component);
+$manager = util::get_manager_classname($component);
 if (!$manager) {
     throw new invalid_parameter_exception('Invalid notification component');
 }
 
 $returnurl = $manager::get_instance_management_url($instanceid);
+
 if (!$manager::can_manage($instanceid) || !$manager::is_import_supported()) {
     redirect($returnurl);
 }
+
 $context = $manager::get_instance_context($instanceid);
-
+$pageurl = new \core\url('/admin/tool/mulib/notification/import.php', ['component' => $component, 'instanceid' => $instanceid]);
 $PAGE->set_context($context);
-$PAGE->set_url('/admin/tool/mulib/notification/import.php', ['component' => 'component', 'instanceid' => $instanceid]);
+$PAGE->set_url($pageurl);
 
-$form = null;
+$handler = handler::from_request();
+$title = get_string('notification_import', 'tool_mulib');
+
 if (!$manager::validate_import_frominstance($instanceid, $frominstance)) {
-    $form = new \tool_mulib\local\form\notification_import(null, [
-        'instanceid' => $instanceid,
-        'component' => $component,
-        'manager' => $manager,
-    ]);
+    // First step: pick the source, the second step is the same page with frominstance in the URL.
+    $form = new \tool_mulib\local\form\notification_import($pageurl, [], ['instanceid' => $instanceid, 'manager' => $manager]);
     if ($form->is_cancelled()) {
-        $form->ajax_form_cancelled($returnurl);
-    } else if ($data = $form->get_data()) {
-        $frominstance = $data->frominstance;
-        unset($data);
-        $form = null;
+        $handler->cancelled($returnurl);
     }
-}
-
-if (!$form) {
-    $form = new \tool_mulib\local\form\notification_import_confirmation(null, [
-        'instanceid' => $instanceid,
-        'component' => $component,
-        'manager' => $manager,
-        'frominstance' => $frominstance,
-    ]);
-
-    if ($form->is_cancelled()) {
-        $form->ajax_form_cancelled($returnurl);
-    }
-
     if ($data = $form->get_data()) {
-        $notificationids = [];
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, 'notificationid_') && $value == 1) {
-                $notificationids[] = explode('_', $key, 2)[1];
-            }
+        $nexturl = new \core\url($pageurl, ['frominstance' => $data->frominstance]);
+        if ($handler->is_dialog()) {
+            // The dialog continues with the second step, the page gets it from the next URL.
+            $extra = [
+                'instanceid' => $instanceid,
+                'component' => $component,
+                'frominstance' => (int)$data->frominstance,
+                'manager' => $manager,
+            ];
+            $handler->render(function (core_renderer $output) use ($nexturl, $extra): string {
+                $form = new \tool_mulib\local\form\notification_import_confirmation($nexturl, [], $extra);
+                return $form->render($output);
+            }, $title);
         }
-        util::notification_import($data, $notificationids);
-
-        $form->ajax_form_submitted($returnurl);
+        redirect($nexturl);
+    }
+} else {
+    $pageurl->param('frominstance', $frominstance);
+    $extra = ['instanceid' => $instanceid, 'component' => $component, 'frominstance' => $frominstance, 'manager' => $manager];
+    $form = new \tool_mulib\local\form\notification_import_confirmation($pageurl, [], $extra);
+    if ($form->is_cancelled()) {
+        $handler->cancelled($returnurl);
+    }
+    if ($data = $form->get_data()) {
+        $data->component = $component;
+        $data->instanceid = $instanceid;
+        $data->frominstance = $frominstance;
+        util::notification_import($data, $data->notificationids);
+        $handler->submitted($returnurl);
     }
 }
 
-$form->ajax_form_render();
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title($title);
+$PAGE->set_heading($title);
+$handler->render($form);

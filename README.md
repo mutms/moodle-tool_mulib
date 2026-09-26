@@ -10,6 +10,13 @@ restrictions on commercial use. Part of the [MuTMS suite](https://github.com/mut
 > This plugin is included in the [MuTMS distribution](https://github.com/mutms/mutms) —
 > no manual installation needed if you use the distribution.
 
+## For developers
+
+The library includes **muform**, the forms library used by all MuTMS plugins instead of moodleform:
+server-side validation and rendering, native dialogs, autocomplete, custom fields, wizards and Behat
+steps. See [docs/muform.md](docs/muform.md). An overview of all shared APIs for developers and AI
+agents is in [AGENTS.md](AGENTS.md).
+
 ## Known limitations
 
 * Supported databases: PostgreSQL, MariaDB, and MySQL — MS SQL Server is not fully supported

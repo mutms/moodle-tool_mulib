@@ -1,0 +1,76 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/wrapper
+
+    Standard element wrapper with label, help icon and error area,
+    extends tool_mulib/muform/element/outer, element templates provide the control block.
+
+    Context variables required for this template:
+    * name - element name
+    * type - element type, short class name
+    * component - component defining the element
+    * id - html id of the control
+    * errorid - html id of the error area
+    * label - label, already cleaned with clean_string()
+    * nolabelfor - true if label cannot be linked to a single control
+    * is_required - true if required marker should be shown
+    * helpbuttonhtml - help icon html
+    * is_frozen - true if element is frozen
+    * is_hidden - true if element is initially hidden
+    * is_disabled - true if element is initially disabled
+    * has_errors - true if element has errors
+    * errors - list of errors, already cleaned with clean_string()
+    * requiredhint - text shown when value is missing, already cleaned
+    * invalidhint - text shown when value is invalid, already cleaned
+
+    Example context (json):
+    {
+        "name": "name", "type": "text", "component": "tool_mulib",
+        "id": "id_name",
+        "errorid": "id_error_name",
+        "label": "Name",
+        "nolabelfor": false,
+        "is_required": true,
+        "helpbuttonhtml": "",
+        "is_frozen": false,
+        "is_hidden": false,
+        "is_disabled": false,
+        "has_errors": false,
+        "errors": [],
+        "requiredhint": "Required",
+        "invalidhint": "Error"
+    }
+}}
+{{< tool_mulib/muform/element/outer }}
+    {{$content}}
+    <div class="col-md-3 col-form-label d-flex pb-0 pe-md-0">
+        {{^nolabelfor}}<label id="{{id}}_label" class="d-inline word-break" for="{{id}}">{{label}}</label>{{/nolabelfor}}
+        {{#nolabelfor}}<span id="{{id}}_label" class="d-inline-block word-break">{{label}}</span>{{/nolabelfor}}
+        <div class="form-label-addon d-flex align-items-center align-self-start">
+            {{#is_required}}{{^is_frozen}}<div class="text-danger" title="{{#str}}required{{/str}}" aria-hidden="true">{{#pix}}req, core{{/pix}}</div>{{/is_frozen}}{{/is_required}}
+            {{{helpbuttonhtml}}}
+        </div>
+    </div>
+    <div class="col-md-9 d-flex flex-wrap align-items-start felement" data-muform-required-hint="{{requiredhint}}" data-muform-invalid-hint="{{invalidhint}}">
+        {{$control}}{{/control}}
+        <div class="form-control-feedback invalid-feedback" id="{{errorid}}"{{#has_errors}} style="display: block;"{{/has_errors}}>
+            {{#errors}}<div>{{.}}</div>{{/errors}}
+        </div>
+    </div>
+    {{/content}}
+{{/ tool_mulib/muform/element/outer }}

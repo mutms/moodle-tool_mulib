@@ -27,13 +27,12 @@
  */
 
 use tool_mulib\local\notification\util;
+use tool_mulib\muform\handler;
 
 /** @var moodle_database $DB */
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var stdClass $CFG */
-
-define('AJAX_SCRIPT', true);
 
 require('../../../../config.php');
 
@@ -42,29 +41,34 @@ $id = required_param('id', PARAM_INT);
 require_login();
 
 $notification = $DB->get_record('tool_mulib_notification', ['id' => $id], '*', MUST_EXIST);
-
-/** @var class-string<\tool_mulib\local\notification\manager> $manager */
-$manager = \tool_mulib\local\notification\util::get_manager_classname($notification->component);
+$manager = util::get_manager_classname($notification->component);
 if (!$manager) {
     throw new invalid_parameter_exception('Invalid notification component');
 }
 
 $returnurl = $manager::get_instance_management_url($notification->instanceid);
+
 if (!$manager::can_manage($notification->instanceid)) {
     redirect($returnurl);
 }
 
 $context = $manager::get_instance_context($notification->instanceid);
-
+$pageurl = new \core\url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
 $PAGE->set_context($context);
-$PAGE->set_url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
+$PAGE->set_url($pageurl);
 
-$form = new \tool_mulib\local\form\notification_delete(null, ['notification' => $notification, 'manager' => $manager]);
+$handler = handler::from_request();
+$form = new \tool_mulib\local\form\notification_delete($pageurl, $notification, ['manager' => $manager]);
+
 if ($form->is_cancelled()) {
-    $form->ajax_form_cancelled($returnurl);
-} else if ($data = $form->get_data()) {
+    $handler->cancelled($returnurl);
+}
+if ($data = $form->get_data()) {
     util::notification_delete($data->id);
-    $form->ajax_form_submitted($returnurl);
+    $handler->submitted($returnurl);
 }
 
-$form->ajax_form_render();
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title(get_string('notification_delete', 'tool_mulib'));
+$PAGE->set_heading(get_string('notification_delete', 'tool_mulib'));
+$handler->render($form);

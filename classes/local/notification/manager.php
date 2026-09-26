@@ -130,16 +130,13 @@ abstract class manager {
     }
 
     /**
-     * Adds the frominstance autocomplete element to import form.
+     * Autocomplete source of instances that notifications can be imported from.
      *
-     * @param int $instanceid
-     * @param \MoodleQuickForm $mform
-     * @return void
+     * @param int $instanceid target instance
+     * @return \tool_mulib\muform\autocomplete\base
      */
-    public static function add_import_frominstance_element(int $instanceid, \MoodleQuickForm $mform): void {
-        if (self::is_import_supported()) {
-            throw new \core\exception\coding_exception('managers that support notification import must override add_import_frominstance_element method');
-        }
+    public static function get_import_frominstance_source(int $instanceid): \tool_mulib\muform\autocomplete\base {
+        throw new \core\exception\coding_exception('managers that support notification import must override get_import_frominstance_source method');
     }
 
     /**
@@ -225,12 +222,14 @@ abstract class manager {
                     // we do not want to encourage users to randomly deleting notification and loosing
                     // track of who was already notified.
                     $url = new \core\url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
-                    $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_delete', 'tool_mulib'), 'i/delete');
+                    $icon = new \tool_mulib\output\muform\dialog\icon($url, get_string('notification_delete', 'tool_mulib'), 'i/delete');
+                    $icon->set_form_size('sm');
                     $actions[] = $OUTPUT->render($icon);
                 }
                 if ($classname) {
                     $url = new \core\url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
-                    $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_update', 'tool_mulib'), 'i/edit');
+                    $icon = new \tool_mulib\output\muform\dialog\icon($url, get_string('notification_update', 'tool_mulib'), 'i/edit');
+                    $icon->set_form_size('lg');
                     $actions[] = $OUTPUT->render($icon);
                 }
                 $row[] = implode('', $actions);
@@ -240,7 +239,7 @@ abstract class manager {
 
         if (static::get_candidate_types($instanceid)) {
             $url = new \core\url('/admin/tool/mulib/notification/create.php', ['instanceid' => $instanceid, 'component' => $component]);
-            $icon = new \tool_mulib\output\ajax_form\icon($url, get_string('notification_create', 'tool_mulib'), 'e/insert');
+            $icon = new \tool_mulib\output\muform\dialog\icon($url, get_string('notification_create', 'tool_mulib'), 'e/insert');
             $icon = $OUTPUT->render($icon);
             $cell = new \html_table_cell($icon);
             $cell->colspan = 3;
@@ -290,8 +289,8 @@ abstract class manager {
 
         $component = static::get_component();
         $url = new \core\url('/admin/tool/mulib/notification/import.php', ['instanceid' => $instanceid, 'component' => $component]);
-        $link = new \tool_mulib\output\ajax_form\link($url, get_string('notification_import', 'tool_mulib'));
-        $actions->get_dropdown()->add_ajax_form($link);
+        $link = new \tool_mulib\output\muform\dialog\link($url, get_string('notification_import', 'tool_mulib'));
+        $actions->get_dropdown()->add_dialog($link);
 
         return $actions;
     }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mulib/db" VERSION="20251127" COMMENT="XMLDB file for tool_mulib"
+<XMLDB PATH="admin/tool/mulib/db" VERSION="20260927" COMMENT="XMLDB file for tool_mulib"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -108,6 +108,22 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="contextid-distance" UNIQUE="true" FIELDS="contextid, distance" COMMENT="there is only one parent going up the context tree"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="tool_mulib_muform_wizard" COMMENT="Temporary state of multi-page muform wizards, one row per running wizard">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Owner of the wizard state"/>
+        <FIELD NAME="sessionhash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="sha1 of wizard name, userid, sesskey and timecreated, binds the row to one wizard and the login session"/>
+        <FIELD NAME="jsondata" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Wizard state as JSON object"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Rows older than one day are purged when a wizard starts"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated" COMMENT="Purge of old rows"/>
       </INDEXES>
     </TABLE>
   </TABLES>

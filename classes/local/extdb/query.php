@@ -218,4 +218,30 @@ abstract class query {
      * @return bool
      */
     abstract public static function is_query_used(int $queryid): bool;
+
+    /**
+     * Run the typed query against the selected server with the check parameters and describe the result.
+     *
+     * @param array $post raw posted form values with serverid and sqlquery
+     * @param string|null $classname query class, null means unknown type
+     * @return string html
+     */
+    public static function get_check_status_html(array $post, ?string $classname): string {
+        global $DB;
+
+        if (!$classname) {
+            return '<div class="alert alert-danger">' . s(get_string('error')) . '</div>';
+        }
+        try {
+            $serverid = is_string($post['serverid'] ?? null) ? (int)$post['serverid'] : 0;
+            $server = $DB->get_record('tool_mulib_extdb_server', ['id' => $serverid], '*', MUST_EXIST);
+            $pdb = new pdb($server);
+            $pdb->connect();
+            $sqlquery = is_string($post['sqlquery'] ?? null) ? $post['sqlquery'] : '';
+            $pdb->query($sqlquery, $classname::get_check_parameters());
+        } catch (\Throwable $ex) {
+            return '<div class="alert alert-danger">' . s($ex->getMessage()) . '</div>';
+        }
+        return '<span class="alert alert-success">' . s(get_string('ok')) . '</span>';
+    }
 }

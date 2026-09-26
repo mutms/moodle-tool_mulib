@@ -1,0 +1,60 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/form
+
+    Muform form wrapper.
+
+    Context variables required for this template:
+    * formid - internal form identifier
+    * idsuffix - unique suffix for html ids
+    * targeturl - form action
+    * sesskey - session key, submitted as __sesskey
+    * rulesjson - JSON encoded display rules
+    * has_errors - true if any validation errors
+    * errors - list of form level errors, already cleaned with clean_string()
+    * elements_byname - rendered elements with name and html indexed by element name, for custom templates
+    * elements - list of top level elements with name and html
+
+    Example context (json):
+    {
+        "formid": "tool_mulib-demo",
+        "idsuffix": "abc",
+        "targeturl": "https://example.com/form.php",
+        "sesskey": "abc",
+        "rulesjson": "[]",
+        "has_errors": false,
+        "errors": [],
+        "elements_byname": {"name": {"name": "name", "html": "<div>...</div>"} },
+        "elements": [{"name": "name", "html": "<div>...</div>"}]
+    }
+}}
+<form id="{{formid}}{{idsuffix}}" method="post" action="{{targeturl}}" class="muform mform" novalidate
+      data-muform="{{formid}}" data-muform-rules="{{rulesjson}}"{{#has_errors}} data-muform-has-errors="1"{{/has_errors}}>
+    <input type="hidden" name="__sesskey" value="{{sesskey}}">
+    <input type="hidden" name="__formid" value="{{formid}}">
+    {{#errors.0}}
+    <div class="alert alert-danger" role="alert">
+        {{#errors}}<div>{{.}}</div>{{/errors}}
+    </div>
+    {{/errors.0}}
+    {{#elements}}{{{html}}}{{/elements}}
+</form>
+<script type="module">
+import {initForm} from '@moodle/lms/tool_mulib/muform/form';
+initForm(document.getElementById('{{formid}}{{idsuffix}}'));
+</script>

@@ -1,0 +1,49 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/inforawhtml
+
+    Trusted html display, rendered across the whole row when the label is empty.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * contentrawhtml - trusted html, printed as is
+    * nolabel - true when there is no label
+
+    Example context (json):
+    {
+        "name": "preview", "type": "inforawhtml", "component": "tool_mulib", "id": "id_preview", "errorid": "id_error_preview",
+        "label": "Preview", "nolabelfor": true, "is_required": false, "attr_required": false,
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "contentrawhtml": "<table class=\"table\"></table>", "nolabel": false
+    }
+}}
+{{#nolabel}}
+{{< tool_mulib/muform/element/outer }}
+    {{$content}}
+    <div class="col-12" id="{{id}}">{{{contentrawhtml}}}</div>
+    {{/content}}
+{{/ tool_mulib/muform/element/outer }}
+{{/nolabel}}
+{{^nolabel}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        <div class="form-control-plaintext" id="{{id}}">{{{contentrawhtml}}}</div>
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}
+{{/nolabel}}

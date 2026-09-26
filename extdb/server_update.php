@@ -26,39 +26,45 @@
  */
 
 use tool_mulib\local\extdb\server;
+use tool_mulib\muform\handler;
 
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var moodle_database $DB */
 
-define('AJAX_SCRIPT', true);
-
 require(__DIR__ . '/../../../../config.php');
+
+$id = required_param('id', PARAM_INT);
 
 require_login();
 
 $context = context_system::instance();
 require_capability('moodle/site:config', $context);
 
-$id = required_param('id', PARAM_INT);
-
-$PAGE->set_url('/admin/tool/mulib/extdb/server_update.php', ['id' => $id]);
+$pageurl = new \core\url('/admin/tool/mulib/extdb/server_update.php', ['id' => $id]);
+$PAGE->set_url($pageurl);
 $PAGE->set_context($context);
+$PAGE->set_pagelayout('admin');
+$PAGE->set_heading(get_string('extdb_server_update', 'tool_mulib'));
+$PAGE->set_title(get_string('extdb_server_update', 'tool_mulib'));
+
+$handler = handler::from_request();
+
+$returnurl = new \core\url('/admin/tool/mulib/extdb/servers.php');
 
 $server = $DB->get_record('tool_mulib_extdb_server', ['id' => $id], '*', MUST_EXIST);
+$current = (array)$server;
+// The secret element only needs to know whether a password exists.
+$current['dbpass'] = ($server->dbpass !== null && $server->dbpass !== '');
 
-$returnurl = new moodle_url('/admin/tool/mulib/extdb/servers.php');
-
-$form = new \tool_mulib\local\extdb\form\server_update(null, ['server' => $server]);
+$form = new \tool_mulib\local\extdb\form\server_update($pageurl, $current, ['server' => $server]);
 
 if ($form->is_cancelled()) {
-    $form->ajax_form_cancelled($returnurl);
+    $handler->cancelled($returnurl);
+}
+if ($data = $form->get_data()) {
+    server::update($data);
+    $handler->submitted($returnurl);
 }
 
-$data = $form->get_data();
-if ($data && empty($data->check)) {
-    $server = server::update($data);
-    $form->ajax_form_submitted($returnurl);
-}
-
-$form->ajax_form_render();
+$handler->render($form);

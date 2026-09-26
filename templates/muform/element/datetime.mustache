@@ -1,0 +1,60 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/datetime
+
+    Date and time element, a text input in the user's timezone
+    with an optional picker mounted by JavaScript.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * widthclass - muform-width-small, muform-width-medium, muform-width-full or empty for auto
+    * attr_required - true if value is validated as required
+    * attributes - list of html attributes with name and value
+    * value - text shown in the input, formatted timestamp or the invalid text typed by user
+    * timestamp - current timestamp or empty string
+    * componentsjson - JSON with year, month, day, hour, minute and second, or empty string
+    * timezone - IANA timezone name used for the text
+    * timezonelabel - localised timezone label, already cleaned
+    * lang - language of the display format
+    * displayformat - PHP date() format of the text
+    * pickerstep - minute step of the picker
+
+    Example context (json):
+    {
+        "name": "starts", "id": "id_starts", "errorid": "id_error_starts",
+        "label": "Starts", "is_required": false, "attr_required": false, "attributes": [],
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Invalid date and time",
+        "value": "2026-09-26 19:28", "timestamp": "1790450923",
+        "componentsjson": "{\"year\":2026,\"month\":9,\"day\":26,\"hour\":19,\"minute\":28,\"second\":43}",
+        "timezone": "Europe/Prague", "timezonelabel": "Time zone: Europe/Prague", "lang": "en",
+        "displayformat": "Y-m-d H:i", "pickerstep": 5
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        {{#is_frozen}}<div class="form-control-plaintext" id="{{id}}">{{value}}</div>{{/is_frozen}}
+        {{^is_frozen}}
+        <div class="muform-datetime d-flex align-items-start gap-1 w-100">
+            <input type="text" class="form-control{{#widthclass}} {{widthclass}}{{/widthclass}}{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}" value="{{value}}" aria-describedby="{{errorid}} {{id}}_timezone" autocomplete="off" data-muform-datetime-timestamp="{{timestamp}}" data-muform-datetime-components="{{componentsjson}}" data-muform-datetime-timezone="{{timezone}}" data-muform-datetime-lang="{{lang}}" data-muform-datetime-format="{{displayformat}}"{{#attr_required}} required{{/attr_required}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}{{#attributes}} {{name}}="{{value}}"{{/attributes}}>
+            <span class="muform-datetime-picker" data-muform-datetime-picker data-muform-datetime-step="{{pickerstep}}"></span>
+        </div>
+        <div class="form-text text-muted w-100" id="{{id}}_timezone">{{timezonelabel}}</div>
+        {{/is_frozen}}
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

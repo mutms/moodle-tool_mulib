@@ -1,0 +1,58 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{{!
+    @template tool_mulib/muform/wizard
+
+    Layout of a multi-page form rendered by tool_mulib\muform\wizard::render():
+    the numbered step list on the left, the stage form in a card on the right.
+    Reachable steps are links, the current one is bold with a primary badge, later ones muted.
+
+    Context variables required for this template:
+    * title - accessible name of the step list, already cleaned
+    * stages - list of steps in order with number, label (already cleaned), is_current, is_link and url
+    * formhtml - rendered stage form
+
+    Example context (json):
+    {
+        "title": "Steps",
+        "stages": [
+            {"number": 1, "label": "Source", "is_current": false, "is_link": true, "url": "https://example.com/import.php?wizard=5&stage=source"},
+            {"number": 2, "label": "Columns", "is_current": true, "is_link": false, "url": "https://example.com/import.php?wizard=5&stage=columns"},
+            {"number": 3, "label": "Options", "is_current": false, "is_link": false, "url": "https://example.com/import.php?wizard=5&stage=options"}
+        ],
+        "formhtml": "<form>...</form>"
+    }
+}}
+<div class="muform-wizard row">
+    <nav aria-label="{{title}}" class="muform-wizard-stages col-md-3 mb-3">
+        <ol class="list-unstyled d-flex flex-column gap-2 mb-0">
+            {{#stages}}
+            <li class="d-flex align-items-center gap-2{{#is_current}} fw-bold{{/is_current}}{{^is_current}}{{^is_link}} text-muted{{/is_link}}{{/is_current}}"{{#is_current}} aria-current="step"{{/is_current}}>
+                <span class="badge rounded-pill{{#is_current}} text-bg-primary{{/is_current}}{{^is_current}} text-bg-secondary{{/is_current}}">{{number}}</span>
+                {{#is_link}}<a href="{{url}}">{{label}}</a>{{/is_link}}
+                {{^is_link}}<span>{{label}}</span>{{/is_link}}
+            </li>
+            {{/stages}}
+        </ol>
+    </nav>
+    <div class="muform-wizard-form col-md-9">
+        <div class="card">
+            <div class="card-body">
+                {{{formhtml}}}
+            </div>
+        </div>
+    </div>
+</div>

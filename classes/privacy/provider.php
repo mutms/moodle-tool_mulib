@@ -55,6 +55,15 @@ class provider implements
             ],
             'privacy:metadata:tool_mulib_notification_user:tableexplanation'
         );
+        $collection->add_database_table(
+            'tool_mulib_muform_wizard',
+            [
+                'userid' => 'privacy:metadata:userid',
+                'jsondata' => 'privacy:metadata:jsondata',
+                'timecreated' => 'privacy:metadata:timecreated',
+            ],
+            'privacy:metadata:tool_mulib_muform_wizard:tableexplanation'
+        );
         return $collection;
     }
 
@@ -118,6 +127,22 @@ class provider implements
             'data',
             $data
         );
+
+        $subcontexts = [get_string('privacy:metadata:tool_mulib_muform_wizard:tableexplanation', 'tool_mulib')];
+        $data = [];
+        $rs = $DB->get_recordset('tool_mulib_muform_wizard', $params, 'id ASC', 'id, jsondata, timecreated');
+        foreach ($rs as $wizard) {
+            $data[] = (object)[
+                'data' => json_decode($wizard->jsondata),
+                'timecreated' => transform::datetime($wizard->timecreated),
+            ];
+        }
+        $rs->close();
+        writer::with_context($syscontext)->export_related_data(
+            $subcontexts,
+            'data',
+            $data
+        );
     }
 
     /**
@@ -135,6 +160,7 @@ class provider implements
 
         // This is a bad idea, users may get notified again.
         $DB->delete_records('tool_mulib_notification_user', []);
+        $DB->delete_records('tool_mulib_muform_wizard', []);
     }
 
     /**
@@ -153,6 +179,7 @@ class provider implements
             }
             $userid = $contextlist->get_user()->id;
             $DB->delete_records('tool_mulib_notification_user', ['userid' => $userid]);
+            $DB->delete_records('tool_mulib_muform_wizard', ['userid' => $userid]);
         }
     }
 
@@ -176,6 +203,12 @@ class provider implements
               ORDER BY nu.userid ASC";
 
         $userlist->add_users($DB->get_fieldset_sql($sql));
+
+        $sql = "SELECT w.userid
+                  FROM {tool_mulib_muform_wizard} w
+                  JOIN {user} u ON u.id = w.userid AND u.deleted = 0
+              ORDER BY w.userid ASC";
+        $userlist->add_users($DB->get_fieldset_sql($sql));
     }
 
     /**
@@ -193,6 +226,7 @@ class provider implements
 
         foreach ($userlist->get_userids() as $userid) {
             $DB->delete_records('tool_mulib_notification_user', ['userid' => $userid]);
+            $DB->delete_records('tool_mulib_muform_wizard', ['userid' => $userid]);
         }
     }
 }

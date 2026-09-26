@@ -69,6 +69,12 @@ final class server {
         if (!empty($data->changedbpass)) {
             $data->dbpass = $data->newdbpass;
         }
+        unset($data->changedbpass);
+        unset($data->newdbpass);
+        if (property_exists($data, 'dbpass') && $data->dbpass === null) {
+            // The secret element returns null when the password was not changed.
+            unset($data->dbpass);
+        }
 
         if (property_exists($data, 'name')) {
             $data->name = trim($data->name);
@@ -105,5 +111,67 @@ final class server {
         }
 
         $DB->delete_records('tool_mulib_extdb_server', ['id' => $id]);
+    }
+
+    /**
+     * Loaded PDO extensions as a form note.
+     *
+     * @return string html
+     */
+    public static function get_pdo_extensions_html(): string {
+        $extensions = [];
+        if (extension_loaded('pdo')) {
+            foreach (get_loaded_extensions() as $extension) {
+                if (str_starts_with($extension, 'pdo_')) {
+                    $extensions[] = $extension;
+                }
+            }
+        }
+        $extensions = $extensions ? implode(', ', $extensions) : get_string('none');
+        return '<em>' . s(get_string('extdb_server_extensions', 'tool_mulib', $extensions)) . '</em>';
+    }
+
+    /**
+     * Try to connect with the values typed into the form and describe the result.
+     *
+     * @param array $post raw posted form values with dsn, dbuser, dbpass and dboptions
+     * @return string html
+     */
+    public static function get_check_status_html(array $post): string {
+        $dbpass = $post['dbpass'] ?? '';
+        if (is_array($dbpass)) {
+            $dbpass = $dbpass['value'] ?? '';
+        }
+        $server = (object)[
+            'dsn' => is_string($post['dsn'] ?? null) ? $post['dsn'] : '',
+            'dbuser' => is_string($post['dbuser'] ?? null) ? $post['dbuser'] : '',
+            'dbpass' => is_string($dbpass) ? $dbpass : '',
+            'dboptions' => is_string($post['dboptions'] ?? null) ? $post['dboptions'] : '',
+        ];
+        try {
+            $pdb = new pdb($server);
+            $pdb->connect();
+        } catch (\Throwable $ex) {
+            return '<div class="alert alert-danger">' . s($ex->getMessage()) . '</div>';
+        }
+        return '<span class="alert alert-success">' . s(get_string('ok')) . '</span>';
+    }
+
+    /**
+     * Validate PDO options JSON.
+     *
+     * @param string $dboptions
+     * @return string|null error text, null when valid
+     */
+    public static function validate_dboptions(string $dboptions): ?string {
+        try {
+            $options = json_decode($dboptions, flags: JSON_THROW_ON_ERROR);
+        } catch (\Throwable $ex) {
+            return get_string('error');
+        }
+        if (!is_array($options) && !is_object($options)) {
+            return get_string('error');
+        }
+        return null;
     }
 }

@@ -1,0 +1,59 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/sharedkey
+
+    Key shared with humans, the current value is rendered in a data attribute for the Show button.
+    The input is a masked text input, never a password input, so browsers
+    do not autofill or offer to save it. The value attribute is always empty.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * widthclass - muform-width-small, muform-width-medium, muform-width-full or empty for auto
+    * attributes - list of html attributes with name and value
+    * has_value - true if a current value exists
+    * allow_clear - true if the clear checkbox is shown
+    * is_cleared - true if the clear checkbox was ticked in the submitted data
+    * input_required - true if the input must be filled, false when a current value exists
+    * currentvalue - current key or empty string
+
+    Example context (json):
+    {
+        "name": "sharedkey", "id": "id_sharedkey", "errorid": "id_error_sharedkey",
+        "label": "Label", "is_required": false, "attr_required": false, "attributes": [],
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "has_value": true, "allow_clear": true, "is_cleared": false, "input_required": false, "currentvalue": "abc"
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        {{#is_frozen}}<div class="form-control-plaintext" id="{{id}}">{{#has_value}}••••••••{{/has_value}}{{^has_value}}{{#str}}muform_notset, tool_mulib{{/str}}{{/has_value}}</div>{{/is_frozen}}
+        {{^is_frozen}}
+        <div class="muform-sharedkey d-flex align-items-start gap-1 w-100">
+            <input type="text" class="form-control muform-sharedkey-masked{{#widthclass}} {{widthclass}}{{/widthclass}}{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}[value]" value="" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="{{errorid}}"{{#has_value}} placeholder="••••••••"{{/has_value}} data-muform-sharedkey-current="{{currentvalue}}"{{#input_required}} required{{/input_required}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}{{#attributes}} {{name}}="{{value}}"{{/attributes}}>
+            <span class="muform-sharedkey-actions" data-muform-sharedkey-actions></span>
+        </div>
+        {{#allow_clear}}
+        <div class="form-check mt-1 w-100">
+            <input type="checkbox" class="form-check-input" id="{{id}}_clear" name="{{name}}[clear]" value="1"{{#is_cleared}} checked{{/is_cleared}}{{#is_disabled}} disabled{{/is_disabled}}>
+            <label class="form-check-label" for="{{id}}_clear">{{#str}}muform_clearvalue, tool_mulib{{/str}}</label>
+        </div>
+        {{/allow_clear}}
+        {{/is_frozen}}
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

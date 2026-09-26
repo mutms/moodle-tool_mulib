@@ -1,0 +1,18 @@
+{
+  "muform/autocompletemanypicker": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
+  "muform/autocompletepicker": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
+  "muform/datetimepicker": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
+  "muform/tagspicker": {
+    "eject": "risky",
+    "wrap": "risky"
+  }
+}

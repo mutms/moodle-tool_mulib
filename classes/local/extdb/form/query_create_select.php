@@ -19,69 +19,70 @@
 
 namespace tool_mulib\local\extdb\form;
 
-use tool_mulib\external\form_autocomplete\extdb_query_contextid;
+use tool_mulib\local\extdb\query_manager;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\select;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
+use tool_mulib\muform\util\options;
 
 /**
- * Create a new query form.
+ * Query type selection, the first step of query creation.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class query_create_select extends \tool_mulib\local\ajax_form {
+final class query_create_select extends form {
     #[\Override]
     protected function definition(): void {
-        $mform = $this->_form;
+        $type = (new select('type', get_string('extdb_query_type', 'tool_mulib'), self::get_type_options()))
+            ->set_required(true);
+        $this->add($type);
 
-        $types = self::get_type_optmenu();
-        $mform->addElement('selectgroups', 'type', get_string('extdb_query_type', 'tool_mulib'), $types);
-        $mform->addRule('type', get_string('required'), 'required', null, 'client');
-
-        $this->add_action_buttons(true, get_string('continue'));
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('continue')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 
     /**
-     * Returns menu for query type selection.
+     * Query type options grouped by plugin, keys are "component-type".
      *
-     * @return array
+     * @return options
      */
-    public static function get_type_optmenu(): array {
-        $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
-
-        $result = ['' => ['' => get_string('choosedots')]];
+    public static function get_type_options(): options {
+        $qman = \core\di::get(query_manager::class);
+        $result = new options(['' => get_string('choosedots')]);
         foreach ($qman->get_classes() as $component => $types) {
+            $group = [];
             foreach ($types as $type => $classname) {
-                $pluginname = get_string('pluginname', $component);
-                $result[$pluginname][$component . '-' . $type] = $classname::get_name();
+                $group[$component . '-' . $type] = $classname::get_name();
             }
+            $result->add_optgroup(get_string('pluginname', $component), $group);
         }
-
         return $result;
     }
 
     /**
-     * Decode types optmenu submission value.
+     * Decode the selected type option.
      *
      * @param string $component
-     * @param string $type
-     * @return string[]
+     * @param string $type either the type or the "component-type" option key
+     * @return string[] component and type, both empty when unknown
      */
-    public static function decode_type_optmenu(string $component, string $type): array {
+    public static function decode_type_option(string $component, string $type): array {
         if (!$type) {
             return ['component' => '', 'type' => ''];
         }
-
         if (str_contains($type, '-')) {
             [$component, $type] = explode('-', $type, 2);
         }
-
-        $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
+        $qman = \core\di::get(query_manager::class);
         $classes = $qman->get_classes();
-
         if (isset($classes[$component][$type])) {
             return ['component' => $component, 'type' => $type];
         }
-
         return ['component' => '', 'type' => ''];
     }
 }

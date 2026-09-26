@@ -19,8 +19,16 @@
 
 namespace tool_mulib\local\form;
 
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\inforawhtml;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
+
 /**
- * Notification delete form.
+ * Delete notification form, current data is the notification record, extra data holds the manager class name.
  *
  * @package     tool_mulib
  * @copyright   2023 Open LMS
@@ -28,40 +36,27 @@ namespace tool_mulib\local\form;
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class notification_delete extends \tool_mulib\local\ajax_form {
+final class notification_delete extends form {
     #[\Override]
-    protected function definition() {
-        $mform = $this->_form;
-        $notification = $this->_customdata['notification'];
+    protected function definition(): void {
+        $notification = (object)$this->get_current_data();
         /** @var class-string<\tool_mulib\local\notification\manager> $manager */
-        $manager = $this->_customdata['manager'];
+        $manager = $this->get_extra_data()['manager'];
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-        $mform->setConstant('id', $notification->id);
-
-        $instance = $manager::get_instance_name($notification->instanceid);
-        $mform->addElement('static', 'staticinstance', get_string('notification_instance', 'tool_mulib'), $instance);
+        $this->add(new hidden('id'));
+        $instancename = $manager::get_instance_name($notification->instanceid);
+        $this->add(new info('instance', get_string('notification_instance', 'tool_mulib'), $instancename));
 
         $types = $manager::get_all_types();
         $type = $types[$notification->notificationtype] ?? null;
-        if ($type) {
-            $type = $type::get_name();
-        } else {
-            $type = get_string('error');
-        }
-        $mform->addElement('static', 'staticnotificationtype', get_string('notification_type', 'tool_mulib'), $type);
+        $typename = $type ? $type::get_name() : get_string('error');
+        $this->add(new info('typename', get_string('notification_type', 'tool_mulib'), $typename));
 
-        $warning = '<em>' . get_string('notification_delete_confirm', 'tool_mulib') . '</em>';
-        $mform->addElement('static', 'staticwarning', '', $warning);
+        $warning = '<em>' . s(get_string('notification_delete_confirm', 'tool_mulib')) . '</em>';
+        $this->add(new inforawhtml('warning', '', $warning));
 
-        $this->add_action_buttons(true, get_string('notification_delete', 'tool_mulib'));
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        return $errors;
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('notification_delete', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 }

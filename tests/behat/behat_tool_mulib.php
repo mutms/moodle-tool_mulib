@@ -23,8 +23,12 @@
 use Behat\Mink\Exception\DriverException;
 use Behat\Mink\Exception\ExpectationException;
 use Behat\Mink\Exception\ElementNotFoundException;
+use Behat\Behat\Hook\Scope\BeforeStepScope;
+use Behat\Gherkin\Node\TableNode;
+use Behat\Mink\Element\NodeElement;
 
 require_once(__DIR__ . '/../../../../../lib/behat/behat_base.php');
+require_once(__DIR__ . '/../classes/muform/element/base.php');
 
 /**
  * Library mulib behat steps.
@@ -36,6 +40,41 @@ require_once(__DIR__ . '/../../../../../lib/behat/behat_base.php');
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_tool_mulib extends behat_base {
+    /**
+     * Migration aid: core form steps used on a page with a muform fail, which is how tests
+     * that still drive a migrated form with legacy steps are found.
+     *
+     * Enabled with define('BEHAT_MULIB_MUFORM_DETECT_WRONGTESTS', true) in config.php.
+     * Features of tool_mulib are exempt, their element features use core steps on purpose.
+     *
+     * @BeforeStep
+     * @param BeforeStepScope $scope
+     */
+    public function check_legacy_form_steps(BeforeStepScope $scope): void {
+        if (!defined('BEHAT_MULIB_MUFORM_DETECT_WRONGTESTS') || BEHAT_MULIB_MUFORM_DETECT_WRONGTESTS !== true) {
+            return;
+        }
+        if (str_contains(str_replace('\\', '/', $scope->getFeature()->getFile()), '/admin/tool/mulib/')) {
+            return;
+        }
+        $text = $scope->getStep()->getText();
+        $legacy = '/^(I set the field|I set the following fields|the field|the following fields|I expand all fieldsets|I select .* from the .* singleselect)/';
+        if (!preg_match($legacy, $text)) {
+            return;
+        }
+        try {
+            $muform = $this->getSession()->getPage()->find('css', 'form.muform');
+        } catch (\Throwable $e) {
+            return;
+        }
+        if ($muform) {
+            throw new ExpectationException(
+                'Legacy form step "' . $text . '" used on a page with a muform, update the test to the muform steps',
+                $this->getSession()
+            );
+        }
+    }
+
     /**
      * Click header action
      *
@@ -458,5 +497,211 @@ class behat_tool_mulib extends behat_base {
                 ['Delete custom field: Test field', 'button', $field, 'table_row']
             );
         }
+    }
+
+    /**
+     * Open a fixture page with query parameters, core step does not accept query strings.
+     *
+     * @Given I am on fixture page :url with parameters :params
+     *
+     * @param string $url fixture page path such as /admin/tool/mulib/tests/behat/fixtures/muform_element_text.php
+     * @param string $params query string such as prefill=1&required=1
+     */
+    public function i_am_on_fixture_page_with_parameters(string $url, string $params): void {
+        if (!preg_match('|^/[a-z0-9_\-/]*/tests/behat/fixtures/[a-z0-9_\-]*\.php$|', $url)) {
+            throw new coding_exception("URL {$url} is not a fixture URL");
+        }
+        if (!preg_match('/^[a-z0-9_]+=[a-zA-Z0-9_.\-]*(&[a-z0-9_]+=[a-zA-Z0-9_.\-]*)*$/', $params)) {
+            throw new coding_exception("Invalid fixture page parameters {$params}");
+        }
+        $this->execute('behat_general::i_visit', [$url . '?' . $params]);
+    }
+
+    /**
+     * Set values of muform elements, first column is element name (or exact label), second column is value.
+     *
+     * Option elements take exact option keys, comma separated when multiple are possible,
+     * exact option labels are accepted only when no option has the given key.
+     *
+     * @Given /^I set the following muform fields:$/
+     *
+     * @param TableNode $data
+     */
+    public function i_set_the_following_muform_fields(TableNode $data): void {
+        $this->set_muform_fields($data, null);
+    }
+
+    /**
+     * Set values of muform elements inside given container.
+     *
+     * @Given /^I set the following muform fields in the "(?P<element_string>(?:[^"]|\\")*)" "(?P<selector_string>[^"]*)":$/
+     *
+     * @param string $element
+     * @param string $selectortype
+     * @param TableNode $data
+     */
+    public function i_set_the_following_muform_fields_in_the(string $element, string $selectortype, TableNode $data): void {
+        $this->set_muform_fields($data, $this->get_text_selector_node($selectortype, $element));
+    }
+
+    /**
+     * Check values of muform elements, first column is element name (or exact label), second column is expected value.
+     *
+     * @Then /^the following muform fields match:$/
+     *
+     * @param TableNode $data
+     */
+    public function the_following_muform_fields_match(TableNode $data): void {
+        $this->match_muform_fields($data, null);
+    }
+
+    /**
+     * Check values of muform elements inside given container.
+     *
+     * @Then /^the following muform fields in the "(?P<element_string>(?:[^"]|\\")*)" "(?P<selector_string>[^"]*)" match:$/
+     *
+     * @param string $element
+     * @param string $selectortype
+     * @param TableNode $data
+     */
+    public function the_following_muform_fields_in_the_match(string $element, string $selectortype, TableNode $data): void {
+        $this->match_muform_fields($data, $this->get_text_selector_node($selectortype, $element));
+    }
+
+    /**
+     * Type into the search field of a muform picker without picking any result.
+     *
+     * @When I type :text into the :locator muform search field
+     *
+     * @param string $text
+     * @param string $locator element name or exact label
+     */
+    public function i_type_into_muform_search_field(string $text, string $locator): void {
+        $this->get_muform_element_helper($locator, null)->type_search($text);
+    }
+
+    /**
+     * Check that the open muform result list is not clipped or covered by anything, dialogs included.
+     *
+     * The corners of the list must be inside the window and the topmost element there must be the list.
+     *
+     * @Then the open muform list should be fully visible
+     */
+    public function the_open_muform_list_should_be_fully_visible(): void {
+        $js = <<<'JS'
+(() => {
+    const lists = Array.from(document.querySelectorAll('[role="listbox"]')).filter((l) => l.getClientRects().length);
+    if (lists.length !== 1) {
+        return 'expected one open list, found ' + lists.length;
+    }
+    const list = lists[0];
+    const r = list.getBoundingClientRect();
+    if (r.top < 0 || r.left < 0 || r.bottom > window.innerHeight || r.right > window.innerWidth) {
+        return 'list is outside of the window: ' + JSON.stringify(r);
+    }
+    const points = [[r.left + 3, r.top + 3], [r.right - 3, r.top + 3], [r.left + 3, r.bottom - 3], [r.right - 3, r.bottom - 3]];
+    for (const [x, y] of points) {
+        const e = document.elementFromPoint(x, y);
+        if (!e || !list.contains(e)) {
+            return 'list is covered at ' + x + ',' + y + ' by ' + (e ? e.outerHTML.slice(0, 100) : 'nothing');
+        }
+    }
+    return 'ok';
+})()
+JS;
+        $result = $this->getSession()->evaluateScript('return ' . $js);
+        if ($result !== 'ok') {
+            throw new ExpectationException('Open muform list is not fully visible: ' . $result, $this->getSession());
+        }
+    }
+
+    /**
+     * Set muform element values.
+     *
+     * @param TableNode $data
+     * @param NodeElement|null $container
+     */
+    private function set_muform_fields(TableNode $data, ?NodeElement $container): void {
+        foreach ($data->getRowsHash() as $locator => $value) {
+            $helper = $this->get_muform_element_helper((string)$locator, $container);
+            $helper->set_value((string)$value);
+            if ($this->running_javascript()) {
+                $this->wait_for_pending_js();
+            }
+        }
+    }
+
+    /**
+     * Check muform element values.
+     *
+     * @param TableNode $data
+     * @param NodeElement|null $container
+     */
+    private function match_muform_fields(TableNode $data, ?NodeElement $container): void {
+        foreach ($data->getRowsHash() as $locator => $value) {
+            $helper = $this->get_muform_element_helper((string)$locator, $container);
+            if (!$helper->matches((string)$value)) {
+                throw new ExpectationException(
+                    'muform element "' . $helper->get_name() . '" value "' . $helper->get_value()
+                    . '" does not match expected "' . $value . '"',
+                    $this->getSession()
+                );
+            }
+        }
+    }
+
+    /**
+     * Find muform element wrapper by element name or exact label and create its Behat helper.
+     *
+     * Helper classes are looked up in <plugin>/tests/classes/muform/element/<type>.php
+     * of the component in data-muform-component attribute.
+     *
+     * @param string $locator element name or exact label text
+     * @param NodeElement|null $container
+     * @return \tool_mulib\tests\muform\element\base
+     */
+    private function get_muform_element_helper(string $locator, ?NodeElement $container): \tool_mulib\tests\muform\element\base {
+        $container = $container ?? $this->getSession()->getPage();
+
+        // Wait once for the form, then look up without retries, label lookup must not wait for a missing name.
+        try {
+            $this->find_all('css', '[data-muform-element]', false, $container);
+        } catch (ElementNotFoundException $e) {
+            throw new ExpectationException('No muform elements found for "' . $locator . '"', $this->getSession());
+        }
+        $wrappers = $container->findAll('css', '[data-muform-element][data-muform-name="' . $locator . '"]');
+        if (!$wrappers) {
+            foreach ($container->findAll('css', '[data-muform-element]') as $wrapper) {
+                // Only the own label, containers such as sections include labels of their children.
+                $labelid = substr((string)$wrapper->getAttribute('id'), strlen('fitem_')) . '_label';
+                $label = $wrapper->find('css', '[id="' . $labelid . '"]');
+                if ($label && trim($label->getText()) === $locator) {
+                    $wrappers[] = $wrapper;
+                }
+            }
+        }
+        if (count($wrappers) !== 1) {
+            throw new ExpectationException(
+                count($wrappers) . ' muform elements found for "' . $locator . '", expected exactly one',
+                $this->getSession()
+            );
+        }
+        $wrapper = reset($wrappers);
+
+        $type = (string)$wrapper->getAttribute('data-muform-element');
+        $component = (string)$wrapper->getAttribute('data-muform-component');
+        $file = core_component::get_component_directory($component) . '/tests/classes/muform/element/' . $type . '.php';
+        $helperclass = $component . '\\tests\\muform\\element\\' . $type;
+        if (!class_exists($helperclass)) {
+            if (!file_exists($file)) {
+                throw new ExpectationException(
+                    'muform element "' . $locator . '" of type ' . $component . '/' . $type . ' has no Behat helper ' . $file,
+                    $this->getSession()
+                );
+            }
+            require_once($file);
+        }
+
+        return new $helperclass($this, $wrapper);
     }
 }

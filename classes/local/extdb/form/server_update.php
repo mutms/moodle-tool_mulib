@@ -19,146 +19,79 @@
 
 namespace tool_mulib\local\extdb\form;
 
+use tool_mulib\local\extdb\server;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\inforawhtml;
+use tool_mulib\muform\element\reload;
+use tool_mulib\muform\element\secret;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\text;
+use tool_mulib\muform\element\textarea;
+use tool_mulib\muform\form;
+
 /**
- * Update server form.
+ * Update server form, current data is the server record with dbpass replaced by a boolean.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class server_update extends \tool_mulib\local\ajax_form {
+final class server_update extends form {
     #[\Override]
     protected function definition(): void {
-        $mform = $this->_form;
-        $server = $this->_customdata['server'];
+        $this->add(new hidden('id'));
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
+        $name = (new text('name', get_string('name'), ['maxlength' => 255, 'width' => 'medium']))
+            ->set_required(true);
+        $this->add($name);
 
-        $mform->addElement('text', 'name', get_string('name'), ['size' => 40, 'maxlength' => 255]);
-        $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', get_string('required'), 'required', null, 'client');
+        $dsnattributes = ['type' => 'rawtext', 'maxlength' => 1333, 'width' => 'full'];
+        $dsn = (new text('dsn', get_string('extdb_server_dsn', 'tool_mulib'), $dsnattributes))
+            ->set_required(true)
+            ->add_help_button('extdb_server_dsn', 'tool_mulib');
+        $this->add($dsn);
 
-        $mform->addElement('text', 'dsn', get_string('extdb_server_dsn', 'tool_mulib'), ['size' => 40, 'maxlength' => 1333]);
-        $mform->setType('dsn', PARAM_RAW);
-        $mform->addHelpButton('dsn', 'extdb_server_dsn', 'tool_mulib');
-        $mform->addRule('dsn', get_string('required'), 'required', null, 'client');
+        $this->add(new inforawhtml('extensions', '', server::get_pdo_extensions_html()));
 
-        $extensions = [];
-        if (extension_loaded('pdo')) {
-            foreach (get_loaded_extensions() as $extension) {
-                if (str_starts_with($extension, 'pdo_')) {
-                    $extensions[] = $extension;
-                }
+        $this->add(new text('dbuser', get_string('extdb_server_dbuser', 'tool_mulib'), ['type' => 'rawtext', 'maxlength' => 100]));
+        $this->add(new secret('dbpass', get_string('extdb_server_dbpass', 'tool_mulib'), ['maxlength' => 100], true));
+
+        $dboptionsattributes = ['type' => 'rawtext', 'rows' => 3];
+        $dboptions = (new textarea('dboptions', get_string('extdb_server_dboptions', 'tool_mulib'), $dboptionsattributes))
+            ->add_help_button('extdb_server_dboptions', 'tool_mulib');
+        $this->add($dboptions);
+
+        $post = $this->get_post_data();
+        if (!empty($post['check'])) {
+            $server = $this->get_extra_data()['server'];
+            if (!isset($post['dbpass']['value']) || $post['dbpass']['value'] === '') {
+                // Nothing typed means the current password is kept.
+                $post['dbpass'] = $server->dbpass;
             }
+            $status = server::get_check_status_html($post);
+            $this->add(new inforawhtml('status', get_string('extdb_server_status', 'tool_mulib'), $status));
         }
-        if ($extensions) {
-            $extensions = implode(', ', $extensions);
-        } else {
-            $extensions = get_string('none');
-        }
-        $mform->addElement('static', 'extensions', '', '<em>' . get_string('extdb_server_extensions', 'tool_mulib', $extensions) . '</em>');
 
-        $mform->addElement('text', 'dbuser', get_string('extdb_server_dbuser', 'tool_mulib'), ['size' => 20, 'maxlength' => 100]);
-        $mform->setType('dbuser', PARAM_RAW);
+        $this->add(new textarea('note', get_string('note', 'core_notes'), ['rows' => 2]));
 
-        $mform->addElement('advcheckbox', 'changedbpass', get_string('extdb_server_dbpass_change', 'tool_mulib'));
-
-        $mform->addElement('text', 'newdbpass', get_string('extdb_server_dbpass', 'tool_mulib'), ['size' => 20, 'maxlength' => 100]);
-        $mform->setType('newdbpass', PARAM_RAW);
-        $mform->hideIf('newdbpass', 'changedbpass', 'eq', '0');
-
-        $mform->addElement('textarea', 'dboptions', get_string('extdb_server_dboptions', 'tool_mulib'), ['rows' => '3', 'cols' => '50']);
-        $mform->addHelpButton('dboptions', 'extdb_server_dboptions', 'tool_mulib');
-        $mform->setType('dboptions', PARAM_RAW);
-
-        $mform->addElement('hidden', 'showstatus');
-        $mform->setType('showstatus', PARAM_INT);
-
-        $mform->addElement('static', 'statusstatic', get_string('extdb_server_status', 'tool_mulib'), '');
-        $mform->hideIf('statusstatic', 'showstatus', 'eq', '0');
-
-        $mform->addElement('textarea', 'note', get_string('note', 'core_notes'), ['rows' => '2', 'cols' => '50']);
-        $mform->setType('note', PARAM_RAW);
-
-        $buttonarray = [
-            $mform->createElement('submit', 'submitbutton_' . $this::$uniqueid, get_string('extdb_server_update', 'tool_mulib')),
-            $mform->createElement('submit', 'check', get_string('extdb_server_check', 'tool_mulib'), [], false),
-            $mform->createElement('cancel'),
-        ];
-        $mform->addGroup($buttonarray, 'buttonarray', '', [' '], false);
-        $mform->closeHeaderBefore('buttonar');
-
-        $this->set_data($server);
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('extdb_server_update', 'tool_mulib')), 'buttons');
+        $this->add(new reload('check', get_string('extdb_server_check', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 
     #[\Override]
-    public function definition_after_data() {
-        parent::definition_after_data();
-        $mform = $this->_form;
-        $server = $this->_customdata['server'];
-
-        $status = '';
-        $data = $this->get_submitted_data();
-        if (!empty($data->check)) {
-            $error = null;
-            try {
-                if ($data->changedbpass) {
-                    $dbpass = $data->newdbpass;
-                } else {
-                    $dbpass = $server->dbpass;
-                }
-                $server = (object)[
-                    'dsn' => $data->dsn,
-                    'dbuser' => $data->dbuser,
-                    'dbpass' => $dbpass,
-                    'dboptions' => $data->dboptions,
-                ];
-                $pdb = new \tool_mulib\local\extdb\pdb($server);
-                $pdb->connect();
-            } catch (\Throwable $ex) {
-                $error = $ex->getMessage();
-            }
-            if ($error === null) {
-                $status = '<span class="alert alert-success">' . get_string('ok') . '</span>';
-            } else {
-                $status = '<div class="alert alert-danger">' . s($error) . '</div>';
-            }
-        }
-        /** @var \MoodleQuickForm_static $element */
-        $element = $mform->getElement('statusstatic');
-        $element->setText($status);
-        /** @var \MoodleQuickForm_hidden $showelement */
-        $showelement = $mform->getElement('showstatus');
-        if ($status === '') {
-            $showelement->setValue(0);
-        } else {
-            $showelement->setValue(1);
-        }
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
+    protected function validation(array $data, array &$allerrors): void {
         global $DB;
-        $errors = parent::validation($data, $files);
 
-        if (trim($data['name']) === '') {
-            $errors['name'] = get_string('required');
-        } else if ($DB->record_exists_select('tool_mulib_extdb_server', "LOWER(name) = LOWER(?) AND id <> ?", [trim($data['name']), $data['id']])) {
-            $errors['name'] = get_string('error');
+        $sql = "LOWER(name) = LOWER(?) AND id <> ?";
+        if ($DB->record_exists_select('tool_mulib_extdb_server', $sql, [trim($data['name']), $data['id']])) {
+            $allerrors['name'][] = get_string('error');
         }
-
-        if ($data['dboptions']) {
-            try {
-                $options = json_decode($data['dboptions'], flags:JSON_THROW_ON_ERROR);
-                if (!is_array($options) && !is_object($options)) {
-                    $errors['dboptions'] = get_string('error');
-                }
-            } catch (\Throwable $ex) {
-                $errors['dboptions'] = get_string('error');
-            }
+        if ($data['dboptions'] !== '' && server::validate_dboptions($data['dboptions']) !== null) {
+            $allerrors['dboptions'][] = get_string('error');
         }
-
-        return $errors;
     }
 }

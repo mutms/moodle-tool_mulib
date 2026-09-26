@@ -36,7 +36,7 @@ final class json_schema {
      * @return array
      */
     public static function validate($data, $schema): array {
-        require_once(__DIR__ . '/../../vendor/autoload.php');
+        vendor_loader::register(__DIR__ . '/../../vendor');
 
         $validator = new \Opis\JsonSchema\Validator();
         try {
@@ -64,7 +64,7 @@ final class json_schema {
      * @return mixed
      */
     public static function normalise_data($data) {
-        require_once(__DIR__ . '/../../vendor/autoload.php');
+        vendor_loader::register(__DIR__ . '/../../vendor');
 
         return \Opis\JsonSchema\Helper::toJSON($data);
     }

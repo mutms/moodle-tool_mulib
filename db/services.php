@@ -27,11 +27,4 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
-    'tool_mulib_form_autocomplete_extdb_query_contextid' => [
-        'classname' => tool_mulib\external\form_autocomplete\extdb_query_contextid::class,
-        'description' => 'Returns list of category context ids for extdb query.',
-        'type' => 'read',
-        'ajax' => true,
-        'loginrequired' => true,
-    ],
 ];

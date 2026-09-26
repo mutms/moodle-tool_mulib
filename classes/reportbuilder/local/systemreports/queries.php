@@ -122,7 +122,7 @@ final class queries extends system_report {
         }
 
         $url = new moodle_url('/admin/tool/mulib/extdb/query_update.php', ['id' => ':id']);
-        $link = new \tool_mulib\output\ajax_form\link($url, new lang_string('edit'), 't/edit');
+        $link = new \tool_mulib\output\muform\dialog\link($url, new lang_string('edit'), 't/edit');
         $link->set_modal_title(get_string('extdb_query_update', 'tool_mulib'));
         $link->set_form_size('xl');
         $this->add_action($link->create_report_action()
@@ -131,7 +131,7 @@ final class queries extends system_report {
             }));
 
         $url = new moodle_url('/admin/tool/mulib/extdb/query_delete.php', ['id' => ':id']);
-        $link = new \tool_mulib\output\ajax_form\link($url, new lang_string('delete'), 't/delete');
+        $link = new \tool_mulib\output\muform\dialog\link($url, new lang_string('delete'), 't/delete');
         $link->set_modal_title(get_string('extdb_query_delete', 'tool_mulib'));
         $link->set_form_size('sm');
         $this->add_action($link->create_report_action(['class' => 'text-danger'])

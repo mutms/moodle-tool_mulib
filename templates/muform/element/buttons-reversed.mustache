@@ -1,0 +1,34 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/buttons-reversed
+
+    Row of buttons displayed in reversed order, the first button in DOM order is shown last.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/buttons
+
+    Example context (json):
+    {
+        "name": "buttons", "type": "buttons", "component": "tool_mulib", "id": "id_buttons",
+        "is_hidden": false, "is_disabled": false,
+        "elements": [{"name": "submit", "html": "<button>Save</button>"}]
+    }
+}}
+{{< tool_mulib/muform/element/buttons }}
+    {{$rowclass}}d-flex flex-wrap flex-row-reverse justify-content-end gap-2{{/rowclass}}
+{{/ tool_mulib/muform/element/buttons }}

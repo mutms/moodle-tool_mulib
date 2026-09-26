@@ -19,143 +19,83 @@
 
 namespace tool_mulib\local\extdb\form;
 
-use tool_mulib\external\form_autocomplete\extdb_query_contextid;
+use core\param;
+use tool_mulib\local\extdb\query;
+use tool_mulib\local\extdb\query_manager;
+use tool_mulib\muform\autocomplete\extdb_query_context;
+use tool_mulib\muform\element\autocomplete;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\hidden;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\inforawhtml;
+use tool_mulib\muform\element\reload;
+use tool_mulib\muform\element\select;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\text;
+use tool_mulib\muform\element\textarea;
+use tool_mulib\muform\form;
 
 /**
- * Create a new query form.
+ * Create a new query form, current data holds component, type and contextid.
  *
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class query_create extends \tool_mulib\local\ajax_form {
+final class query_create extends form {
     #[\Override]
     protected function definition(): void {
         global $DB;
-        $mform = $this->_form;
-        $currentdata = $this->_customdata['currentdata'];
-        $syscontext = \context_system::instance();
 
-        $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
-        $classname = $qman->get_class($currentdata['component'], $currentdata['type']);
+        $current = $this->get_current_data();
+        $qman = \core\di::get(query_manager::class);
+        $classname = $qman->get_class($current['component'], $current['type']);
 
-        $mform->addElement('hidden', 'component');
-        $mform->setType('component', PARAM_ALPHANUMEXT);
+        $this->add(new hidden('component'));
+        $this->add(new hidden('type'));
+        $this->add(new info('querycomponent', get_string('plugin'), get_string('pluginname', $current['component'])));
+        $typename = $classname ? $classname::get_name() : get_string('error');
+        $this->add(new info('querytype', get_string('extdb_query_type', 'tool_mulib'), $typename));
 
-        $mform->addElement('hidden', 'type');
-        $mform->setType('type', PARAM_ALPHANUM);
-
-        $mform->addElement('static', 'querycomponent', get_string('plugin'), get_string('pluginname', $currentdata['component']));
-
-        if ($classname) {
-            $typename = $classname::get_name();
-        } else {
-            $typename = get_string('error');
-        }
-        $mform->addElement('static', 'querytype', get_string('extdb_query_type', 'tool_mulib'), $typename);
-
-        extdb_query_contextid::add_element(
-            $mform,
-            [],
-            'contextid',
-            get_string('category'),
-            $syscontext
-        );
+        $contextid = (new autocomplete('contextid', get_string('category'), new extdb_query_context((int)$current['contextid'])))
+            ->set_required(true);
+        $this->add($contextid);
 
         $servers = $DB->get_records_menu('tool_mulib_extdb_server', [], 'name ASC', 'id, name');
-        $servers = ['' => get_string('choosedots')] + $servers;
-        $mform->addElement('select', 'serverid', get_string('extdb_server', 'tool_mulib'), $servers);
-        $mform->addRule('serverid', get_string('required'), 'required', null, 'client');
+        $serverid = (new select('serverid', get_string('extdb_server', 'tool_mulib'), ['' => get_string('choosedots')] + $servers))
+            ->set_required(true);
+        $this->add($serverid);
 
-        $mform->addElement('text', 'name', get_string('name'), ['size' => 40, 'maxlength' => 255]);
-        $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', get_string('required'), 'required', null, 'client');
+        $name = (new text('name', get_string('name'), ['maxlength' => 255, 'width' => 'medium']))
+            ->set_required(true);
+        $this->add($name);
 
-        $mform->addElement('textarea', 'sqlquery', get_string('extdb_query_sqlquery', 'tool_mulib'), ['rows' => '5', 'cols' => '50']);
-        $mform->setType('sqlquery', PARAM_RAW);
-        $mform->addRule('sqlquery', get_string('required'), 'required', null, 'client');
+        $sqlquery = (new textarea('sqlquery', get_string('extdb_query_sqlquery', 'tool_mulib'), ['type' => 'rawtext', 'rows' => 5]))
+            ->set_required(true);
+        $this->add($sqlquery);
 
-        $mform->addElement('hidden', 'showstatus');
-        $mform->setType('showstatus', PARAM_INT);
+        $post = $this->get_post_data();
+        if (!empty($post['check'])) {
+            $status = query::get_check_status_html($post, $classname);
+            $this->add(new inforawhtml('status', get_string('extdb_query_status', 'tool_mulib'), $status));
+        }
 
-        $mform->addElement('static', 'statusstatic', get_string('extdb_query_status', 'tool_mulib'), '');
-        $mform->hideIf('statusstatic', 'showstatus', 'eq', '0');
+        $this->add(new inforawhtml('sqlhelp', '', format_text($classname::get_query_help(), FORMAT_MARKDOWN)));
+        $this->add(new textarea('note', get_string('note', 'core_notes'), ['rows' => 2]));
 
-        $help = $classname::get_query_help();
-        $help = format_text($help, FORMAT_MARKDOWN);
-        $mform->addElement('static', 'sqlhelp', '', $help);
-
-        $mform->addElement('textarea', 'note', get_string('note', 'core_notes'), ['rows' => '2', 'cols' => '50']);
-        $mform->setType('note', PARAM_RAW);
-
-        $buttonarray = [
-            $mform->createElement('submit', 'submitbutton_' . $this::$uniqueid, get_string('extdb_query_create', 'tool_mulib')),
-            $mform->createElement('submit', 'check', get_string('extdb_query_check', 'tool_mulib'), [], false),
-            $mform->createElement('cancel'),
-        ];
-        $mform->addGroup($buttonarray, 'buttonarray', '', [' '], false);
-        $mform->closeHeaderBefore('buttonar');
-
-        $this->set_data($currentdata);
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('extdb_query_create', 'tool_mulib')), 'buttons');
+        $this->add(new reload('check', get_string('extdb_query_check', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 
     #[\Override]
-    public function definition_after_data() {
+    protected function validation(array $data, array &$allerrors): void {
         global $DB;
-        $mform = $this->_form;
-        $currentdata = $this->_customdata['currentdata'];
 
-        $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
-        $classname = $qman->get_class($currentdata['component'], $currentdata['type']);
-
-        parent::definition_after_data();
-        $status = '';
-        $data = $this->get_submitted_data();
-        if (!empty($data->check)) {
-            $error = null;
-            try {
-                $server = $DB->get_record('tool_mulib_extdb_server', ['id' => $data->serverid], '*', MUST_EXIST);
-                $pdb = new \tool_mulib\local\extdb\pdb($server);
-                $pdb->connect();
-                $pdb->query($data->sql, $classname::get_check_parameters());
-            } catch (\Throwable $ex) {
-                $error = $ex->getMessage();
-            }
-            if ($error === null) {
-                $status = '<span class="alert alert-success">' . get_string('ok') . '</span>';
-            } else {
-                $status = '<div class="alert alert-danger">' . s($error) . '</div>';
-            }
+        if ($DB->record_exists_select('tool_mulib_extdb_query', "LOWER(name) = LOWER(?)", [trim($data['name'])])) {
+            $allerrors['name'][] = get_string('error');
         }
-        /** @var \MoodleQuickForm_static $element */
-        $element = $mform->getElement('statusstatic');
-        $element->setText($status);
-        /** @var \MoodleQuickForm_hidden $showelement */
-        $showelement = $mform->getElement('showstatus');
-        if ($status === '') {
-            $showelement->setValue(0);
-        } else {
-            $showelement->setValue(1);
-        }
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        global $DB;
-        $errors = parent::validation($data, $files);
-        $syscontext = \context_system::instance();
-
-        if (trim($data['name']) === '') {
-            $errors['name'] = get_string('required');
-        } else if ($DB->record_exists_select('tool_mulib_extdb_query', "LOWER(name) = LOWER(?)", [trim($data['name'])])) {
-            $errors['name'] = get_string('error');
-        }
-
-        $error = extdb_query_contextid::validate_value($data['contextid'], [], $syscontext);
-        if ($error !== null) {
-            $errors['contextid'] = $error;
-        }
-
-        return $errors;
     }
 }

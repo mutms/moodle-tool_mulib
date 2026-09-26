@@ -20,9 +20,17 @@
 namespace tool_mulib\local\form;
 
 use tool_mulib\local\mulib;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\checkbox;
+use tool_mulib\muform\element\checkboxes;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\select;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
 
 /**
- * Notification create form.
+ * Add notifications form, extra data holds instanceid and the manager class name.
  *
  * @package     tool_mulib
  * @copyright   2023 Open LMS
@@ -30,57 +38,39 @@ use tool_mulib\local\mulib;
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class notification_create extends \tool_mulib\local\ajax_form {
+final class notification_create extends form {
     #[\Override]
-    protected function definition() {
-        $mform = $this->_form;
-        $component = $this->_customdata['component'];
-        $instanceid = $this->_customdata['instanceid'];
+    protected function definition(): void {
+        $extra = $this->get_extra_data();
+        $instanceid = $extra['instanceid'];
         /** @var class-string<\tool_mulib\local\notification\manager> $manager */
-        $manager = $this->_customdata['manager'];
+        $manager = $extra['manager'];
 
-        $mform->addElement('hidden', 'instanceid');
-        $mform->setType('instanceid', PARAM_INT);
-        $mform->setConstant('instanceid', $instanceid);
-
-        $mform->addElement('hidden', 'component');
-        $mform->setType('component', PARAM_COMPONENT);
-        $mform->setConstant('component', $component);
-
-        $instance = $manager::get_instance_name($instanceid);
-        $mform->addElement('static', 'staticinstance', get_string('notification_instance', 'tool_mulib'), $instance);
+        $this->add(new info('instance', get_string('notification_instance', 'tool_mulib'), $manager::get_instance_name($instanceid)));
 
         $showcc = false;
         $types = $manager::get_candidate_types($instanceid);
-        $elements = [];
         foreach ($types as $type => $typename) {
             $classname = $manager::get_classname($type);
             if ($classname && $classname::is_cc_supervisor_supported()) {
                 $showcc = true;
             }
-            $elements[] = $mform->createElement('checkbox', $type, $typename);
         }
-        $mform->addGroup($elements, 'types', get_string('notification_types', 'tool_mulib'), '<div class="w-100 mb-2" />');
+        $typeselement = (new checkboxes('types', get_string('notification_types', 'tool_mulib'), $types))
+            ->set_required(true);
+        $this->add($typeselement);
 
         if ($showcc && mulib::is_murelatio_active()) {
             $options = $manager::get_supervisor_options($instanceid, null);
-            $mform->addElement('select', 'supervisorframeworkid', get_string('notification_cc_supervisor', 'tool_mulib'), $options);
+            $this->add(new select('supervisorframeworkid', get_string('notification_cc_supervisor', 'tool_mulib'), $options));
         }
 
-        $mform->addElement('advcheckbox', 'enabled', get_string('notification_enabled', 'tool_mulib'), ' ');
-        $mform->setDefault('enabled', 1);
+        $enabled = (new checkbox('enabled', get_string('notification_enabled', 'tool_mulib')))
+            ->set_default(1);
+        $this->add($enabled);
 
-        $this->add_action_buttons(true, get_string('notification_create', 'tool_mulib'));
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        if (empty($data['types'])) {
-            $errors['types'] = get_string('required');
-        }
-
-        return $errors;
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('notification_create', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 }

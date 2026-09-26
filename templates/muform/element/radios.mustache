@@ -1,0 +1,53 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/radios
+
+    Group of radio buttons.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * attr_required - true if value is validated as required
+    * nolabelfor - always true
+    * value - current value
+    * is_inline - true to render options in one line
+    * groups - list of option groups with label (may be empty) and options (key, label, is_checked, id)
+
+    Example context (json):
+    {
+        "name": "radios", "id": "id_radios", "errorid": "id_error_radios",
+        "label": "Label", "nolabelfor": true, "is_required": false, "attr_required": false,
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "value": "a", "is_inline": false, "groups": [{"label": "", "options": [{"key": "a", "label": "Option A", "is_checked": true, "id": "id_radios_0"}]}]
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        <div role="radiogroup" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}} class="w-100{{#is_inline}} d-flex flex-wrap column-gap-3{{/is_inline}}">
+            {{#groups}}
+            {{#label}}<div class="w-100 fw-bold mt-2">{{label}}</div>{{/label}}
+            {{#options}}
+            <div class="form-check{{#is_inline}} form-check-inline{{/is_inline}}">
+                <input type="radio" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}" value="{{key}}"{{#is_checked}} checked{{/is_checked}}{{#is_frozen}} disabled{{/is_frozen}}{{#attr_required}} required{{/attr_required}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}>
+                <label class="form-check-label" for="{{id}}">{{label}}</label>
+            </div>
+            {{/options}}
+            {{/groups}}
+        </div>
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

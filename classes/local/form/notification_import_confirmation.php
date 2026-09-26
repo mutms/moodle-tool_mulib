@@ -18,10 +18,16 @@
 
 namespace tool_mulib\local\form;
 
-use tool_mulib\local\notification\manager;
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\checkboxes;
+use tool_mulib\muform\element\info;
+use tool_mulib\muform\element\submit;
+use tool_mulib\muform\form;
 
 /**
- * Notification import confirmation form.
+ * Notification import, the second step picks the notifications; extra data holds
+ * instanceid, component, frominstance and the manager class name.
  *
  * @package     tool_mulib
  * @copyright   2024 Open LMS
@@ -29,61 +35,38 @@ use tool_mulib\local\notification\manager;
  * @author      Farhan Karmali
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class notification_import_confirmation extends \tool_mulib\local\ajax_form {
+final class notification_import_confirmation extends form {
     #[\Override]
-    protected function definition() {
+    protected function definition(): void {
         global $DB;
 
-        $mform = $this->_form;
-        $component = $this->_customdata['component'];
-        $instanceid = $this->_customdata['instanceid'];
-        $frominstance = $this->_customdata['frominstance'];
+        $extra = $this->get_extra_data();
         /** @var class-string<\tool_mulib\local\notification\manager> $manager */
-        $manager = $this->_customdata['manager'];
+        $manager = $extra['manager'];
 
-        $mform->addElement('hidden', 'instanceid');
-        $mform->setType('instanceid', PARAM_INT);
-        $mform->setConstant('instanceid', $instanceid);
-
-        $mform->addElement('hidden', 'component');
-        $mform->setType('component', PARAM_COMPONENT);
-        $mform->setConstant('component', $component);
-
-        $mform->addElement('hidden', 'frominstance');
-        $mform->setType('frominstance', PARAM_INT);
-        $mform->setConstant('frominstance', $frominstance);
-
-        $fromname = $manager::get_instance_name($instanceid);
-        $mform->addElement('static', 'staticinstance', get_string('notification_import_from', 'tool_mulib'), $fromname);
+        $fromname = $manager::get_instance_name($extra['frominstance']);
+        $this->add(new info('instance', get_string('notification_import_from', 'tool_mulib'), $fromname));
 
         $types = $manager::get_all_types();
-
         $notifications = $DB->get_records(
             'tool_mulib_notification',
-            ['instanceid' => $frominstance, 'component' => $component, 'enabled' => 1]
+            ['instanceid' => $extra['frominstance'], 'component' => $extra['component'], 'enabled' => 1],
+            'id ASC'
         );
+        $options = [];
         foreach ($notifications as $notification) {
             if (!isset($types[$notification->notificationtype])) {
                 continue;
             }
             $classname = $types[$notification->notificationtype];
-            $mform->addElement(
-                'advcheckbox',
-                'notificationid_' . $notification->id,
-                $classname::get_name(),
-                null,
-                ['group' => 1]
-            );
+            $options[(string)$notification->id] = $classname::get_name();
         }
-        $this->add_checkbox_controller(1);
+        $notificationids = (new checkboxes('notificationids', get_string('notification_types', 'tool_mulib'), $options))
+            ->set_required(true);
+        $this->add($notificationids);
 
-        $this->add_action_buttons(true, get_string('notification_import', 'tool_mulib'));
-    }
-
-    #[\Override]
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        return $errors;
+        $this->add(new buttons('buttons'));
+        $this->add(new submit('submit', get_string('notification_import', 'tool_mulib')), 'buttons');
+        $this->add(new cancel(), 'buttons');
     }
 }

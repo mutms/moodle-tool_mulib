@@ -26,42 +26,45 @@
  */
 
 use tool_mulib\local\extdb\server;
+use tool_mulib\muform\handler;
 
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var moodle_database $DB */
 
-define('AJAX_SCRIPT', true);
-
 require(__DIR__ . '/../../../../config.php');
+
+$id = required_param('id', PARAM_INT);
 
 require_login();
 
 $context = context_system::instance();
 require_capability('moodle/site:config', $context);
 
-$id = required_param('id', PARAM_INT);
-
-$PAGE->set_url('/admin/tool/mulib/extdb/server_delete.php', ['id' => $id]);
+$pageurl = new \core\url('/admin/tool/mulib/extdb/server_delete.php', ['id' => $id]);
+$PAGE->set_url($pageurl);
 $PAGE->set_context($context);
+$PAGE->set_pagelayout('admin');
+$PAGE->set_heading(get_string('extdb_server_delete', 'tool_mulib'));
+$PAGE->set_title(get_string('extdb_server_delete', 'tool_mulib'));
 
-$returnurl = new moodle_url('/admin/tool/mulib/extdb/servers.php');
+$handler = handler::from_request();
+
+$returnurl = new \core\url('/admin/tool/mulib/extdb/servers.php');
 
 $server = $DB->get_record('tool_mulib_extdb_server', ['id' => $id], '*', MUST_EXIST);
-
 if ($DB->record_exists('tool_mulib_extdb_query', ['serverid' => $server->id])) {
     redirect($returnurl);
 }
 
-$form = new \tool_mulib\local\extdb\form\server_delete(null, ['server' => $server]);
+$form = new \tool_mulib\local\extdb\form\server_delete($pageurl, $server);
 
 if ($form->is_cancelled()) {
-    $form->ajax_form_cancelled($returnurl);
+    $handler->cancelled($returnurl);
 }
-
 if ($data = $form->get_data()) {
     server::delete($data->id);
-    $form->ajax_form_submitted($returnurl);
+    $handler->submitted($returnurl);
 }
 
-$form->ajax_form_render();
+$handler->render($form);

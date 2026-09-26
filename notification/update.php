@@ -27,13 +27,12 @@
  */
 
 use tool_mulib\local\notification\util;
+use tool_mulib\muform\handler;
 
 /** @var moodle_database $DB */
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var stdClass $CFG */
-
-define('AJAX_SCRIPT', true);
 
 require('../../../../config.php');
 
@@ -42,30 +41,47 @@ $id = required_param('id', PARAM_INT);
 require_login();
 
 $notification = $DB->get_record('tool_mulib_notification', ['id' => $id], '*', MUST_EXIST);
-
-/** @var class-string<\tool_mulib\local\notification\manager> $manager */
-$manager = \tool_mulib\local\notification\util::get_manager_classname($notification->component);
+$manager = util::get_manager_classname($notification->component);
 if (!$manager) {
     throw new invalid_parameter_exception('Invalid notification component');
 }
 
 $returnurl = $manager::get_instance_management_url($notification->instanceid);
+
 if (!$manager::can_manage($notification->instanceid)) {
     redirect($returnurl);
 }
 
 $context = $manager::get_instance_context($notification->instanceid);
-
+$pageurl = new \core\url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
 $PAGE->set_context($context);
-$PAGE->set_url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
+$PAGE->set_url($pageurl);
 
-$form = new \tool_mulib\local\form\notification_update(null, ['notification' => $notification, 'manager' => $manager]);
+$classname = $manager::get_classname($notification->notificationtype);
+$current = (array)$notification;
+if ($notification->custom && $notification->customjson) {
+    $decoded = json_decode($notification->customjson, true);
+    $current['subject'] = $decoded['subject'] ?? '';
+    $current['body'] = $decoded['body'] ?? '';
+} else {
+    $current['subject'] = $classname::get_default_subject();
+    $current['body'] = str_replace('{$a->', '{$a-&gt;', markdown_to_html($classname::get_default_body()));
+}
+$current['bodyformat'] = FORMAT_HTML;
+
+$handler = handler::from_request();
+$form = new \tool_mulib\local\form\notification_update($pageurl, $current, ['manager' => $manager]);
+
 if ($form->is_cancelled()) {
-    $form->ajax_form_cancelled($returnurl);
-} else if ($data = $form->get_data()) {
+    $handler->cancelled($returnurl);
+}
+if ($data = $form->get_data()) {
     $notification = util::notification_update((array)$data);
-    $returnurl = new moodle_url('/admin/tool/mulib/notification/view.php', ['id' => $notification->id]);
-    $form->ajax_form_submitted($returnurl);
+    $returnurl = new \core\url('/admin/tool/mulib/notification/view.php', ['id' => $notification->id]);
+    $handler->submitted($returnurl);
 }
 
-$form->ajax_form_render();
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title(get_string('notification_update', 'tool_mulib'));
+$PAGE->set_heading(get_string('notification_update', 'tool_mulib'));
+$handler->render($form);

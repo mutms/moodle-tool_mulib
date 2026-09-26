@@ -1,0 +1,42 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/outer
+
+    Minimal element wrapper, the only markup contract of muform elements:
+    one outer element with data attributes, anything may be rendered inside.
+    Use for custom elements with their own UI, standard inputs use
+    tool_mulib/muform/element/wrapper which extends this template.
+
+    Context variables required for this template:
+    * name - element name
+    * type - element type, short class name
+    * component - component defining the element
+    * id - html id of the control
+    * is_hidden - true if element is initially hidden
+    * is_disabled - true if element is initially disabled
+    * is_frozen - true if element is frozen
+
+    Example context (json):
+    {
+        "name": "name", "type": "text", "component": "tool_mulib", "id": "id_name",
+        "is_hidden": false, "is_disabled": false, "is_frozen": false
+    }
+}}
+<div id="fitem_{{id}}" class="{{$outerclass}}mb-3 row fitem muform-element{{/outerclass}}" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_frozen}} data-muform-frozen="1"{{/is_frozen}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
+    {{$content}}{{/content}}
+</div>

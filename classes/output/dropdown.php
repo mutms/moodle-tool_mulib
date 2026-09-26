@@ -62,11 +62,11 @@ class dropdown implements \core\output\named_templatable, \core\output\renderabl
     }
 
     /**
-     * Add link that opens ajax_form.
+     * Add link that opens muform handler in a native dialog.
      *
-     * @param \tool_mulib\output\ajax_form\link $link
+     * @param \tool_mulib\output\muform\dialog\link $link
      */
-    final public function add_ajax_form(\tool_mulib\output\ajax_form\link $link): void {
+    final public function add_dialog(\tool_mulib\output\muform\dialog\link $link): void {
         global $OUTPUT;
         $oldclasses = $link->get_classes();
         $link->add_class('dropdown-item');

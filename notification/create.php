@@ -27,13 +27,12 @@
  */
 
 use tool_mulib\local\notification\util;
+use tool_mulib\muform\handler;
 
 /** @var moodle_database $DB */
 /** @var moodle_page $PAGE */
 /** @var core_renderer $OUTPUT */
 /** @var stdClass $CFG */
-
-define('AJAX_SCRIPT', true);
 
 require('../../../../config.php');
 
@@ -42,46 +41,45 @@ $instanceid = required_param('instanceid', PARAM_INT);
 
 require_login();
 
-/** @var class-string<\tool_mulib\local\notification\manager> $manager */
-$manager = \tool_mulib\local\notification\util::get_manager_classname($component);
+$manager = util::get_manager_classname($component);
 if (!$manager) {
     throw new invalid_parameter_exception('Invalid notification component');
 }
 
 $returnurl = $manager::get_instance_management_url($instanceid);
+
 if (!$manager::can_manage($instanceid)) {
     redirect($returnurl);
 }
+
 $context = $manager::get_instance_context($instanceid);
-
+$pageurl = new \core\url('/admin/tool/mulib/notification/create.php', ['component' => $component, 'instanceid' => $instanceid]);
 $PAGE->set_context($context);
-$PAGE->set_url('/admin/tool/mulib/notification/create.php', ['component' => $component, 'instanceid' => $instanceid]);
+$PAGE->set_url($pageurl);
 
-$form = new \tool_mulib\local\form\notification_create(
-    null,
-    ['instanceid' => $instanceid, 'component' => $component, 'manager' => $manager]
-);
+$handler = handler::from_request();
+$form = new \tool_mulib\local\form\notification_create($pageurl, [], ['instanceid' => $instanceid, 'manager' => $manager]);
+
 if ($form->is_cancelled()) {
-    $form->ajax_form_cancelled($returnurl);
-} else if ($data = $form->get_data()) {
-    if (!empty($data->types)) {
-        foreach ($data->types as $type => $enabled) {
-            if (!$enabled) {
-                continue;
-            }
-            $d = [
-                'component' => $data->component,
-                'instanceid' => $data->instanceid,
-                'enabled' => $data->enabled,
-                'notificationtype' => $type,
-            ];
-            if (!empty($data->supervisorframeworkid)) {
-                $d['supervisorframeworkid'] = $data->supervisorframeworkid;
-            }
-            util::notification_create($d);
+    $handler->cancelled($returnurl);
+}
+if ($data = $form->get_data()) {
+    foreach ($data->types as $type) {
+        $d = [
+            'component' => $component,
+            'instanceid' => $instanceid,
+            'enabled' => $data->enabled,
+            'notificationtype' => $type,
+        ];
+        if (!empty($data->supervisorframeworkid)) {
+            $d['supervisorframeworkid'] = $data->supervisorframeworkid;
         }
+        util::notification_create($d);
     }
-    $form->ajax_form_submitted($returnurl);
+    $handler->submitted($returnurl);
 }
 
-$form->ajax_form_render();
+$PAGE->set_pagelayout('admin');
+$PAGE->set_title(get_string('notification_create', 'tool_mulib'));
+$PAGE->set_heading(get_string('notification_create', 'tool_mulib'));
+$handler->render($form);

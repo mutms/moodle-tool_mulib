@@ -107,12 +107,14 @@ $buttons = [];
 
 if ($manager::can_manage($notification->instanceid)) {
     $url = new \moodle_url('/admin/tool/mulib/notification/delete.php', ['id' => $notification->id]);
-    $button = new \tool_mulib\output\ajax_form\button($url, get_string('notification_delete', 'tool_mulib'));
-    $button->set_submitted_action($button::SUBMITTED_ACTION_REDIRECT);
+    $button = new \tool_mulib\output\muform\dialog\button($url, get_string('notification_delete', 'tool_mulib'));
+    $button->set_submitted_action(\tool_mulib\muform\handler\dialog::ACTION_REDIRECT);
+    $button->set_form_size('sm');
     $buttons[] = $OUTPUT->render($button);
     if ($classname) {
         $url = new \moodle_url('/admin/tool/mulib/notification/update.php', ['id' => $notification->id]);
-        $button = new \tool_mulib\output\ajax_form\button($url, get_string('notification_update', 'tool_mulib'));
+        $button = new \tool_mulib\output\muform\dialog\button($url, get_string('notification_update', 'tool_mulib'));
+        $button->set_form_size('lg');
         $buttons[] = $OUTPUT->render($button);
     }
 }

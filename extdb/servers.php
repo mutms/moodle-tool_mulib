@@ -42,11 +42,8 @@ require_capability('moodle/site:config', $syscontext);
 $PAGE->set_heading(get_string('extdb_servers', 'tool_mulib'));
 $PAGE->set_secondary_navigation(false);
 
-$url = new moodle_url('/admin/tool/mulib/extdb/server_create.php');
-$button = new \tool_mulib\output\ajax_form\button(
-    $url,
-    get_string('extdb_server_create', 'tool_mulib')
-);
+$url = new \core\url('/admin/tool/mulib/extdb/server_create.php');
+$button = new \tool_mulib\output\muform\dialog\button($url, get_string('extdb_server_create', 'tool_mulib'), true);
 $PAGE->add_header_action($OUTPUT->render($button));
 
 echo $OUTPUT->header();
