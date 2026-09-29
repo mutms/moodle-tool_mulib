@@ -122,6 +122,7 @@ class MuDialog {
    */
   async request(init, url = this.options.url) {
     const pending = new Pending("tool_mulib/muform:dialog");
+    let navigating = false;
     try {
       const response = await fetch(url, {
         ...init,
@@ -131,7 +132,7 @@ class MuDialog {
       if (!response.ok) {
         throw new Error(`Dialog request failed: ${response.status}`);
       }
-      await this.handle(await response.json());
+      navigating = await this.handle(await response.json());
     } catch (error) {
       this.dialog.close();
       try {
@@ -141,33 +142,38 @@ class MuDialog {
         window.console.error(error);
       }
     } finally {
-      pending.resolve();
+      if (!navigating) {
+        pending.resolve();
+      }
     }
   }
   /**
    * Apply an answer of the handler.
    *
    * @param answer parsed JSON
+   * @returns true when the browser navigates away
    */
   async handle(answer) {
     if (answer.status === "render") {
       await this.render(answer.title, answer.html, answer.javascript);
-      return;
+      return false;
     }
     if (answer.status === "submitted") {
       this.dialog.close();
       const action = this.options.action ?? "reload";
       if (action === "reload") {
         redirect(window.location.href);
+        return true;
       } else if (action === "redirect" && answer.redirecturl) {
         redirect(answer.redirecturl);
-      } else {
-        const target = this.options.trigger ?? document;
-        target.dispatchEvent(new CustomEvent("muform:dialog-submitted", { bubbles: true, detail: { data: answer.data } }));
+        return true;
       }
-      return;
+      const target = this.options.trigger ?? document;
+      target.dispatchEvent(new CustomEvent("muform:dialog-submitted", { bubbles: true, detail: { data: answer.data } }));
+      return false;
     }
     this.dialog.close();
+    return false;
   }
   /**
    * Replace dialog content with a form and wire it up.

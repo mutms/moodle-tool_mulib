@@ -178,6 +178,9 @@ describe('tool_mulib/muform/dialog', () => {
         }));
         await settle();
         expect(document.querySelector('dialog')).toBeNull();
+        // The page is being left, Behat must keep waiting until the new page loads.
+        const count = (stack: string[]) => stack.filter((key) => key === 'tool_mulib/muform:dialog').length;
+        expect(count(pendingStack)).toBe(count(completeStack) + 1);
     });
 
     it('closes and reports errors on failed requests', async() => {
