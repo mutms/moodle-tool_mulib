@@ -111,6 +111,8 @@ then `add()` it. Chain nothing inside `add()`. Mark every overridden method with
 ## Handling a form
 
 ```php
+use tool_mulib\muform\handler;
+
 require('../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -121,27 +123,37 @@ require_capability('local/myplugin:manage', $context);
 
 $item = $DB->get_record('local_myplugin_item', ['id' => $id], '*', MUST_EXIST);
 
-$PAGE->set_url(new \core\url('/local/myplugin/edit.php', ['id' => $item->id]));
-$PAGE->set_context($context);
+$currenturl = new \core\url('/local/myplugin/edit.php', ['id' => $item->id]);
 $returnurl = new \core\url('/local/myplugin/index.php');
 
-$form = new item_edit($PAGE->url, $item);
+$PAGE->set_context($context);
+$PAGE->set_url($currenturl);
+$title = get_string('item_edit', 'local_myplugin');
+$PAGE->set_title($title);
+$PAGE->set_heading($title);
+
+$handler = handler::from_request();
+$form = new item_edit($currenturl, $item);
 
 if ($form->is_cancelled()) {
-    redirect($returnurl);
+    $handler->cancelled($returnurl);
 }
 if ($data = $form->get_data()) {
     // $data is stdClass with typed values: int for number, string for text, 1/0 for checkbox.
+    $data->id = $item->id;
     $DB->update_record('local_myplugin_item', $data);
-    redirect($returnurl);
+    $handler->submitted($returnurl);
 }
-
-echo $OUTPUT->header();
-echo $form->render($OUTPUT);
-echo $OUTPUT->footer();
+$handler->render($form);
 ```
 
-Access control belongs to the handler, never to the form: `require_login()` and
+The same script serves the full page and the [dialog](#dialogs): `handler::from_request()` returns
+the page handler for normal requests (redirect, or header + form + footer) and the dialog handler
+for dialog requests (JSON). Each call ends the script. `$PAGE->url` must be this script with the
+parameters it reads, because the form posts to it; the page heading is also the dialog title.
+Take record ids from page parameters, never from submitted data.
+
+Access control belongs to the handler script, never to the form: `require_login()` and
 `require_capability()` run before the form is constructed, so nothing is parsed for
 users who may not edit. The sesskey is checked by the form itself.
 
@@ -151,7 +163,7 @@ based on them.
 
 Forms answered with a file (exports) use the `download` button instead of `submit`: it validates
 like `submit` but posts the form to a new browser window, also from dialogs, so the form stays open
-and usable after the download. The handler sends the file and stops, validation errors that only
+and usable after the download. The script sends the file and stops, validation errors that only
 the server finds render in that new window.
 
 ## Elements
@@ -677,24 +689,7 @@ A muform can be opened in a native `<dialog>` from any page. The form does not k
 the same handler URL serves the full page and the dialog (the dialog JS sends the
 `X-Muform-Dialog: 1` header). `tool_mulib\muform\handler::from_request()` returns the dialog
 handler (`handler\dialog`) for dialog requests and the page handler (`handler\page`) otherwise,
-both answer the same three calls:
-
-```php
-$PAGE->set_title($title);
-$PAGE->set_heading($title);
-
-$handler = handler::from_request();
-$form = new item_edit($PAGE->url, $item);
-
-if ($form->is_cancelled()) {
-    $handler->cancelled($returnurl);
-}
-if ($data = $form->get_data()) {
-    // Save data.
-    $handler->submitted($returnurl);
-}
-$handler->render($form);
-```
+both answer the same three calls. See [Handling a form](#handling-a-form) for the handler script.
 
 In classic scripts every answer is sent at once and the script stops: the page handler redirects
 or prints header, content and footer, the dialog handler sends JSON. Router controllers pass the
