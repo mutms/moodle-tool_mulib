@@ -25,15 +25,15 @@
  */
 
 /**
- * Prevent Oracle Database usage!
+ * Prevent MS SQL Server usage, MuTMS relies on database features it lacks.
  *
  * @param environment_results $result
  * @return environment_results|null
  */
-function tool_mulib_oracle_incompatible(environment_results $result): ?environment_results {
+function tool_mulib_sqlsrv_incompatible(environment_results $result): ?environment_results {
     global $DB;
 
-    if ($DB->get_dbfamily() === 'oracle') {
+    if ($DB->get_dbfamily() === 'mssql') {
         $result->setStatus(false);
         return $result;
     }

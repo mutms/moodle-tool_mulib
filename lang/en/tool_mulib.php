@@ -24,7 +24,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['environment_oracle_incompatible'] = 'Oracle Database is not compatible with MuTMS plugins.';
+$string['environment_sqlsrv_incompatible'] = 'MS SQL Server is not compatible with MuTMS plugins.';
 $string['environment_windows_unsupported'] = 'MS Windows is not supported as web server for use with MuTMS plugins. ';
 $string['extdb'] = 'External databases';
 $string['extdb_exception'] = 'Error communicating with external database';

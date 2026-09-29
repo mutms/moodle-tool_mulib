@@ -2,9 +2,9 @@
 <COMPATIBILITY_MATRIX>
     <PLUGIN name="tool_mulib">
         <CUSTOM_CHECKS>
-            <CUSTOM_CHECK file="admin/tool/mulib/environmentlib.php" function="tool_mulib_oracle_incompatible" level="required">
+            <CUSTOM_CHECK file="admin/tool/mulib/environmentlib.php" function="tool_mulib_sqlsrv_incompatible" level="required">
                 <FEEDBACK>
-                    <ON_ERROR message="environment_oracle_incompatible" plugin="tool_mulib"/>
+                    <ON_ERROR message="environment_sqlsrv_incompatible" plugin="tool_mulib"/>
                 </FEEDBACK>
             </CUSTOM_CHECK>
             <CUSTOM_CHECK file="admin/tool/mulib/environmentlib.php" function="tool_mulib_windows_unsupported" level="optional">
