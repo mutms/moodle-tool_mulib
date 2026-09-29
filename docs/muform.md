@@ -546,9 +546,10 @@ previews, write a plugin layout element (`<component>\muform\element\<type>`) wi
 and ES module; the module finds its children inside its own wrapper by
 `[data-muform-name="..."]`, never through html ids, which carry the form suffix.
 
-All shipped elements are `final`: their value type, template, Behat helper and ES module form one
-contract, so a different behaviour is always a new element type rather than a subclass, and a
-different look is a template or a variant.
+All shipped elements are `final`, following rule 4: a subclassable element would turn every protected
+method into API that could never change again. Their value type, template, Behat helper and ES module
+also form one contract, so a different behaviour is always a new element type rather than a subclass,
+and a different look is a template or a variant.
 
 ## Writing a new element
 
