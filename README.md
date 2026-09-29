@@ -23,6 +23,12 @@ agents is in [AGENTS.md](AGENTS.md).
 * PHP for Windows is not supported — use WSL 2 or Docker if necessary
 * Classic themes are not supported in MuTMS plugins
 
+## AI disclosure
+
+Parts of this plugin were written with the help of Claude (Anthropic). A human
+maintainer reviewed, corrected and accepted everything before it was committed.
+The design decisions and the final code are the maintainer's own.
+
 ---
 
 > This plugin is a fork of [Open LMS local util plugin](https://github.com/open-lms-open-source/moodle-local_openlms),
