@@ -77,6 +77,10 @@ class muform_fixture {
         $link = new dialog_link($editurl, 'Edit as link', 'i/edit');
         $link->set_form_size('lg');
 
+        $dateurl = util::get_path_for_callable([self::class, 'date']);
+        $datebutton = new dialog_button($dateurl, 'Pick date');
+        $datebutton->set_form_size('sm');
+
         $response->getBody()->write((string)$OUTPUT->header());
         $response->getBody()->write($OUTPUT->heading('muform router fixture'));
 
@@ -91,7 +95,8 @@ class muform_fixture {
         $response->getBody()->write($state);
 
         $response->getBody()->write(\html_writer::div(
-            $OUTPUT->render($reloadbutton) . ' ' . $OUTPUT->render($staybutton) . ' ' . $OUTPUT->render($link),
+            $OUTPUT->render($reloadbutton) . ' ' . $OUTPUT->render($staybutton) . ' ' . $OUTPUT->render($link)
+                . ' ' . $OUTPUT->render($datebutton),
             'd-flex gap-2 align-items-center mb-3'
         ));
         $response->getBody()->write(\html_writer::div(\html_writer::link($editurl, 'Edit full page'), 'mb-3'));
@@ -135,6 +140,38 @@ document.querySelector(".fixture-stay").addEventListener("muform:dialog-submitte
         if ($data = $form->get_data()) {
             \core\notification::success('Saved ' . s($data->fullname));
             return $handler->submitted(new url($indexurl, ['saved' => $data->fullname]), ['fullname' => $data->fullname]);
+        }
+        return $handler->render($form);
+    }
+
+    /**
+     * Small form with a single date, the calendar must not be clipped by a small dialog.
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     */
+    #[route(
+        path: '/muform/fixture/date',
+        method: ['GET', 'POST'],
+        requirelogin: new require_login(requirelogin: true, autologinguest: false),
+    )]
+    public function date(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+        global $CFG;
+
+        $this->setup_page($request, $response, 'Date fixture');
+        require_once($CFG->dirroot . '/admin/tool/mulib/tests/behat/fixtures/muform_date_form.php');
+
+        $indexurl = util::get_path_for_callable([self::class, 'index']);
+        $dateurl = util::get_path_for_callable([self::class, 'date']);
+        $form = new \tool_mulib_muform_date_form($dateurl, []);
+        $handler = handler::from_request($request, $response);
+
+        if ($form->is_cancelled()) {
+            return $handler->cancelled(new url($indexurl, ['cancelled' => 1]));
+        }
+        if ($data = $form->get_data()) {
+            return $handler->submitted(new url($indexurl, ['saved' => (string)$data->due]));
         }
         return $handler->render($form);
     }

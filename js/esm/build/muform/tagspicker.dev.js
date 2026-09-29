@@ -152,7 +152,8 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
       if (standardonly) {
         setQuery("");
       }
-    } else if (event.key === "Escape") {
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault();
       setOpen(false);
     }
   }, "onKeyDown");
@@ -178,12 +179,12 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
               children: [
                 /* @__PURE__ */ jsxDEV("span", { children: tag.name }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-                  lineNumber: 265,
+                  lineNumber: 267,
                   columnNumber: 25
                 }, this),
                 tag.error && /* @__PURE__ */ jsxDEV("span", { className: "visually-hidden", children: tag.error }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-                  lineNumber: 266,
+                  lineNumber: 268,
                   columnNumber: 39
                 }, this),
                 !disabled && /* @__PURE__ */ jsxDEV(
@@ -202,7 +203,7 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-                    lineNumber: 268,
+                    lineNumber: 270,
                     columnNumber: 29
                   },
                   this
@@ -213,7 +214,7 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-              lineNumber: 263,
+              lineNumber: 265,
               columnNumber: 21
             },
             this
@@ -257,7 +258,7 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-              lineNumber: 277,
+              lineNumber: 279,
               columnNumber: 17
             },
             this
@@ -282,14 +283,14 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-              lineNumber: 312,
+              lineNumber: 314,
               columnNumber: 21
             },
             this
           ),
           /* @__PURE__ */ jsxDEV("input", { type: "hidden", name, value: tags.map((tag) => tag.name).join(","), disabled }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-            lineNumber: 321,
+            lineNumber: 323,
             columnNumber: 17
           }, this)
         ]
@@ -298,7 +299,7 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-        lineNumber: 260,
+        lineNumber: 262,
         columnNumber: 13
       },
       this
@@ -313,17 +314,17 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
         children: [
           results.kind === "loading" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.searching }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-            lineNumber: 326,
+            lineNumber: 328,
             columnNumber: 52
           }, this),
           results.kind === "overflow" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.toomanyresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-            lineNumber: 327,
+            lineNumber: 329,
             columnNumber: 53
           }, this),
           empty && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.noresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-            lineNumber: 328,
+            lineNumber: 330,
             columnNumber: 31
           }, this),
           items.map((item, index) => /* @__PURE__ */ jsxDEV(
@@ -347,7 +348,7 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-              lineNumber: 330,
+              lineNumber: 332,
               columnNumber: 25
             },
             this
@@ -358,14 +359,14 @@ function TagsPicker({ area, initial, suggest, standardonly, name, id, placeholde
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-        lineNumber: 324,
+        lineNumber: 326,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/tagspicker.tsx",
-    lineNumber: 259,
+    lineNumber: 261,
     columnNumber: 9
   }, this);
 }

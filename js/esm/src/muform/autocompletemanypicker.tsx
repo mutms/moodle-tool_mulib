@@ -226,7 +226,9 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
             // Focus moves on, the list must not stay open over the rest of the form,
             // the typed text was not chosen and must not look like a value.
             closeSearch();
-        } else if (event.key === 'Escape') {
+        } else if (event.key === 'Escape' && open) {
+            // Only the list closes, a dialog around the form stays open.
+            event.preventDefault();
             setOpen(false);
         }
     };

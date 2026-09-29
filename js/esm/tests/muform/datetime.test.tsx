@@ -209,6 +209,32 @@ describe('tool_mulib/muform/element/datetime', () => {
         expect(changes.at(-1)).toEqual({name: 'starts', value: '1791008143'});
     });
 
+    it('applies a double clicked day and closes only the calendar on Escape', async() => {
+        const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS));
+        const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
+        const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;
+
+        await fire(trigger, new MouseEvent('click', {bubbles: true}));
+        let panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
+        const escape = new KeyboardEvent('keydown', {key: 'Escape', bubbles: true, cancelable: true});
+        await fire(panel.querySelector('[data-muform-datetime-day="26"]')!, escape);
+        // The default action would close a dialog around the form.
+        expect(escape.defaultPrevented).toBe(true);
+        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+        expect(text.value).toBe('2026-09-26 19:28:43');
+
+        await fire(trigger, new MouseEvent('click', {bubbles: true}));
+        panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
+        answers.push({
+            valid: true, text: '2026-09-10 19:28:43', timestamp: 1789061323,
+            components: {year: 2026, month: 9, day: 10, hour: 19, minute: 28, second: 43}, timezone: 'Europe/Prague',
+        });
+        await fire(panel.querySelector('[data-muform-datetime-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
+        expect(bodies.at(-1)).toEqual({text: '2026-09-10 19:28:43', timezone: 'Europe/Prague', lang: 'en', format: 'Y-m-d H:i:s'});
+        expect(text.value).toBe('2026-09-10 19:28:43');
+        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+    });
+
     it('keeps errors and disabling away from the picker controls', async() => {
         const {element, wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS));
         const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;

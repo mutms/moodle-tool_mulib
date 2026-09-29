@@ -122,8 +122,26 @@ Feature: muform works in router controllers, as a full page and in native dialog
     When I type "Longlist" into the "members" muform search field
     Then I should see "Longlist User 01" in the "dialog[open] [role='listbox']" "css_element"
     And the open muform list should be fully visible
-    When I click on "//dialog[@open]//li[@data-muform-autocomplete-option][contains(., 'Longlist User 45')]" "xpath_element"
+    # Escape closes only the list, the dialog stays open.
+    When I press the escape key
+    Then "dialog[open] [role='listbox']" "css_element" should not exist
+    And "dialog[open]" "css_element" should exist
+    When I type "Longlist" into the "members" muform search field
+    And I click on "//dialog[@open]//li[@data-muform-autocomplete-option][contains(., 'Longlist User 45')]" "xpath_element"
     And I type "Longlist" into the "members" muform search field
     And I click on "//dialog[@open]//li[@data-muform-autocomplete-option][contains(., 'Longlist User 01')]" "xpath_element"
     Then I should see "Longlist User 01" in the "dialog[open] [data-muform-name='members']" "css_element"
     And I should see "Longlist User 45" in the "dialog[open] [data-muform-name='members']" "css_element"
+
+  @javascript
+  Scenario: Calendar of a date element is not clipped by a small dialog
+    Given I visit "/r.php/tool_mulib/muform/fixture"
+    When I click on "Pick date" "button"
+    And I click on "Choose date and time" "button" in the "dialog[open]" "css_element"
+    Then the open muform list should be fully visible
+    # Escape closes only the calendar, the dialog stays open.
+    When I press the escape key
+    Then ".muform-datetime-panel" "css_element" should not exist
+    And "dialog[open]" "css_element" should exist
+    When I click on "Cancel" "button" in the "dialog[open]" "css_element"
+    Then "dialog[open]" "css_element" should not exist

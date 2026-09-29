@@ -143,7 +143,8 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
       remove(selected[selected.length - 1].value);
     } else if (event.key === "Tab") {
       closeSearch();
-    } else if (event.key === "Escape") {
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault();
       setOpen(false);
     }
   }, "onKeyDown");
@@ -169,12 +170,12 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
               children: [
                 /* @__PURE__ */ jsxDEV("span", { dangerouslySetInnerHTML: { __html: item.label } }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-                  lineNumber: 247,
+                  lineNumber: 249,
                   columnNumber: 25
                 }, this),
                 item.error && /* @__PURE__ */ jsxDEV("span", { className: "visually-hidden", children: item.error }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-                  lineNumber: 248,
+                  lineNumber: 250,
                   columnNumber: 40
                 }, this),
                 !disabled && /* @__PURE__ */ jsxDEV(
@@ -193,7 +194,7 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-                    lineNumber: 250,
+                    lineNumber: 252,
                     columnNumber: 29
                   },
                   this
@@ -204,7 +205,7 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-              lineNumber: 245,
+              lineNumber: 247,
               columnNumber: 21
             },
             this
@@ -243,7 +244,7 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-              lineNumber: 259,
+              lineNumber: 261,
               columnNumber: 17
             },
             this
@@ -267,14 +268,14 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-              lineNumber: 288,
+              lineNumber: 290,
               columnNumber: 21
             },
             this
           ),
           /* @__PURE__ */ jsxDEV("input", { type: "hidden", name, value: selected.map((item) => item.value).join(","), disabled }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-            lineNumber: 296,
+            lineNumber: 298,
             columnNumber: 17
           }, this)
         ]
@@ -283,7 +284,7 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-        lineNumber: 242,
+        lineNumber: 244,
         columnNumber: 13
       },
       this
@@ -298,17 +299,17 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
         children: [
           results.kind === "loading" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.searching }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-            lineNumber: 301,
+            lineNumber: 303,
             columnNumber: 52
           }, this),
           results.kind === "overflow" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.toomanyresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-            lineNumber: 302,
+            lineNumber: 304,
             columnNumber: 53
           }, this),
           empty && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.noresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-            lineNumber: 303,
+            lineNumber: 305,
             columnNumber: 31
           }, this),
           items.map((item, index) => /* @__PURE__ */ jsxDEV(
@@ -330,7 +331,7 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-              lineNumber: 305,
+              lineNumber: 307,
               columnNumber: 25
             },
             this
@@ -341,14 +342,14 @@ function ManyPicker({ url, source, initial, name, id, placeholder, disabled, str
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-        lineNumber: 299,
+        lineNumber: 301,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletemanypicker.tsx",
-    lineNumber: 241,
+    lineNumber: 243,
     columnNumber: 9
   }, this);
 }

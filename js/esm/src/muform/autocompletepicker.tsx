@@ -259,7 +259,9 @@ export default function Picker(props: PickerProps) {
         } else if (event.key === 'Tab') {
             // Focus moves on, the list must not stay open over the rest of the form, the chosen value stays.
             closeSearch();
-        } else if (event.key === 'Escape') {
+        } else if (event.key === 'Escape' && open) {
+            // Only the list closes, a dialog around the form stays open.
+            event.preventDefault();
             setOpen(false);
         }
     };

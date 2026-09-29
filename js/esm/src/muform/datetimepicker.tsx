@@ -159,6 +159,8 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
         open,
         onOpenChange,
         placement: 'bottom-end',
+        // Fixed positioning escapes scrolling ancestors such as dialog bodies, which would clip the panel.
+        strategy: 'fixed',
         middleware: [offset(4), flip(), shift({padding: 8})],
         whileElementsMounted: autoUpdate,
     });
@@ -198,6 +200,14 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
         event.preventDefault();
         select(addDays(parts, delta));
         setFocusDay(true);
+    };
+
+    const onPanelKeyDown = (event: React.KeyboardEvent): void => {
+        if (event.key === 'Escape') {
+            // Only the calendar closes, a dialog around the form stays open.
+            event.preventDefault();
+            setOpen(false);
+        }
     };
 
     const applyAndClose = (text: string): void => {
@@ -263,7 +273,7 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
                         style={floatingStyles}
                         className="muform-datetime-panel card shadow p-2"
                         aria-label={strings.pick}
-                        {...getFloatingProps()}
+                        {...getFloatingProps({onKeyDown: onPanelKeyDown})}
                     >
                         <div className="d-flex align-items-center justify-content-between mb-2">
                             <span className="d-flex gap-1">
@@ -320,6 +330,9 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
                                                         aria-current={isToday ? 'date' : undefined}
                                                         data-muform-datetime-day={day}
                                                         onClick={() => select({...parts, year: view.year, month: view.month, day})}
+                                                        onDoubleClick={() => applyAndClose(
+                                                            formatComponents({...parts, year: view.year, month: view.month, day})
+                                                        )}
                                                     >
                                                         {day}
                                                     </button>

@@ -183,7 +183,8 @@ function Picker(props) {
       }
     } else if (event.key === "Tab") {
       closeSearch();
-    } else if (event.key === "Escape") {
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault();
       setOpen(false);
     }
   }, "onKeyDown");
@@ -210,7 +211,7 @@ function Picker(props) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-          lineNumber: 279,
+          lineNumber: 281,
           columnNumber: 21
         },
         this
@@ -251,7 +252,7 @@ function Picker(props) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-          lineNumber: 284,
+          lineNumber: 286,
           columnNumber: 17
         },
         this
@@ -270,24 +271,24 @@ function Picker(props) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-          lineNumber: 314,
+          lineNumber: 316,
           columnNumber: 17
         },
         this
       ),
       /* @__PURE__ */ jsxDEV("input", { type: "hidden", name, value: selected ? selected.value : "", disabled }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-        lineNumber: 316,
+        lineNumber: 318,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-      lineNumber: 277,
+      lineNumber: 279,
       columnNumber: 13
     }, this),
     selected?.error && /* @__PURE__ */ jsxDEV("div", { className: "form-text text-danger w-100", children: selected.error }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-      lineNumber: 318,
+      lineNumber: 320,
       columnNumber: 33
     }, this),
     open && /* @__PURE__ */ jsxDEV(
@@ -300,17 +301,17 @@ function Picker(props) {
         children: [
           results.kind === "loading" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.searching }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-            lineNumber: 322,
+            lineNumber: 324,
             columnNumber: 52
           }, this),
           results.kind === "overflow" && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.toomanyresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-            lineNumber: 323,
+            lineNumber: 325,
             columnNumber: 53
           }, this),
           empty && /* @__PURE__ */ jsxDEV("li", { className: "list-group-item text-muted", children: strings.noresults }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-            lineNumber: 324,
+            lineNumber: 326,
             columnNumber: 31
           }, this),
           items.map((item, index) => /* @__PURE__ */ jsxDEV(
@@ -332,7 +333,7 @@ function Picker(props) {
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-              lineNumber: 326,
+              lineNumber: 328,
               columnNumber: 25
             },
             this
@@ -343,14 +344,14 @@ function Picker(props) {
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-        lineNumber: 320,
+        lineNumber: 322,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/autocompletepicker.tsx",
-    lineNumber: 276,
+    lineNumber: 278,
     columnNumber: 9
   }, this);
 }

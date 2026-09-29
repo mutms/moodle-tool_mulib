@@ -244,7 +244,9 @@ export default function TagsPicker(
                 // Text that is not a standard tag cannot be added, it must not look like a value.
                 setQuery('');
             }
-        } else if (event.key === 'Escape') {
+        } else if (event.key === 'Escape' && open) {
+            // Only the list closes, a dialog around the form stays open.
+            event.preventDefault();
             setOpen(false);
         }
     };
