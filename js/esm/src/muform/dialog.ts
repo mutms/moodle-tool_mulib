@@ -290,7 +290,14 @@ class MuDialog {
             muform.focusFirstError();
         }
         if (!this.body.contains(document.activeElement)) {
-            const focusable = this.body.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea, button');
+            let focusable = this.body.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea, button');
+            if (focusable instanceof HTMLInputElement && focusable.type === 'radio' && !focusable.checked) {
+                // Focus the chosen answer, a focus ring on another radio looks like a different choice.
+                const name = focusable.name;
+                const group = Array.from(this.body.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
+                    .filter((radio) => radio.name === name);
+                focusable = group.find((radio) => radio.checked) ?? focusable;
+            }
             focusable?.focus();
         }
         await resized;

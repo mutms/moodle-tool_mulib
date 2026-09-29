@@ -168,6 +168,7 @@ download, also in a dialog.
 | `autocompletemany` | `(name, label, source, attributes)`                                          | `string[]` values                                          | `[]`             |
 | `tags`             | `(name, label, tagarea, attributes)`                                         | `string[]` tag names                                       | `[]`             |
 | `checkbox`         | `(name, label, text, attributes)`                                            | `1` or `0`                                                 | `0`              |
+| `yesno`            | `(name, label)`                                                              | `1` or `0`                                                 | never empty      |
 | `radios`           | `(name, label, options, inline)`                                             | option key or `null`                                       | `null`           |
 | `checkboxes`       | `(name, label, options, inline)`                                             | `string[]` of option keys                                  | `[]`             |
 | `select`           | `(name, label, options, attributes)`                                         | option key or `null`                                       | `null`           |
@@ -346,6 +347,12 @@ if cleaning would change it, that is an error.
 `tool_mulib\muform\util\options` object when you need groups. Labels must be strings, so convert
 `lang_string` values with `array_map('strval', ...)`. An empty key in `select` is the "Choose..."
 option and returns `null`. For short lists like roles, `checkboxes` is nicer than `multiselect`.
+
+### Yes or No
+
+`yesno` asks a question with two inline radios, Yes and No, and returns 1 or 0 like `checkbox`. Use it
+instead of a Yes/No `select`. A frozen `yesno` shows just "Yes" or "No" as text. In Behat tables it
+takes `1`, `yes` or `Yes` and `0`, `no` or `No`, and an empty cell leaves the answer unchanged.
 
 ### Attributes and setters
 

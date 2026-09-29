@@ -88,6 +88,18 @@ describe('tool_mulib/muform/dialog', () => {
         expect(document.activeElement).toBe(trigger);
     });
 
+    it('focuses the checked radio of the first element', async() => {
+        const radios = '<div data-muform-element="yesno" data-muform-component="tool_mulib" data-muform-name="active">'
+            + '<input type="radio" id="id_active_yes" name="active" value="1">'
+            + '<input type="radio" id="id_active_no" name="active" value="0" checked></div>';
+        answers.push({status: 'render', title: '', html: FORM.replace('novalidate data-muform="f1" data-muform-rules="[]">',
+            'novalidate data-muform="f1" data-muform-rules="[]">' + radios), javascript: ''});
+        openFrom(document.getElementById('t')!);
+        await settle();
+        expect(document.activeElement).toBe(document.getElementById('id_active_no'));
+        document.querySelector<HTMLDialogElement>('dialog')!.close();
+    });
+
     it('posts valid submissions and dispatches the submitted event for the nothing action', async() => {
         answers.push({status: 'render', title: '', html: FORM, javascript: ''});
         const rerendered = FORM.replace('value=""', 'value="2"').replace('action="/x"', 'action="/x?step=2"');

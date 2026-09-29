@@ -1,0 +1,56 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/yesno
+
+    Yes or No choice as two inline radios, plain text when frozen.
+
+    Context variables required for this template:
+    * see tool_mulib/muform/element/wrapper
+    * nolabelfor - always true
+    * value - 1 or 0
+    * is_yes - true when the value is 1
+    * yeslabel - label of the Yes option
+    * nolabel - label of the No option
+    * valuelabel - label of the current value for frozen elements
+
+    Example context (json):
+    {
+        "name": "active", "id": "id_active", "errorid": "id_error_active",
+        "label": "Active", "nolabelfor": true, "is_required": false,
+        "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
+        "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
+        "value": 1, "is_yes": true, "yeslabel": "Yes", "nolabel": "No", "valuelabel": "Yes"
+    }
+}}
+{{< tool_mulib/muform/element/wrapper }}
+    {{$control}}
+        {{#is_frozen}}<div class="form-control-plaintext" id="{{id}}" data-muform-yesno-value="{{value}}">{{valuelabel}}</div>{{/is_frozen}}
+        {{^is_frozen}}
+        <div role="radiogroup" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}} class="w-100 d-flex flex-wrap column-gap-3">
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}_yes" name="{{name}}" value="1"{{#is_yes}} checked{{/is_yes}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}>
+                <label class="form-check-label" for="{{id}}_yes">{{yeslabel}}</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}_no" name="{{name}}" value="0"{{^is_yes}} checked{{/is_yes}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}>
+                <label class="form-check-label" for="{{id}}_no">{{nolabel}}</label>
+            </div>
+        </div>
+        {{/is_frozen}}
+    {{/control}}
+{{/ tool_mulib/muform/element/wrapper }}

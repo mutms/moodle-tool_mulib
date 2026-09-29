@@ -18,17 +18,25 @@
 
 namespace tool_mulib\tests\muform\element;
 
+use Behat\Mink\Exception\ExpectationException;
+
 /**
- * Behat helper for radios element, value is option key or exact option label.
+ * Behat helper for yesno element.
+ *
+ * Yes is 1, yes or Yes (or the translated label), No is 0, no or No. An empty cell keeps the current
+ * answer when setting and is not allowed when matching.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class radios extends base {
+final class yesno extends base {
     #[\Override]
     public function set_value(string $value): void {
-        $key = $this->resolve_option(trim($value), $this->get_options());
+        if (trim($value) === '') {
+            return;
+        }
+        $key = $this->normalise($value);
         foreach ($this->find_all('css', 'input[type="radio"]') as $input) {
             if ((string)$input->getAttribute('value') === $key) {
                 $driver = $this->context->getSession()->getDriver();
@@ -41,10 +49,18 @@ final class radios extends base {
                 return;
             }
         }
+        throw new ExpectationException(
+            'Muform element "' . $this->get_name() . '" cannot be set, it is frozen',
+            $this->context->getSession()
+        );
     }
 
     #[\Override]
     public function get_value(): string {
+        $frozen = $this->find_all('css', '[data-muform-yesno-value]');
+        if ($frozen) {
+            return (string)reset($frozen)->getAttribute('data-muform-yesno-value');
+        }
         foreach ($this->find_all('css', 'input[type="radio"]') as $input) {
             if ($input->isChecked()) {
                 return (string)$input->getAttribute('value');
@@ -55,10 +71,26 @@ final class radios extends base {
 
     #[\Override]
     public function matches(string $expected): bool {
-        $expected = trim($expected);
-        if ($expected !== '') {
-            $expected = $this->resolve_option($expected, $this->get_options());
+        return $this->get_value() === $this->normalise($expected);
+    }
+
+    /**
+     * Convert table value to 1 or 0.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function normalise(string $value): string {
+        $value = \core_text::strtolower(trim($value));
+        if ($value === '1' || $value === 'yes' || $value === \core_text::strtolower(get_string('yes'))) {
+            return '1';
         }
-        return $this->get_value() === $expected;
+        if ($value === '0' || $value === 'no' || $value === \core_text::strtolower(get_string('no'))) {
+            return '0';
+        }
+        throw new ExpectationException(
+            'Invalid value "' . $value . '" for muform yesno element "' . $this->get_name() . '", use 1, 0, Yes or No',
+            $this->context->getSession()
+        );
     }
 }
