@@ -75,7 +75,6 @@ final class customfields_test extends muform_testcase {
             'notes' => ['type' => 'textarea', 'configdata' => [
                 'defaultvalue' => '<p>Default</p>', 'defaultvalueformat' => FORMAT_HTML,
             ]],
-            'credits' => ['type' => 'mutrain', 'configdata' => []],
         ];
         $i = 0;
         foreach ($specs as $shortname => $spec) {
@@ -126,7 +125,6 @@ final class customfields_test extends muform_testcase {
             'customfield_start' => (string)make_timestamp(2026, 9, 28, 14, 30),
             'customfield_size' => '7.5',
             'customfield_notes' => ['text' => '<p>Hello</p>', 'format' => '1', 'itemid' => (string)file_get_unused_draft_itemid()],
-            'customfield_credits' => '2.5',
         ];
     }
 
@@ -169,7 +167,7 @@ final class customfields_test extends muform_testcase {
         $this->assertSame([
             'customfield_code', 'customfields_description_' . $this->fields['code']->get('id'),
             'customfield_agree', 'customfield_level', 'customfield_start', 'customfield_size',
-            'customfield_notes', 'customfield_credits',
+            'customfield_notes',
         ], $section->get_children());
         $description = $form->get_element('customfields_description_' . $this->fields['code']->get('id'));
         $this->assertInstanceOf(inforawhtml::class, $description);
@@ -185,7 +183,6 @@ final class customfields_test extends muform_testcase {
         $this->assertNull($data->customfield_start);
         $this->assertSame(5.0, $data->customfield_size);
         $this->assertSame('<p>Default</p>', $data->customfield_notes);
-        $this->assertNull($data->customfield_credits);
 
         $html = $this->render($form);
         $this->assertStringContainsString('data-muform-element="customfields"', $html);
@@ -205,7 +202,6 @@ final class customfields_test extends muform_testcase {
         $generator->add_instance_data($this->fields['start'], $course->id, $start);
         $generator->add_instance_data($this->fields['size'], $course->id, 12.5);
         $generator->add_instance_data($this->fields['notes'], $course->id, ['text' => '<p>Stored</p>', 'format' => FORMAT_HTML]);
-        $generator->add_instance_data($this->fields['credits'], $course->id, '1.25');
 
         $this->add_element($course->id);
         $this->simulate_get();
@@ -217,7 +213,6 @@ final class customfields_test extends muform_testcase {
         $this->assertSame($start, $data->customfield_start);
         $this->assertSame(12.5, $data->customfield_size);
         $this->assertSame('<p>Stored</p>', $data->customfield_notes);
-        $this->assertSame(1.25, $data->customfield_credits);
     }
 
     public function test_save(): void {
@@ -238,11 +233,10 @@ final class customfields_test extends muform_testcase {
         $this->assertEquals(make_timestamp(2026, 9, 28), $values['start']);
         $this->assertEquals(7.5, $values['size']);
         $this->assertSame('<p>Hello</p>', $values['notes']);
-        $this->assertEquals(2.5, $values['credits']);
 
         $context = \context_course::instance($course->id);
         $rows = $DB->get_records('customfield_data', ['instanceid' => $course->id]);
-        $this->assertCount(7, $rows);
+        $this->assertCount(6, $rows);
         foreach ($rows as $row) {
             $this->assertSame((string)$context->id, (string)$row->contextid);
             $this->assertSame('core_course', $row->component);
@@ -255,18 +249,17 @@ final class customfields_test extends muform_testcase {
         // Update keeps the rows.
         $this->add_element($course->id);
         $post = ['customfield_code' => 'NEW', 'customfield_agree' => '1', 'customfield_level' => '',
-            'customfield_start' => '', 'customfield_size' => '', 'customfield_credits' => '0'] + $this->get_valid_post();
+            'customfield_start' => '', 'customfield_size' => ''] + $this->get_valid_post();
         $form = $this->submit($post);
         $this->assertTrue($form->is_valid());
         $form->get_element('customfields')->save($course->id);
-        $this->assertCount(7, $DB->get_records('customfield_data', ['instanceid' => $course->id]));
+        $this->assertCount(6, $DB->get_records('customfield_data', ['instanceid' => $course->id]));
         $values = $this->get_core_values($course->id);
         $this->assertSame('NEW', $values['code']);
         $this->assertEquals(1, $values['agree']);
         $this->assertEquals(0, $values['level']);
         $this->assertEquals(0, $values['start']);
         $this->assertNull($values['size']);
-        $this->assertNull($values['credits']);
 
         // Instance id must match.
         try {
@@ -322,16 +315,12 @@ final class customfields_test extends muform_testcase {
         $errors = $this->get_rendered_errors($form, 'customfield_start');
         $this->assertCount(1, $errors);
         $this->assertStringStartsWith('Please enter a date on or after', $errors[0]);
-
-        $this->add_element($course->id);
-        $form = $this->submit(['customfield_credits' => '-1'] + $this->get_valid_post());
-        $this->assertFalse($form->is_valid());
     }
 
     public function test_required(): void {
         $generator = $this->getDataGenerator();
         $category = $generator->create_custom_field_category([]);
-        foreach (['text', 'checkbox', 'select', 'date', 'number', 'textarea', 'mutrain'] as $type) {
+        foreach (['text', 'checkbox', 'select', 'date', 'number', 'textarea'] as $type) {
             $configdata = ['required' => 1];
             if ($type === 'select') {
                 $configdata['options'] = "A\nB";
@@ -343,12 +332,61 @@ final class customfields_test extends muform_testcase {
         $form = $this->submit([
             'customfield_rtext' => '', 'customfield_rselect' => '', 'customfield_rdate' => '',
             'customfield_rnumber' => '', 'customfield_rtextarea' => ['text' => '', 'format' => '1', 'itemid' => '1'],
-            'customfield_rmutrain' => '',
         ]);
         $this->assertFalse($form->is_valid());
-        foreach (['text', 'checkbox', 'select', 'date', 'number', 'textarea', 'mutrain'] as $type) {
+        foreach (['text', 'checkbox', 'select', 'date', 'number', 'textarea'] as $type) {
             $this->assertCount(1, $this->get_rendered_errors($form, 'customfield_r' . $type), $type);
         }
+    }
+
+    public function test_mutrain(): void {
+        global $DB;
+
+        if (!class_exists(\customfield_mutrain\field_controller::class)) {
+            $this->markTestSkipped('customfield_mutrain is not installed');
+        }
+
+        $generator = $this->getDataGenerator();
+        $category = $generator->create_custom_field_category(['name' => 'Training']);
+        $generator->create_custom_field(['categoryid' => $category->get('id'), 'shortname' => 'credits',
+            'name' => 'Credits', 'type' => 'mutrain', 'configdata' => []]);
+        $generator->create_custom_field(['categoryid' => $category->get('id'), 'shortname' => 'rcredits',
+            'name' => 'Required credits', 'type' => 'mutrain', 'configdata' => ['required' => 1]]);
+        $course = $generator->create_course();
+
+        $this->add_element(null);
+        $this->simulate_get();
+        $form = new simple_form($this->get_url(), []);
+        $this->assertNull($form->get_non_validated_data()->customfield_credits);
+
+        $this->add_element(null);
+        $form = $this->submit(['customfield_credits' => '2.5', 'customfield_rcredits' => '']);
+        $this->assertFalse($form->is_valid());
+        $this->assertCount(1, $this->get_rendered_errors($form, 'customfield_rcredits'));
+
+        $this->add_element(null);
+        $form = $this->submit(['customfield_credits' => '-1', 'customfield_rcredits' => '1']);
+        $this->assertFalse($form->is_valid());
+
+        $this->add_element(null);
+        $form = $this->submit(['customfield_credits' => '2.5', 'customfield_rcredits' => '1']);
+        $this->assertTrue($form->is_valid());
+        $form->get_element('customfields')->save($course->id);
+        $values = $this->get_core_values($course->id);
+        $this->assertEquals(2.5, $values['credits']);
+        $this->assertEquals(1, $values['rcredits']);
+
+        $this->add_element($course->id);
+        $this->simulate_get();
+        $form = new simple_form($this->get_url(), []);
+        $this->assertSame(2.5, $form->get_non_validated_data()->customfield_credits);
+
+        $this->add_element($course->id);
+        $form = $this->submit(['customfield_credits' => '0', 'customfield_rcredits' => '1']);
+        $this->assertTrue($form->is_valid());
+        $form->get_element('customfields')->save($course->id);
+        $this->assertNull($this->get_core_values($course->id)['credits']);
+        $this->assertCount(2, $DB->get_records('customfield_data', ['instanceid' => $course->id]));
     }
 
     public function test_not_editable(): void {
