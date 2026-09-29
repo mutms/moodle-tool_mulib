@@ -7,19 +7,26 @@ restrictions on commercial use. Part of the [MuTMS suite](https://github.com/mut
 
 ## Requirements
 
-> This plugin is included in the [MuTMS distribution](https://github.com/mutms/mutms) —
-> no manual installation needed if you use the distribution.
-
 * Supported databases: PostgreSQL, MariaDB, and MySQL
 * MS SQL Server is not compatible
 * PHP for Windows is not supported — use a Linux VM (WSL or Hyper-V) if necessary
 
 ## For developers
 
-The library includes **muform**, the forms library used by all MuTMS plugins instead of moodleform:
-server-side validation and rendering, native dialogs, autocomplete, custom fields, wizards and Behat
-steps. See [docs/muform.md](docs/muform.md). An overview of all shared APIs for developers and AI
-agents is in [AGENTS.md](AGENTS.md).
+Shared APIs used by all MuTMS plugins:
+
+* **SQL based capability checks** – context map cache for fast capability filtering directly in SQL
+  queries on system, tenant, category and course levels, instead of checking records one by one in PHP
+* **[muform](docs/muform.md)** – forms library replacing moodleform: server-side validation and rendering,
+  native dialogs, autocomplete, tags, custom fields, wizards and Behat steps
+* **SQL helpers** – immutable SQL fragments with parameters, search queries for autocompletes and
+  concurrent-safe upserts
+* **External databases** – server connections and query types for synchronisation from other systems
+* **Notifications** – configurable notifications with placeholders and delivery tracking
+* **Page output** – header action buttons and menus, entity details, copy-to-clipboard URLs
+* **Utilities** – dates, roles, custom fields, JSON schema validation and Composer vendor loading
+
+An overview for developers and AI agents is in [AGENTS.md](AGENTS.md).
 
 ## AI disclosure
 
