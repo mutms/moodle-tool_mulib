@@ -265,7 +265,7 @@ abstract class manager {
             $table->head[] = get_string('actions');
         }
         $table->data = $rows;
-        $table->attributes['class'] = 'admintable generaltable';
+        $table->attributes['class'] = 'table table-striped table-hover table-bordered';
         $result = \html_writer::table($table);
 
         return $result;

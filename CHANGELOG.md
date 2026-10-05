@@ -11,3 +11,8 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - remove mulib::clean_string(), standard clean_string() is used instead
 - new forms library
 - new integration of vendor/ plugin dependencies
+
+### Fixed
+
+- notifications table uses the same striped, hover and bordered styling as other management tables
+
