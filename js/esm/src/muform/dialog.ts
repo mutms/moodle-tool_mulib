@@ -18,8 +18,9 @@
  *
  * The handler answers requests carrying the X-Muform-Dialog header with JSON:
  * {status: 'render', title, html, javascript}, {status: 'submitted', redirecturl, data}
- * or {status: 'cancelled'}. Importing this module installs a click handler for
- * elements with data-muform-dialog-url attribute.
+ * or {status: 'cancelled'}. Output printed by the handler, such as debugging messages, is part of
+ * the html, the other answers have it in output and the dialog shows it before it goes on.
+ * Importing this module installs a click handler for elements with data-muform-dialog-url attribute.
  *
  * @module     tool_mulib/muform/dialog
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -52,8 +53,11 @@ export interface DialogOptions {
 /** JSON answers of the handler. */
 type Answer =
     | {status: 'render'; title: string; html: string; javascript: string}
-    | {status: 'submitted'; redirecturl: string | null; data: unknown}
-    | {status: 'cancelled'; redirecturl: string | null};
+    | {status: 'submitted'; redirecturl: string | null; data: unknown; output?: string}
+    | {status: 'cancelled'; redirecturl: string | null; output?: string};
+
+/** Answers that end the dialog. */
+type FinalAnswer = Exclude<Answer, {status: 'render'}>;
 
 /** Subset of core/fragment. */
 interface Fragment {
@@ -244,6 +248,21 @@ class MuDialog {
             await this.render(answer.title, answer.html, answer.javascript);
             return false;
         }
+        if (answer.output) {
+            // Printed output such as debugging messages would be lost, wait for the user like Moodle redirects do.
+            this.showOutput(answer.output, answer);
+            return false;
+        }
+        return this.finish(answer);
+    }
+
+    /**
+     * Close the dialog and do what the final answer of the handler asks for.
+     *
+     * @param answer parsed JSON
+     * @returns true when the browser navigates away
+     */
+    private finish(answer: FinalAnswer): boolean {
         if (answer.status === 'submitted') {
             this.dialog.close();
             const action = this.options.action ?? 'reload';
@@ -261,6 +280,39 @@ class MuDialog {
         }
         this.dialog.close();
         return false;
+    }
+
+    /**
+     * Show output printed by the handler and go on when the user continues or closes the dialog.
+     *
+     * @param html printed output
+     * @param answer parsed JSON
+     */
+    private showOutput(html: string, answer: FinalAnswer): void {
+        this.body.innerHTML = `<div data-muform-dialog-output>${html}</div>`
+            + '<div class="mt-3"><button type="button" class="btn btn-primary" data-muform-dialog-continue></button></div>';
+        const button = this.body.querySelector<HTMLButtonElement>('[data-muform-dialog-continue]')!;
+        button.textContent = 'Continue';
+        getString('continue', 'core').then((text) => {
+            button.textContent = text;
+            return text;
+        }).catch(() => undefined);
+
+        let done = false;
+        const proceed = () => {
+            if (done) {
+                return;
+            }
+            done = true;
+            const pending = new Pending('tool_mulib/muform:dialog');
+            if (!this.finish(answer)) {
+                // While the browser is leaving the page the old page must not look settled to Behat.
+                pending.resolve();
+            }
+        };
+        button.addEventListener('click', proceed);
+        this.dialog.addEventListener('close', proceed);
+        button.focus();
     }
 
     /**

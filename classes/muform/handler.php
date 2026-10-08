@@ -80,7 +80,12 @@ abstract class handler {
             }
             $value = $_SERVER['HTTP_' . str_replace('-', '_', strtoupper(handler\dialog::HEADER))] ?? '';
         }
-        return ($value === '1') ? new handler\dialog($response) : new handler\page($response);
+        if ($value !== '1') {
+            return new handler\page($response);
+        }
+        $handler = new handler\dialog($response);
+        $handler->start_output_capture();
+        return $handler;
     }
 
     /**

@@ -42,9 +42,53 @@ final class dialog extends \tool_mulib\muform\handler {
     /** @var string close the dialog only, page JS may listen for muform:dialog-submitted event */
     public const string ACTION_NOTHING = 'nothing';
 
+    /** @var int|null level of the output buffer capturing printed output, null if nothing is captured */
+    private ?int $capturelevel = null;
+
     #[\Override]
     public function is_dialog(): bool {
         return true;
+    }
+
+    /**
+     * Start capturing of printed output such as debugging messages and PHP notices,
+     * it must not break the JSON answer, it is added to the answer instead.
+     *
+     * @return void
+     */
+    public function start_output_capture(): void {
+        if ($this->capturelevel !== null) {
+            throw new coding_exception('Output is captured already');
+        }
+        ob_start();
+        $this->capturelevel = ob_get_level();
+    }
+
+    /**
+     * Stop capturing of printed output.
+     *
+     * @return string the captured output
+     */
+    private function get_captured_output(): string {
+        if ($this->capturelevel === null) {
+            return '';
+        }
+        $output = '';
+        // Buffers that somebody opened later and did not close are part of the captured output.
+        while (ob_get_level() >= $this->capturelevel) {
+            $output = ob_get_clean() . $output;
+        }
+        $this->capturelevel = null;
+        return $output;
+    }
+
+    /**
+     * Give the captured output back if there was no answer.
+     */
+    public function __destruct() {
+        if ($this->capturelevel !== null && ob_get_level() === $this->capturelevel) {
+            ob_end_flush();
+        }
     }
 
     #[\Override]
@@ -104,6 +148,16 @@ final class dialog extends \tool_mulib\muform\handler {
      * @return ResponseInterface
      */
     private function json(array $payload): ResponseInterface {
+        $output = $this->get_captured_output();
+        if ($output !== '') {
+            if ($payload['status'] === 'render') {
+                $payload['html'] = $output . $payload['html'];
+            } else {
+                // The dialog shows the output and waits for the user before it goes on.
+                $payload['output'] = $output;
+            }
+        }
+
         $response = $this->response ?? \core\di::get(ResponseFactoryInterface::class)->createResponse();
         $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
         $response->getBody()->write(json_encode($payload, JSON_THROW_ON_ERROR));

@@ -183,6 +183,39 @@ describe('tool_mulib/muform/dialog', () => {
         expect(count(pendingStack)).toBe(count(completeStack) + 1);
     });
 
+    it('shows printed output and waits before it goes on', async() => {
+        mockString('continue', 'core', 'Continue');
+        answers.push({status: 'submitted', redirecturl: null, data: {id: 7}, output: '<div class="debuggingmessage">Oops</div>'});
+        const trigger = document.getElementById('t')!;
+        const submitted: unknown[] = [];
+        trigger.addEventListener('muform:dialog-submitted', (event) => submitted.push((event as CustomEvent).detail));
+        const closed = openFrom(trigger);
+        await settle();
+
+        const dialog = document.querySelector<HTMLDialogElement>('dialog')!;
+        expect(dialog.querySelector('[data-muform-dialog-output] .debuggingmessage')!.textContent).toBe('Oops');
+        expect(submitted).toEqual([]);
+        // Behat is not kept waiting while the output is displayed.
+        const count = (stack: string[]) => stack.filter((key) => key === 'tool_mulib/muform:dialog').length;
+        expect(count(pendingStack)).toBe(count(completeStack));
+
+        const button = dialog.querySelector<HTMLButtonElement>('[data-muform-dialog-continue]')!;
+        expect(button.textContent).toBe('Continue');
+        button.click();
+        await closed;
+        expect(submitted).toEqual([{data: {id: 7}}]);
+        expect(document.querySelector('dialog')).toBeNull();
+        expect(count(pendingStack)).toBe(count(completeStack));
+
+        // Closing the dialog goes on too, the form was submitted already.
+        answers.push({status: 'submitted', redirecturl: null, data: {id: 8}, output: 'Oops'});
+        const closedagain = openFrom(trigger);
+        await settle();
+        document.querySelector<HTMLDialogElement>('dialog')!.close();
+        await closedagain;
+        expect(submitted).toEqual([{data: {id: 7}}, {data: {id: 8}}]);
+    });
+
     it('closes and reports errors on failed requests', async() => {
         global.fetch = jest.fn(async() => ({ok: false, status: 500} as Response)) as unknown as typeof fetch;
         const spy = jest.spyOn(window.console, 'error').mockImplementation(() => undefined);

@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
 
 namespace tool_mulib\phpunit\muform;
 
@@ -160,6 +161,58 @@ final class handler_test extends muform_testcase {
 
         $data = $this->decode($this->handler(true)->cancelled($url));
         $this->assertSame(['status' => 'cancelled', 'redirecturl' => $url->out(false)], $data);
+    }
+
+    public function test_dialog_captured_output(): void {
+        global $PAGE;
+        $PAGE->set_url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php');
+        $PAGE->set_context(\core\context\system::instance());
+        $url = new \core\url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php', ['id' => 3]);
+        $level = ob_get_level();
+
+        // Printed output must not break the JSON answer, the dialog shows it before it goes on.
+        $handler = $this->handler(true);
+        $this->assertSame($level + 1, ob_get_level());
+        echo 'debug <b>message</b>';
+        $response = $handler->submitted($url, ['id' => 3]);
+        $this->assertSame($level, ob_get_level());
+        $this->assertSame(
+            ['status' => 'submitted', 'redirecturl' => $url->out(false), 'data' => ['id' => 3], 'output' => 'debug <b>message</b>'],
+            $this->decode($response)
+        );
+
+        $handler = $this->handler(true);
+        echo 'first';
+        ob_start();
+        echo 'second';
+        $response = $handler->cancelled($url);
+        $this->assertSame($level, ob_get_level());
+        $this->assertSame(['status' => 'cancelled', 'redirecturl' => $url->out(false), 'output' => 'firstsecond'], $this->decode($response));
+
+        // Rendered forms have it at the top.
+        $form = new simple_form($this->get_url(), ['name' => 'Jane']);
+        $handler = $this->handler(true);
+        echo 'debug';
+        $data = $this->decode($handler->render($form));
+        $this->assertSame($level, ob_get_level());
+        $this->assertStringStartsWith('debug<form ', $data['html']);
+        $this->assertArrayNotHasKey('output', $data);
+
+        // Nothing is captured after the answer.
+        $response = $handler->cancelled($url);
+        $this->assertSame(['status' => 'cancelled', 'redirecturl' => $url->out(false)], $this->decode($response));
+
+        // Handler without answer gives the output back.
+        $handler = $this->handler(true);
+        echo 'lost';
+        $this->assertSame($level + 1, ob_get_level());
+        unset($handler);
+        $this->assertSame($level, ob_get_level());
+        $this->expectOutputString('lost');
+
+        // Pages do not capture anything.
+        $handler = $this->handler(false);
+        $this->assertSame($level, ob_get_level());
     }
 
     public function test_page_submitted_and_cancelled(): void {
