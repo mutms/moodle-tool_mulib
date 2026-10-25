@@ -250,7 +250,7 @@ final class wizard {
      *
      * Every stage the user may go to is a link, those are the valid stages and the first
      * invalid one, which is exactly what resolve_stages() accepts as a requested stage;
-     * the current stage is highlighted, later stages are disabled.
+     * completed and current stages are active, the current stage is highlighted, later stages are disabled.
      *
      * @param core_renderer $output
      * @param array $stages result of resolve_stages(), a list of array{name:string,label:string,valid:bool,current:bool}
@@ -267,6 +267,7 @@ final class wizard {
             $items[] = [
                 'number' => $i + 1,
                 'label' => clean_string($stage['label']),
+                'is_active' => $stage['valid'] || $stage['current'],
                 'is_current' => $stage['current'],
                 'is_link' => $reachable && !$stage['current'],
                 'url' => $this->get_url($pageurl, $stage['name'])->out(false),

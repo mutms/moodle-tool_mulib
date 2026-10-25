@@ -66,6 +66,106 @@
     opacity: 0.65;
 }
 
+/* muform: wizard stepper, vertical in narrow containers and horizontal when there is enough space.
+   Inspired by Bootstrap 6 stepper, own Bootstrap 5 compatible implementation,
+   MuTMS cannot wait for the Bootstrap 6 migration of Moodle. */
+.muform-wizard-stages {
+    container-type: inline-size;
+}
+.muform-stepper {
+    --muform-stepper-size: 2rem;
+    --muform-stepper-gap: 1rem;
+    --muform-stepper-track-size: 0.125rem;
+    --muform-stepper-bg: var(--bs-secondary-bg);
+    --muform-stepper-color: var(--bs-body-color);
+    --muform-stepper-active-bg: var(--bs-primary);
+    --muform-stepper-active-color: var(--bs-white, #fff);
+    display: grid;
+    grid-auto-flow: row;
+    gap: var(--muform-stepper-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.muform-stepper-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--muform-stepper-size) auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+.muform-stepper-number {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--muform-stepper-size);
+    height: var(--muform-stepper-size);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--muform-stepper-color);
+    background-color: var(--muform-stepper-bg);
+    border-radius: 50%;
+}
+/* The connecting line to the next step. */
+.muform-stepper-item::after {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: calc((var(--muform-stepper-size) - var(--muform-stepper-track-size)) * 0.5);
+    width: var(--muform-stepper-track-size);
+    height: calc(100% + var(--muform-stepper-gap));
+    content: "";
+    background-color: var(--muform-stepper-bg);
+}
+.muform-stepper-item:last-child::after {
+    display: none;
+}
+.muform-stepper-item.active .muform-stepper-number,
+.muform-stepper-item.active::after {
+    color: var(--muform-stepper-active-color);
+    background-color: var(--muform-stepper-active-bg);
+}
+/* The line leads to an active step only. */
+.muform-stepper-item.active:not(:has(+ .muform-stepper-item.active))::after {
+    background-color: var(--muform-stepper-bg);
+}
+.muform-stepper-item.current .muform-stepper-number {
+    box-shadow: 0 0 0 0.25rem var(--bs-primary-bg-subtle);
+}
+.muform-stepper-item.current .muform-stepper-label {
+    font-weight: 600;
+}
+.muform-stepper-item.disabled .muform-stepper-label {
+    color: var(--bs-secondary-color);
+}
+.muform-stepper-item a.muform-stepper-label {
+    text-decoration: none;
+}
+.muform-stepper-item a.muform-stepper-label:hover {
+    text-decoration: underline;
+}
+@container (min-width: 30rem) {
+    .muform-stepper {
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+    }
+    .muform-stepper-item {
+        grid-template-rows: var(--muform-stepper-size) auto;
+        grid-template-columns: auto;
+        align-items: start;
+        justify-items: center;
+        text-align: center;
+    }
+    .muform-stepper-item::after {
+        inset-block-start: calc((var(--muform-stepper-size) - var(--muform-stepper-track-size)) * 0.5);
+        inset-inline-start: 50%;
+        width: calc(100% + var(--muform-stepper-gap));
+        height: var(--muform-stepper-track-size);
+    }
+}
+
 /* muform: native dialogs, styled like Bootstrap modals. */
 dialog.muform-dialog {
     --bs-modal-padding: 1rem;

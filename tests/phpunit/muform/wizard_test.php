@@ -252,23 +252,24 @@ final class wizard_test extends \advanced_testcase {
 
         $this->assertStringContainsString('<nav aria-label="' . get_string('muform_steps', 'tool_mulib') . '"', $html);
         $sourceurl = $wizard->get_url($pageurl, 'source')->out(false);
-        $this->assertStringContainsString('<a href="' . s($sourceurl) . '">Source &#60;b&#62;data&#60;/b&#62;</a>', $html);
-        $this->assertStringContainsString('fw-bold" aria-current="step"', $html);
-        $this->assertStringContainsString('<span class="badge rounded-pill text-bg-primary">2</span>', $html);
-        $this->assertStringContainsString('<span>Columns</span>', $html);
+        $link = '<a class="muform-stepper-label stretched-link" href="';
+        $this->assertStringContainsString($link . s($sourceurl) . '">Source &#60;b&#62;data&#60;/b&#62;</a>', $html);
+        $this->assertStringContainsString('<li class="muform-stepper-item active current" aria-current="step">', $html);
+        $this->assertStringContainsString('<span class="muform-stepper-label">Columns</span>', $html);
         // The first invalid stage is reachable, resolve_stages() would accept it as requested.
         $optionsurl = $wizard->get_url($pageurl, 'options')->out(false);
-        $this->assertStringContainsString('<a href="' . s($optionsurl) . '">Options</a>', $html);
-        $this->assertSame(2, substr_count($html, '<a href='));
-        $this->assertStringNotContainsString('text-muted', $html);
+        $this->assertStringContainsString($link . s($optionsurl) . '">Options</a>', $html);
+        $this->assertSame(2, substr_count($html, $link));
+        $this->assertSame(2, substr_count($html, 'muform-stepper-item active'));
+        $this->assertStringNotContainsString('disabled', $html);
 
-        // Later invalid stages are muted text.
+        // Later invalid stages are disabled text.
         $stages = wizard::resolve_stages(['source', 'columns', 'options'], fn() => false, null);
         $html = $wizard->render($PAGE->get_renderer('core'), $stages, $pageurl, $form);
-        $this->assertSame(0, substr_count($html, '<a href='));
-        $this->assertSame(2, substr_count($html, 'text-muted'));
+        $this->assertSame(0, substr_count($html, $link));
+        $this->assertSame(2, substr_count($html, '<li class="muform-stepper-item disabled">'));
         $this->assertSame(1, substr_count($html, 'aria-current="step"'));
-        $this->assertStringContainsString('class="muform-wizard-form col-md-9"', $html);
+        $this->assertStringContainsString('class="muform-wizard-form card"', $html);
         $this->assertStringContainsString('<div class="card-body">', $html);
         $this->assertStringContainsString('<form id="tool_mulib-phpunit-muform-fixtures-simple_form', $html);
         $this->assertStringContainsString('action="' . s($wizard->get_url($pageurl, 'columns')->out(false)) . '"', $html);

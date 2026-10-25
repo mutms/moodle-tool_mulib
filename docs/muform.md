@@ -559,7 +559,9 @@ echo $wizard->render($OUTPUT, $stages, $pageurl, $form);
 
 Wizards are full pages, so they use `redirect()` and `$OUTPUT` directly. The Back button is a
 `reload` element, not `cancel`, because dialogs close on cancel. Cancel and the final submit delete
-the row. `render()` shows the steps on the left and the form on the right.
+the row. `render()` shows a stepper above the form: numbered steps joined by a line, completed and
+current steps highlighted, reachable steps as links. It is vertical in narrow containers and horizontal
+from 30rem width (a CSS container query, so it also works in narrow page regions).
 
 ## Custom fields
 
