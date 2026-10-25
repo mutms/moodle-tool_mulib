@@ -53,8 +53,10 @@ final class cohort_util_test extends \advanced_testcase {
             $expected1 = '/admin/tool/mucohort/cohort.php?id=' . $cohort1->id;
             $expected2 = '/admin/tool/mucohort/cohort.php?id=' . $cohort2->id;
         } else {
-            $expected1 = '/cohort/index.php?contextid=' . $syscontext->id . '&search=' . rawurlencode($cohort1->name);
-            $expected2 = '/cohort/index.php?contextid=' . $catcontext->id . '&search=Cohort+2';
+            $url = new \core\url('/cohort/index.php', ['contextid' => $syscontext->id, 'search' => $cohort1->name]);
+            $expected1 = $url->out(false);
+            $url = new \core\url('/cohort/index.php', ['contextid' => $catcontext->id, 'search' => $cohort2->name]);
+            $expected2 = $url->out(false);
         }
 
         $this->setAdminUser();
