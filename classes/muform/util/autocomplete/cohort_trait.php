@@ -22,13 +22,15 @@ use core\context;
 use stdClass;
 use tool_mulib\local\search_util;
 use tool_mulib\local\context_map;
+use tool_mulib\local\cohort_util;
 use tool_mulib\local\mulib;
 use tool_mulib\local\sql;
 
 /**
  * Cohort search helpers for autocomplete sources of either family.
  *
- * Visible cohorts and cohorts the user may view are offered, with multi-tenancy
+ * Visible cohorts, cohorts the user may view and advanced cohorts with an access record
+ * of the user are offered, with multi-tenancy
  * cohorts of other tenants are not. Cohorts already used by the edited item
  * ("current" ids) are always accepted, whatever changed since.
  *
@@ -54,7 +56,7 @@ trait cohort_trait {
                FROM {cohort} ch
                /* tenantjoin */
                /* capsubquery */
-              WHERE (ch.visible = 1 OR capctx.id IS NOT NULL)
+              WHERE (ch.visible = 1 OR capctx.id IS NOT NULL OR /* access */)
                     /* exclude */ /* searchsql */
            ORDER BY ch.name ASC, ch.id ASC"
         ))
@@ -66,6 +68,7 @@ trait cohort_trait {
                     new sql("(ctx.contextlevel = ? OR ctx.contextlevel = ?)", [CONTEXT_SYSTEM, CONTEXT_COURSECAT])
                 )->wrap("LEFT JOIN (", ")capctx ON capctx.id = ch.contextid")
             )
+            ->replace_comment('access', cohort_util::get_access_record_sql('ch', (int)$USER->id))
             ->replace_comment('searchsql', search_util::get_cohort_search_query(trim($query), 'ch')->wrap('AND ', ''));
 
         $exclude = array_values(array_filter($exclude, fn($id) => is_string($id) && preg_match('/^\d+$/D', $id)));

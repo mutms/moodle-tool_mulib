@@ -77,4 +77,14 @@ final class cohort_util_test extends \advanced_testcase {
         $this->assertSame([$cohort2->id => 'Cohort 2', $cohort1->id => 'Cohort 1'], $names);
         $this->assertSame([], cohort_util::format_cohort_names([]));
     }
+
+    public function test_access_records_without_mucohort(): void {
+        if (mulib::is_mucohort_available()) {
+            $this->markTestSkipped('Access records are tested in tool_mucohort');
+        }
+        $user = $this->getDataGenerator()->create_user();
+        $cohort = $this->getDataGenerator()->create_cohort(['visible' => 0]);
+        $this->assertSame('1=2', cohort_util::get_access_record_sql('c', (int)$user->id)->sql);
+        $this->assertFalse(cohort_util::has_access_record($cohort, (int)$user->id));
+    }
 }

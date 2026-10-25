@@ -24,6 +24,9 @@ use stdClass;
 /**
  * Cohort helpers for MuTMS plugins.
  *
+ * Advanced cohort access records are read here only, the shape of tool_mucohort_access
+ * (mucohortid, userid) is a contract between tool_mucohort and other MuTMS plugins.
+ *
  * @package    tool_mulib
  * @copyright  2026 Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -89,5 +92,47 @@ final class cohort_util {
             }
         }
         return $result;
+    }
+
+    /**
+     * SQL condition matching advanced cohorts in which the user has any access record.
+     *
+     * Users with any access record may use the cohort, the same as with moodle/cohort:view capability.
+     *
+     * @param string $cohortalias alias of the cohort table
+     * @param int $userid
+     * @return sql condition, never true if advanced cohorts are not available
+     */
+    public static function get_access_record_sql(string $cohortalias, int $userid): sql {
+        if (!mulib::is_mucohort_available() || !$userid || isguestuser($userid)) {
+            return new sql('1=2');
+        }
+        return new sql(
+            "EXISTS (SELECT 'x'
+                       FROM {tool_mucohort} mca_mc
+                       JOIN {tool_mucohort_access} mca_a ON mca_a.mucohortid = mca_mc.id
+                      WHERE mca_mc.cohortid = {$cohortalias}.id AND {$cohortalias}.component = 'tool_mucohort'
+                            AND mca_a.userid = ?)",
+            [$userid]
+        );
+    }
+
+    /**
+     * Does the user have any access record in the advanced cohort?
+     *
+     * @param stdClass $cohort cohort record
+     * @param int $userid
+     * @return bool
+     */
+    public static function has_access_record(stdClass $cohort, int $userid): bool {
+        global $DB;
+
+        if (($cohort->component ?? '') !== 'tool_mucohort') {
+            return false;
+        }
+        $sql = self::get_access_record_sql('c', $userid);
+        $sql = (new sql("SELECT 'x' FROM {cohort} c WHERE c.id = ? AND /* access */", [$cohort->id]))
+            ->replace_comment('access', $sql);
+        return $DB->record_exists_sql($sql->sql, $sql->params);
     }
 }
