@@ -37,6 +37,23 @@ final class mulib_test extends \advanced_testcase {
         $this->resetAfterTest();
     }
 
+    public function test_is_mutms_plugin(): void {
+        $this->assertTrue(mulib::is_mutms_plugin('tool_mulib'));
+        $this->assertTrue(mulib::is_mutms_plugin('tool_mutenancy'));
+        $this->assertTrue(mulib::is_mutms_plugin('tool_mucohort'));
+        $this->assertTrue(mulib::is_mutms_plugin('auth_musaml'));
+        $this->assertFalse(mulib::is_mutms_plugin('tool_certificate'));
+        $this->assertFalse(mulib::is_mutms_plugin('local_mutest'));
+        // Not every plugin with "mu" prefix is a MuTMS plugin.
+        $this->assertFalse(mulib::is_mutms_plugin('tool_multilang'));
+        $this->assertFalse(mulib::is_mutms_plugin(''));
+
+        foreach (mulib::MUTMS_PLUGINS as $component) {
+            [$type, $name] = \core_component::normalize_component($component);
+            $this->assertSame($component, $type . '_' . $name);
+        }
+    }
+
     public function test_is_mucatalog_available(): void {
         $this->assertSame(
             file_exists(__DIR__ . '/../../../../../tool/mucatalog/version.php'),

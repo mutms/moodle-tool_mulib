@@ -32,6 +32,44 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mulib {
+    /** @var string[] components of all MuTMS plugins, tool_certificate is not a MuTMS plugin */
+    public const array MUTMS_PLUGINS = [
+        'auth_musaml',
+        'block_mucertify_my',
+        'block_muprog_my',
+        'block_muprogmyoverview',
+        'certificateelement_mucertify',
+        'certificateelement_muprog',
+        'customfield_mutrain',
+        'enrol_muprog',
+        'mod_mubook',
+        'mod_mudeck',
+        'tool_mucatalog',
+        'tool_mucertify',
+        'tool_mucohort',
+        'tool_muhome',
+        'tool_mulib',
+        'tool_muloginas',
+        'tool_muprog',
+        'tool_mupwned',
+        'tool_murelation',
+        'tool_musudo',
+        'tool_mutenancy',
+        'tool_mutrain',
+    ];
+
+    /**
+     * Is the component a MuTMS plugin?
+     *
+     * NOTE: the plugin does not need to be installed.
+     *
+     * @param string $component frankenstyle component name
+     * @return bool
+     */
+    public static function is_mutms_plugin(string $component): bool {
+        return in_array($component, self::MUTMS_PLUGINS, true);
+    }
+
     /**
      * Is catalogue plugin available?
      *
