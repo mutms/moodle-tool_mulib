@@ -197,6 +197,15 @@ final class mulib {
     }
 
     /**
+     * Is advanced cohort management plugin available?
+     *
+     * @return bool
+     */
+    public static function is_mucohort_available(): bool {
+        return class_exists(\tool_mucohort\local\management::class);
+    }
+
+    /**
      * Is multi-tenancy available?
      *
      * @return bool

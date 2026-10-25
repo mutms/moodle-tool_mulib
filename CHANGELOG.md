@@ -12,6 +12,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - mulib::is_mutms_plugin() and mulib::MUTMS_PLUGINS list of all MuTMS plugin components
 - reportbuilder_util::is_downloading() and reportbuilder_util::format_badge() helpers for report builder reports
 - import_util for parsing of uploaded or pasted CSV data with automatic delimiter detection
+- mulib::is_mucohort_available() and cohort_util with links to cohort management
 
 ### Changed
 
