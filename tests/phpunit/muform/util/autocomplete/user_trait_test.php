@@ -55,6 +55,7 @@ final class user_trait_test extends \advanced_testcase {
         $source = new site_users($syscontext->id);
         $this->assertSame([$syscontext->id], $source->get_args());
 
+        // Suspended users are allowed by default.
         $result = $source->search('Zeta', 50, []);
         $this->assertEqualsCanonicalizing([$u1->id, $u2->id, $u5->id], array_keys($result));
         $this->assertStringContainsString('Anna Zeta', $result[$u1->id]);
@@ -66,15 +67,16 @@ final class user_trait_test extends \advanced_testcase {
         $this->assertSame([(int)$u1->id], array_keys($source->search('anna@', 50, [])));
         $this->assertArrayHasKey($u1->id, $source->search('', 50, []));
 
-        $labels = $source->labels([(string)$u1->id, (string)$u3->id, (string)$u4->id, 'x', '999999']);
-        $this->assertSame([(int)$u1->id], array_keys($labels));
-        $this->assertSame([$u5->id => 'Suspended user'], $source->validate([(string)$u1->id, (string)$u5->id]));
+        // Existing values are labelled including suspended users.
+        $labels = $source->labels([(string)$u1->id, (string)$u3->id, (string)$u4->id, (string)$u5->id, 'x', '999999']);
+        $this->assertEqualsCanonicalizing([(int)$u1->id, (int)$u5->id], array_keys($labels));
+        $this->assertSame([], $source->validate([(string)$u1->id, (string)$u5->id]));
 
         $single = new site_user($syscontext->id);
         $this->assertStringContainsString('Bert Zeta', $single->label((string)$u2->id));
         $this->assertNull($single->label((string)$u3->id));
         $this->assertNull($single->validate((string)$u1->id));
-        $this->assertSame('Suspended user', $single->validate((string)$u5->id));
+        $this->assertNull($single->validate((string)$u5->id));
         $this->assertEqualsCanonicalizing([$u1->id, $u2->id, $u5->id], array_keys($single->search('Zeta', 50)));
     }
 
@@ -118,6 +120,45 @@ final class user_trait_test extends \advanced_testcase {
         };
         $this->assertSame([(int)$u2->id], array_keys($source->search('Zeta', 50, [])));
         $this->assertSame([(int)$u2->id], array_keys($source->labels([(string)$u1->id, (string)$u2->id])));
+    }
+
+    public function test_disallow_suspended_users(): void {
+        $u1 = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        $source = new class extends \tool_mulib\muform\autocompletemany\base {
+            use \tool_mulib\muform\util\autocomplete\user_trait;
+
+            #[\Override]
+            public function get_args(): array {
+                return [];
+            }
+
+            #[\Override]
+            public function search(string $query, int $maxitems, array $exclude): ?array {
+                return $this->search_users(system::instance(), $query, $maxitems, $exclude);
+            }
+
+            #[\Override]
+            public function labels(array $values): array {
+                return $this->user_labels(system::instance(), $values);
+            }
+
+            #[\Override]
+            public function validate(array $values): array {
+                return $this->validate_users($values);
+            }
+
+            /**
+             * Suspended users must not be selected.
+             *
+             * @return bool
+             */
+            protected function allow_suspended_users(): bool {
+                return false;
+            }
+        };
+        $this->assertSame([$u1->id => 'Suspended user'], $source->validate([(string)$u1->id]));
+        $this->assertArrayNotHasKey((int)$u1->id, $source->search('', 50, []));
+        $this->assertArrayHasKey((int)$u1->id, $source->labels([(string)$u1->id]));
     }
 
     public function test_capability(): void {

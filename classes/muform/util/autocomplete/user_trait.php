@@ -48,6 +48,11 @@ trait user_trait {
 
         $search = trim($query) === '' ? new sql('') : search_util::get_user_search_query(trim($query), 'u', $context);
         $orderby = search_util::get_user_search_orderby(trim($query), 'u', $context);
+        if (!$this->allow_suspended_users()) {
+            // Suspended users are not offered, existing values are still labelled.
+            $suspended = new sql('u.suspended = 0');
+            $where = $where ? sql::join(' AND ', [$where->wrap('(', ')'), $suspended]) : $suspended;
+        }
         $sql = $this->users_sql($context, $search, $exclude, $where);
         $sql = $sql->replace_comment('orderby', $orderby->wrap('ORDER BY ', ''));
 
@@ -91,7 +96,21 @@ trait user_trait {
     }
 
     /**
-     * Suspended users must not be selected.
+     * May suspended users be selected?
+     *
+     * Suspended users are allowed by default, override in sources where they are not valid values,
+     * the search and validation follow it.
+     *
+     * @return bool
+     */
+    protected function allow_suspended_users(): bool {
+        return true;
+    }
+
+    /**
+     * Why users must not be selected, suspended users are refused only if not allowed.
+     *
+     * Deleted, unconfirmed and guest users are never offered by the search and labels.
      *
      * @param string[] $ids
      * @return array [id => error text]
@@ -99,6 +118,9 @@ trait user_trait {
     protected function validate_users(array $ids): array {
         global $DB;
 
+        if ($this->allow_suspended_users()) {
+            return [];
+        }
         $ids = array_values(array_filter($ids, fn($id) => is_string($id) && preg_match('/^\d+$/D', $id)));
         if (!$ids) {
             return [];
