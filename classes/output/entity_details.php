@@ -32,11 +32,16 @@ class entity_details implements \core\output\named_templatable, \core\output\ren
     /**
      * Add entity detail.
      *
+     * Empty values are replaced with a non-breaking space to keep the row height.
+     *
      * @param string $property
-     * @param string|null $value
+     * @param string|null $value html
      * @return void
      */
     public function add(string $property, ?string $value): void {
+        if ($value === null || trim($value) === '') {
+            $value = '&nbsp;';
+        }
         $this->rows[] = ['property' => $property, 'value' => $value];
     }
 

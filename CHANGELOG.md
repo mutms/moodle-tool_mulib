@@ -19,5 +19,6 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Fixed
 
+- entity_details replaces empty values with a non-breaking space to keep the row height
 - notifications table uses the same striped, hover and bordered styling as other management tables
 

@@ -56,4 +56,21 @@ final class entity_details_test extends \advanced_testcase {
             $OUTPUT->render($details)
         );
     }
+
+    public function test_render_empty(): void {
+        global $OUTPUT;
+
+        $details = new entity_details();
+        $details->add('A', '');
+        $details->add('B', null);
+        $details->add('C', ' ');
+        $this->assertSame(
+            "<dl class=\"row\">\n" .
+            "    <dt class=\"col-sm-3\">A</dt><dd class=\"col-sm-9\">&nbsp;</dd>\n" .
+            "    <dt class=\"col-sm-3\">B</dt><dd class=\"col-sm-9\">&nbsp;</dd>\n" .
+            "    <dt class=\"col-sm-3\">C</dt><dd class=\"col-sm-9\">&nbsp;</dd>\n" .
+            "</dl>",
+            $OUTPUT->render($details)
+        );
+    }
 }
