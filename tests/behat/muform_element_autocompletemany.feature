@@ -96,7 +96,8 @@ Feature: muform autocompletemany element
     When I press "Save changes"
     Then I should see "Form is invalid" in the "#muform_state" "css_element"
     And I should see "Too many members" in the "[data-muform-name='members'] .invalid-feedback" "css_element"
-    And I should see "Suspended user" in the "[data-muform-name='members'] .invalid-feedback" "css_element"
+    # Suspended users are allowed, the same as in 4.5.
+    And I should not see "Suspended user" in the "[data-muform-name='members'] .invalid-feedback" "css_element"
     When I click on "Remove User Two" "button" in the "[data-muform-name='members']" "css_element"
     Then the following muform fields match:
       | members | User One |

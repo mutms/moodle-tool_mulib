@@ -105,14 +105,15 @@ Feature: muform autocomplete element
       | owner    | User One |
       | reviewer | User Two |
     And I should see "user1@example.com" in the "[data-muform-name='owner']" "css_element"
+    # Suspended users are allowed, the same as in 4.5.
     When I press "Save changes"
-    Then I should see "Form is invalid" in the "#muform_state" "css_element"
-    And I should see "Suspended user" in the "[data-muform-name='reviewer'] .invalid-feedback" "css_element"
+    Then I should see "Form submitted" in the "#muform_state" "css_element"
+    And I should not see "null" in the "#submitted_owner" "css_element"
+    And I should not see "null" in the "#submitted_reviewer" "css_element"
     When I set the following muform fields:
       | reviewer | |
     And I press "Save changes"
     Then I should see "Form submitted" in the "#muform_state" "css_element"
-    And I should not see "null" in the "#submitted_owner" "css_element"
     And I should see "reviewer: null" in the "#submitted_reviewer" "css_element"
     And the following muform fields match:
       | owner | User One |
