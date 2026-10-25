@@ -170,7 +170,9 @@ download, also in a dialog.
 | `checkbox`         | `(name, label, text, attributes)`                                            | `1` or `0`                                                 | `0`              |
 | `yesno`            | `(name, label)`                                                              | `1` or `0`                                                 | never empty      |
 | `radios`           | `(name, label, options, inline)`                                             | option key or `null`                                       | `null`           |
+| `radiocards`       | `(name, label, options, descriptions = [])`                                  | option key or `null`                                       | `null`           |
 | `checkboxes`       | `(name, label, options, inline)`                                             | `string[]` of option keys                                  | `[]`             |
+| `checkboxcards`    | `(name, label, options, descriptions = [])`                                  | `string[]` of option keys                                  | `[]`             |
 | `select`           | `(name, label, options, attributes)`                                         | option key or `null`                                       | `null`           |
 | `multiselect`      | `(name, label, options, attributes)`                                         | `string[]` of option keys                                  | `[]`             |
 | `hidden`           | `(name, type = null)`                                                        | `string`, `int` for `param::INT`, or `null`                | `null`           |
@@ -347,6 +349,17 @@ if cleaning would change it, that is an error.
 `tool_mulib\muform\util\options` object when you need groups. Labels must be strings, so convert
 `lang_string` values with `array_map('strval', ...)`. An empty key in `select` is the "Choose..."
 option and returns `null`. For short lists like roles, `checkboxes` is nicer than `multiselect`.
+
+### Cards
+
+`radiocards` and `checkboxcards` work exactly like `radios` and `checkboxes`, but every option is a
+card with its title and an optional plain text description underneath, indexed by the same keys as
+the options. Descriptions are always visible and linked to the input with `aria-describedby`, the
+whole card is clickable. Use them instead of help buttons when users must understand what the
+options mean before choosing, for example cohort types or consequences of a conversion. Cards are
+always stacked, there is no inline variant. The look is inspired by Bootstrap 6 field group cards.
+Descriptions are plain text on purpose: the clickable card cannot contain links or other interactive
+content, and screen readers read the description as text.
 
 ### Yes or No
 
