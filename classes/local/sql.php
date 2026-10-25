@@ -126,6 +126,32 @@ final class sql implements \ArrayAccess {
     }
 
     /**
+     * Create a new SQL fragment with all parameters renamed.
+     *
+     * Useful for APIs that accept only their own parameter names, such as report builder.
+     *
+     * @param callable $generator returns a new unique parameter name without colon, called once per parameter
+     * @return sql new query instance
+     */
+    public function rename_params(callable $generator): self {
+        $map = [];
+        $newparams = [];
+        foreach ($this->params as $key => $value) {
+            $newkey = $generator();
+            if (!is_string($newkey) || !preg_match('/^[a-z][a-z0-9_]*$/D', $newkey) || array_key_exists($newkey, $newparams)) {
+                throw new coding_exception('Invalid parameter name generated');
+            }
+            $map[$key] = $newkey;
+            $newparams[$newkey] = $value;
+        }
+        $callback = function ($match) use ($map) {
+            return ':' . $map[$match[1]];
+        };
+        $newsql = preg_replace_callback(self::NAMED_REGEX, $callback, $this->sql);
+        return new self($newsql, $newparams);
+    }
+
+    /**
      * Export query in a raw executable format suitable for database console in IDEs.
      *
      * NOTE: to be used for debugging only!

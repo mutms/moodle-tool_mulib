@@ -200,6 +200,50 @@ final class sql_test extends \advanced_testcase {
     }
 
     /**
+     * Test parameter renaming.
+     *
+     * @covers \tool_mulib\local\sql::rename_params
+     */
+    public function test_rename_params(): void {
+        $sql = new sql('a = :a AND c = :c::text AND d = :a2', ['a' => 1, 'c' => 3, 'a2' => 4, 'x' => 9]);
+        $i = 0;
+        $result = $sql->rename_params(function () use (&$i) {
+            $i++;
+            return 'rbparam' . $i;
+        });
+        $this->assertNotSame($sql, $result);
+        $this->assertSame('a = :rbparam1 AND c = :rbparam2::text AND d = :rbparam3', $result->sql);
+        $this->assertSame(['rbparam1' => 1, 'rbparam2' => 3, 'rbparam3' => 4], $result->params);
+
+        $sql = new sql('a = ? AND b = ?', [1, 2]);
+        $names = ['px', 'py'];
+        $result = $sql->rename_params(function () use (&$names) {
+            return array_shift($names);
+        });
+        $this->assertSame('a = :px AND b = :py', $result->sql);
+        $this->assertSame(['px' => 1, 'py' => 2], $result->params);
+
+        $sql = new sql('a = 1');
+        $result = $sql->rename_params(fn() => 'xx');
+        $this->assertSame('a = 1', $result->sql);
+        $this->assertSame([], $result->params);
+
+        $sql = new sql('a = :a AND b = :b', ['a' => 1, 'b' => 2]);
+        try {
+            $sql->rename_params(fn() => 'xx');
+            $this->fail('Exception expected');
+        } catch (moodle_exception $ex) {
+            $this->assertInstanceOf(coding_exception::class, $ex);
+        }
+        try {
+            $sql->rename_params(fn() => 'Invalid');
+            $this->fail('Exception expected');
+        } catch (moodle_exception $ex) {
+            $this->assertInstanceOf(coding_exception::class, $ex);
+        }
+    }
+
+    /**
      * Test wrapping.
      *
      * @covers \tool_mulib\local\sql::wrap

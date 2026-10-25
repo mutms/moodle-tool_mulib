@@ -6,6 +6,10 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ## [Unreleased]
 
+### Added
+
+- sql::rename_params() for APIs that accept only their own parameter names, for example report builder base conditions
+
 ### Changed
 
 - remove mulib::clean_string(), standard clean_string() is used instead
