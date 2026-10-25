@@ -70,6 +70,7 @@
    Inspired by Bootstrap 6 stepper, own Bootstrap 5 compatible implementation,
    MuTMS cannot wait for the Bootstrap 6 migration of Moodle. */
 .muform-wizard-stages {
+    /* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator yet */
     container-type: inline-size;
 }
 .muform-stepper {
@@ -146,6 +147,8 @@
 .muform-stepper-item a.muform-stepper-label:hover {
     text-decoration: underline;
 }
+
+/* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator yet */
 @container (min-width: 30rem) {
     .muform-stepper {
         grid-auto-columns: 1fr;
