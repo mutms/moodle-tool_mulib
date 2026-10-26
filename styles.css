@@ -7,33 +7,63 @@
 }
 
 /* muform: card options of radiocards and checkboxcards elements, the whole card is clickable.
-   Inspired by Bootstrap 6 field group cards, own Bootstrap 5 compatible implementation. */
+   Inspired by Bootstrap 6 field group cards, own Bootstrap 5 compatible implementation.
+   Unlike Bootstrap 6 every card has a visible border with the contrast of input borders
+   and the selected card is marked by the primary colour, not only by a faint background. */
 .muform .muform-cards {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
 }
 .muform .muform-card {
     position: relative;
     margin: 0;
     padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-    border: var(--bs-border-width) solid transparent;
+    border: var(--bs-border-width) solid var(--bs-gray-500);
     border-radius: var(--bs-border-radius-lg);
     cursor: pointer;
 }
-.muform .muform-card:hover,
-.muform .muform-card:has(:checked) {
-    background-color: var(--bs-tertiary-bg);
+.muform .muform-card:hover {
+    background-color: var(--bs-secondary-bg);
 }
 .muform .muform-card:has(:checked) {
-    border-color: var(--bs-border-color);
+    border-color: var(--bs-primary);
+    background-color: var(--bs-primary-bg-subtle);
+    /* Thicker border without moving the content. */
+    box-shadow: inset 0 0 0 var(--bs-border-width) var(--bs-primary);
 }
 .muform .muform-card:has(:focus-visible) {
     box-shadow: 0 0 0 var(--bs-focus-ring-width, 0.25rem) var(--bs-focus-ring-color);
 }
+.muform .muform-card:has(:checked):has(:focus-visible) {
+    box-shadow:
+        inset 0 0 0 var(--bs-border-width) var(--bs-primary),
+        0 0 0 var(--bs-focus-ring-width, 0.25rem) var(--bs-focus-ring-color);
+}
 .muform .muform-card:has(:disabled) {
     cursor: default;
+}
+/* Locked selection stays readable, the disabled radio says it cannot be changed. */
+.muform .muform-card:has(:disabled):not(:has(:checked)) {
     opacity: 0.65;
+}
+.muform .muform-card .form-check-input:disabled:checked ~ .form-check-label {
+    opacity: 1;
+}
+.muform .muform-card:has(:disabled):not(:has(:checked)):hover {
+    background-color: transparent;
+}
+
+@media (forced-colors: active) {
+    .muform .muform-card {
+        /* stylelint-disable-next-line csstree/validator -- system colours are not known to the validator */
+        border-color: CanvasText;
+    }
+    .muform .muform-card:has(:checked) {
+        border-color: Highlight;
+        outline: var(--bs-border-width) solid Highlight;
+        outline-offset: calc(-2 * var(--bs-border-width));
+    }
 }
 .muform .muform-card .form-check-input {
     position: relative;
