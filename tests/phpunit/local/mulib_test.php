@@ -197,4 +197,21 @@ final class mulib_test extends \advanced_testcase {
         // It can be converted back to raw UTF-8 characters.
         $this->assertSame(\core_text::entities_to_utf8($string), \core_text::entities_to_utf8($cleaned));
     }
+
+    public function test_uuid7(): void {
+        $before = (int)floor(microtime(true) * 1000);
+        $uuid = mulib::uuid7();
+        $after = (int)floor(microtime(true) * 1000);
+
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $uuid);
+        $ms = hexdec(str_replace('-', '', substr($uuid, 0, 13)));
+        $this->assertGreaterThanOrEqual($before, $ms);
+        $this->assertLessThanOrEqual($after, $ms);
+
+        $uuids = [];
+        for ($i = 0; $i < 100; $i++) {
+            $uuids[] = mulib::uuid7();
+        }
+        $this->assertCount(100, array_unique($uuids));
+    }
 }

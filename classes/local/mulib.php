@@ -227,6 +227,26 @@ final class mulib {
     }
 
     /**
+     * Generate UUID version 7 - time ordered, see RFC 9562.
+     *
+     * NOTE: core \core\uuid generates only version 4 UUIDs.
+     *
+     * @return string lowercase UUID in the 8-4-4-4-12 format
+     */
+    public static function uuid7(): string {
+        $ms = (int)floor(microtime(true) * 1000);
+        $bytes = pack('J', $ms);
+        $bytes = substr($bytes, 2, 6) . random_bytes(10);
+        // Version 7 in the high nibble of byte 6.
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x70);
+        // Variant 10xx in the high bits of byte 8.
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+        $hex = bin2hex($bytes);
+        return substr($hex, 0, 8) . '-' . substr($hex, 8, 4) . '-' . substr($hex, 12, 4) . '-'
+            . substr($hex, 16, 4) . '-' . substr($hex, 20, 12);
+    }
+
+    /**
      * Encode all dangerous characters and named html entities as
      * numeric html entities.
      *
