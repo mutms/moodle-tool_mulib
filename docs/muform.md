@@ -486,7 +486,7 @@ fixture and feature, they show the usual set of scenarios. Fixture pages must ch
 ## JavaScript
 
 Every element has an ES module in `js/esm/src/muform/element/<type>.ts`. The form loads one module
-per element on the page. Build with `npx grunt esm` from the Moodle root and commit the build.
+per element on the page. Build with `nvm use && npx grunt esm` from the plugin directory and commit the build.
 
 A module exports a class based on `Element`, or on `NativeElement` for normal inputs. The form code
 never touches the markup inside an element; it reads `getValue()`, updates `state` and calls

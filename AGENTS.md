@@ -126,8 +126,9 @@ Capability: `tool/mulib:useextdb`.
   install, upgrade, backups, PHPUnit, Behat and code checks, and what `mpd reset` destroys.
 - Namespaces: `tool_mulib\muform\` forms, `tool_mulib\local\` internal APIs, `tool_mulib\output\`
   renderables, `tool_mulib\route\` REST routes (muform endpoints are browser only).
-- JS lives in `js/esm/src` (TypeScript), build from the Moodle root:
-  `npx grunt esm`, check with `npx eslint public/admin/tool/mulib/js/esm`,
+- JS lives in `js/esm/src` (TypeScript). Setup once in the Moodle root: `nvm install && npm install`.
+  Build from the mulib directory (grunt then builds only this plugin): `nvm use && npx grunt esm`.
+  From the Moodle root check with `npx eslint public/admin/tool/mulib/js/esm`,
   `npx jest public/admin/tool/mulib/js/esm/tests`, `npx stylelint public/admin/tool/mulib/styles.css`
   (no `!important`).
 - PHP: `vendor/bin/phpunit --testsuite tool_mulib_testsuite`, `mpci phpcs --max-warnings 0 <plugin dir>`.
