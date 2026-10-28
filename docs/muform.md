@@ -392,6 +392,8 @@ $dm->disable_if('priority', 'level', 'in', ['low', 'none']);
 
 The operators are `eq`, `neq`, `in`, `notin`, `checked`, `notchecked`, `empty` and `notempty`. Rules
 look at values only, never at whether another element is hidden, so the result is always predictable.
+Rules compare the same value as `get_data()` returns: an empty `duration` is `0`, so use
+`hide_if('x', 'interval', 'eq', 0)` rather than `empty`.
 A rule on a section or button row applies to everything inside it. The browser uses exactly the same
 logic. A validator can ask `is_hidden()` on the display manager, but that only says what the browser
 would show.
