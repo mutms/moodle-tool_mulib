@@ -198,6 +198,30 @@ final class mulib_test extends \advanced_testcase {
         $this->assertSame(\core_text::entities_to_utf8($string), \core_text::entities_to_utf8($cleaned));
     }
 
+    public function test_json_encode(): void {
+        $data = ['name' => 'Žluťoučký kůň', 'url' => 'https://example.com/a/b', 'list' => [1, 2], 'empty' => new \stdClass()];
+        $this->assertSame(
+            '{"name":"Žluťoučký kůň","url":"https://example.com/a/b","list":[1,2],"empty":{}}',
+            mulib::json_encode($data)
+        );
+        $expected = <<<'JSON'
+{
+    "name": "Žluťoučký kůň",
+    "url": "https://example.com/a/b",
+    "list": [
+        1,
+        2
+    ],
+    "empty": {}
+}
+JSON;
+        $this->assertSame($expected, mulib::json_encode($data, true));
+        $this->assertSame('null', mulib::json_encode(null));
+
+        $this->expectException(\JsonException::class);
+        mulib::json_encode("\xB1\x31");
+    }
+
     public function test_uuid7(): void {
         $before = (int)floor(microtime(true) * 1000);
         $uuid = mulib::uuid7();

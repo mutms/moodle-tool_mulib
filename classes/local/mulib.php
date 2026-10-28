@@ -227,6 +227,24 @@ final class mulib {
     }
 
     /**
+     * Encode JSON data in a consistent way for storage in database and files.
+     *
+     * Unicode characters and slashes are not escaped.
+     *
+     * @param mixed $data
+     * @param bool $pretty true means human readable format with indentation
+     * @return string
+     * @throws \JsonException if data cannot be encoded
+     */
+    public static function json_encode(mixed $data, bool $pretty = false): string {
+        $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
+        if ($pretty) {
+            $flags |= JSON_PRETTY_PRINT;
+        }
+        return json_encode($data, $flags);
+    }
+
+    /**
      * Generate UUID version 7 - time ordered, see RFC 9562.
      *
      * NOTE: core \core\uuid generates only version 4 UUIDs.

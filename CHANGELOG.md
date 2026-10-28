@@ -14,6 +14,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - import_util for parsing of uploaded or pasted CSV data with automatic delimiter detection
 - mulib::is_mucohort_available() and cohort_util with links to cohort management
 - mulib::uuid7() generator of time ordered UUIDs
+- mulib::json_encode() for consistent encoding of stored JSON data
 
 ### Changed
 

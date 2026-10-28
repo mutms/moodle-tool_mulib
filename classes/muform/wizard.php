@@ -156,7 +156,7 @@ final class wizard {
     public function set_data(array $data): void {
         global $DB;
 
-        $this->record->jsondata = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $this->record->jsondata = \tool_mulib\local\mulib::json_encode($data);
         $DB->set_field('tool_mulib_muform_wizard', 'jsondata', $this->record->jsondata, ['id' => $this->record->id]);
     }
 
