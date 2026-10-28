@@ -235,7 +235,7 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
 
     const items = results.kind === 'list' ? results.items : [];
     const fieldClass = disabled ? ' disabled' : '';
-    const pillClass = (item: Selected): string => (item.error ? 'text-bg-danger' : 'bg-white text-body border fw-normal');
+    const pillClass = (item: Selected): string => (item.error ? 'text-bg-danger' : 'bg-secondary text-dark fw-normal');
     const closeClass = (item: Selected): string => (item.error ? 'btn-close btn-close-white' : 'btn-close');
     const empty = results.kind === 'list' && items.length === 0;
 
@@ -246,16 +246,17 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
                 {selected.map((item) => (
                     <span key={item.value} className={`badge d-inline-flex align-items-center gap-1 ${pillClass(item)}`}
                         title={item.error ?? undefined} data-muform-autocomplete-pill={item.value}>
-                        <span dangerouslySetInnerHTML={{__html: item.label}}></span>
-                        {item.error && <span className="visually-hidden">{item.error}</span>}
                         {!disabled && (
                             <button type="button" className={closeClass(item)} style={{fontSize: '.6em'}}
+                                data-bs-theme={item.error ? undefined : 'light'}
                                 aria-label={strings.remove.replace('{$a}', labelText(item.label))}
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     remove(item.value, true);
                                 }}></button>
                         )}
+                        <span dangerouslySetInnerHTML={{__html: item.label}}></span>
+                        {item.error && <span className="visually-hidden">{item.error}</span>}
                     </span>
                 ))}
                 <input

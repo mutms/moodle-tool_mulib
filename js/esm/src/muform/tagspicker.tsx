@@ -252,7 +252,7 @@ export default function TagsPicker(
     };
 
     const fieldClass = disabled ? ' disabled' : '';
-    const pillClass = (tag: Tag): string => (tag.error ? 'text-bg-danger' : 'bg-secondary-subtle text-body fw-normal');
+    const pillClass = (tag: Tag): string => (tag.error ? 'text-bg-danger' : 'bg-secondary text-dark fw-normal');
     const closeClass = (tag: Tag): string => (tag.error ? 'btn-close btn-close-white' : 'btn-close');
     const empty = results.kind === 'list' && items.length === 0;
     const showlist = open && suggest && (results.kind !== 'list' || items.length > 0 || query !== '');
@@ -264,16 +264,17 @@ export default function TagsPicker(
                 {tags.map((tag) => (
                     <span key={tag.name} className={`badge d-inline-flex align-items-center gap-1 ${pillClass(tag)}`}
                         title={tag.error ?? undefined} data-muform-tags-pill={tag.name}>
-                        <span>{tag.name}</span>
-                        {tag.error && <span className="visually-hidden">{tag.error}</span>}
                         {!disabled && (
                             <button type="button" className={closeClass(tag)} style={{fontSize: '.6em'}}
+                                data-bs-theme={tag.error ? undefined : 'light'}
                                 aria-label={strings.remove.replace('{$a}', tag.name)}
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     remove(tag.name, true);
                                 }}></button>
                         )}
+                        <span>{tag.name}</span>
+                        {tag.error && <span className="visually-hidden">{tag.error}</span>}
                     </span>
                 ))}
                 <input
