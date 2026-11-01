@@ -25,7 +25,7 @@
  */
 
 $string['environment_sqlsrv_incompatible'] = 'MS SQL Server is not compatible with MuTMS plugins.';
-$string['environment_windows_unsupported'] = 'MS Windows is not supported as web server for use with MuTMS plugins. ';
+$string['environment_windows_unsupported'] = 'MS Windows is not supported as web server for use with MuTMS plugins.';
 $string['extdb'] = 'External databases';
 $string['extdb_exception'] = 'Error communicating with external database';
 $string['extdb_queries'] = 'External database queries';
