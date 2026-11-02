@@ -16,6 +16,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - mulib::uuid7() generator of time ordered UUIDs
 - mulib::json_encode() for consistent encoding of stored JSON data
 - course_trait with course search helpers for autocomplete sources
+- mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings and docs/translations.md
 
 ### Changed
 

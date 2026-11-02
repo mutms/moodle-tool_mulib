@@ -58,6 +58,11 @@ final class mulib {
         'tool_mutrain',
     ];
 
+    /** @var string[] translations shipped in lang/ of all MuTMS plugins, tested by tool_mulib */
+    public const array TRANSLATIONS = [
+        'cs',
+    ];
+
     /**
      * Is the component a MuTMS plugin?
      *

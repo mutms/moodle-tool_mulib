@@ -132,6 +132,9 @@ Capability: `tool/mulib:useextdb`.
   `npx jest public/admin/tool/mulib/js/esm/tests`, `npx stylelint public/admin/tool/mulib/styles.css`
   (no `!important`).
 - PHP: `vendor/bin/phpunit --testsuite tool_mulib_testsuite`, `mpci phpcs --max-warnings 0 <plugin dir>`.
+- Language packs of all MuTMS plugins follow `docs/translations.md`. `mulib::TRANSLATIONS` lists the
+  languages every plugin must ship, `tests/phpunit/lang_test.php` fails on missing strings. In mpd,
+  `mdl-lang-check <plugin dir>` also checks placeholders, HTML tags and order.
 - Behat: one run at a time (single test site); `php admin/cli/purge_caches.php` after adding classes,
   `behat-init` after adding steps; fail dumps in the behat dataroot `behat_faildump`; summaries say
   "1 scenario" in singular.
