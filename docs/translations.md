@@ -21,10 +21,31 @@ Read this before adding, changing or translating any string.
 mdl-lang-check public/admin/tool/muprog
 ```
 
+- `mdl-lang-normalise public/admin/tool/muprog` sorts the strings and writes them in the standard
+  form, `--check` only reports files that are not normalised.
 - Then have a native speaker who knows the feature review the result plugin by plugin.
 
 - Packs installed from AMOS into `$CFG->dataroot/lang/<lang>/` override `lang/<lang>/` of a plugin
   key by key, so a change here is not visible on a site where AMOS has the same key.
+
+## Backporting
+
+Translate on the newest branch, then copy the translations to older branches with mpd, run in the
+older project:
+
+```
+cd /srv/projects/mutms45
+mdl-lang-backport --dry-run /srv/projects/mutms53 admin/tool/muprog
+mdl-lang-backport /srv/projects/mutms53 admin/tool/muprog
+mdl-lang-backport --changed /srv/projects/mutms53 admin/tool/muprog
+mdl-lang-check admin/tool/muprog
+```
+
+- The default run copies only strings with the same English text in both branches, those are safe.
+- `--changed` copies strings whose English differs and lists each with both English texts. Review
+  and fix every one of them by hand, the translation follows the newer English.
+- Strings that exist only in the older branch are reported as untranslated, translate them there.
+- Existing translations are kept, `--update` overwrites them when the English is the same.
 
 ## What must stay unchanged
 
