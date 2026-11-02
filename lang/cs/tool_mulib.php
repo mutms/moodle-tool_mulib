@@ -24,6 +24,7 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['environment_oracle_incompatible'] = 'Databáze Oracle není kompatibilní s pluginy MuTMS.';
 $string['environment_windows_unsupported'] = 'Systém MS Windows není podporován jako webový server pro použití s pluginy MuTMS.';
 $string['extdb'] = 'Externí databáze';
 $string['extdb_exception'] = 'Chyba při komunikaci s externí databází';
@@ -78,4 +79,5 @@ $string['privacy:metadata:timenotified'] = 'Čas, kdy byl uživatel upozorněn';
 $string['privacy:metadata:tool_mulib_notification_user:tableexplanation'] = 'Sledovaná oznámení uživatelů';
 $string['privacy:metadata:userid'] = 'Uživatel';
 $string['task_context_map_cron'] = 'Cron mapy kontextů';
+$string['toomanyitemsfound'] = 'Nalezeno příliš mnoho položek (nejvýše {$a})';
 $string['toomanyrecords'] = 'Nalezeno příliš mnoho záznamů';
