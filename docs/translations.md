@@ -73,6 +73,7 @@ What the terms mean, for every language. The English word alone is often not eno
 | curated cohort | A cohort with membership managed by hand, as opposed to rules. |
 | access (cohort) | The list of users with delegated permissions for one cohort. |
 | program allocation | A user being put into a program. Certifications use "assignment" instead. |
+| certification assignment | A user being put into a certification. It allocates the user to the programs of the certification. |
 | certification period | The time a user holds a certification. One user has several periods over time. |
 | certification window | The time limit for getting the certification, opens and closes within a period. |
 | revoked | A certification taken away from the user by someone else. Differs from expired. |
@@ -82,6 +83,15 @@ What the terms mean, for every language. The English word alone is often not eno
 | delete | The thing stops existing. |
 | remove | The thing stays, only its link to something else goes away. |
 | cleanup task | A scheduled maintenance task. It often does more than delete old data. |
+
+### Allocation and assignment
+
+English uses "allocate" for programs and tenants and "assign" for certifications (and roles, as
+core). The two words matter where both levels meet: assigning a user to a certification allocates
+them to its programs, so certification strings such as "Not allocated" or "users are de-allocated
+from programs" talk about program allocations. Translations must keep program allocation and
+certification assignment apart. Tenant allocation may take either word, choose what reads naturally
+for moving an account into an organisation.
 
 ## Czech
 
@@ -96,7 +106,7 @@ Core Moodle calls a site `stránky`, and it is used here too, except where it co
 | tenant manager | správce klienta | |
 | tenant user / global user | uživatel klienta / globální uživatel | |
 | associated user | přidružený uživatel | |
-| allocate to tenant | přiřadit ke klientovi | Differs from programs. |
+| allocate to tenant | přiřadit ke klientovi | English says allocate, Czech uses the certification word. |
 | cohort | globální skupina | Core term, even though it is not always global. Not `kohorta`. |
 | advanced cohort | rozšířená globální skupina | |
 | candidate cohort | globální skupina kandidátů | |
@@ -164,5 +174,81 @@ Core Moodle calls a site `stránky`, and it is used here too, except where it co
 
 ## German
 
-`mod_mudeck` is the only plugin with `lang/de` so far, so `de` is not in `mulib::TRANSLATIONS` yet. Terms
-for the concepts above have not been decided, take them from the core German pack first.
+Standard German for partners in Germany, Austria and Switzerland, formal `Sie` and `ß` like the core
+German pack. Partners adapt it locally where needed (`de_ch`, `de_du` or language customisation).
+`de` is not in `mulib::TRANSLATIONS` until the preview packs are reviewed.
+
+### Terms
+
+| English | German | Notes |
+|---|---|---|
+| tenant | Mandant | Used by Moodle Workplace marketing and other plugins. |
+| multi-tenancy | Mehrmandantenfähigkeit | |
+| tenant manager | Mandantenmanager/in | |
+| tenant user / global user | Nutzer/in des Mandanten / globale/r Nutzer/in | |
+| associated user | verbundene/r Nutzer/in | Not `zugeordnet`, that is program allocation. |
+| allocate to tenant | einem Mandanten zuweisen | English says allocate, `zuweisen` reads naturally for moving an account. |
+| cohort | globale Gruppe | Core term. Never only `Gruppe`, that is a course group. |
+| advanced cohort | erweiterte globale Gruppe | |
+| candidate cohort | globale Gruppe der Kandidat/innen | |
+| curator | verantwortliche Person | Not `Kurator`. |
+| curated (cohort type) | manuell verwaltet | |
+| access (list of users) | berechtigte Nutzer/innen | `Zugriff` only for granting access. |
+| permission | Recht | Core `Rechte`. |
+| capability | Fähigkeit | Core term. |
+| site | Website | Core term. |
+| category | Kursbereich | Core term. |
+| program | Programm | Not `Lernpfad`. |
+| program allocation | Zuordnung | `einem Programm zuordnen`. Also SAML user mapping (`Nutzerzuordnung`). |
+| allocation source | Zuordnungsquelle | |
+| self allocation | Selbstzuordnung | |
+| course set | Kursset | |
+| program item | Element | Core `Aspekt` is for gradebook items only. |
+| certification | Zertifizierung | |
+| certificate | Zertifikat | |
+| certification assignment | Zuweisung | `einer Zertifizierung zuweisen`. Not `Zuordnung`. |
+| certification period | Zertifizierungszeitraum | Short labels may use `Zeitraum`. |
+| certification window | Zeitfenster | In full `Zeitfenster für die Zertifizierung`. Never `Zeitraum`. |
+| grace period | Nachfrist | Core term. |
+| revoked | widerrufen | Differs from `abgelaufen` (expired). |
+| recertification | Rezertifizierung | |
+| evidence | Nachweis | `Abschlussnachweis` for completion evidence. |
+| sign up key | Anmeldeschlüssel | |
+| framework | Rahmen | Core `Kompetenzrahmen`. Credits: `Punkterahmen`, relations: `Beziehungsrahmen`. |
+| training credits | Weiterbildungspunkte | |
+| supervisor / subordinate | Vorgesetzte/r / Mitarbeiter/in | |
+| team | Team | |
+| privileged session | privilegierte Sitzung | `starten` and `beenden`. |
+| privilege | Privileg | `Recht` is reserved for permissions. |
+| cache | Cache | Core term. |
+| cron | Cron | |
+| suspended | gesperrt | Core term. |
+| next / previous | Weiter / Zurück | Core term. |
+| data breach | Datenleck | |
+| custom report | nutzerdefinierter Bericht | Core term. |
+| completion | Abschluss | `Abschlussverfolgung` only for the core feature. |
+| due date | Fälligkeitsdatum | `überfällig` for overdue. |
+| notification | Benachrichtigung | Message providers follow core `Systemnachricht`. |
+| tag | Tag | Core term. |
+| custom field | nutzerdefiniertes Feld | Core term. |
+| identity provider / service provider | Identitätsanbieter / Dienstanbieter | IdP and SP stay. |
+| plugin | Plugin | |
+| user | Nutzer/in, plural Nutzer/innen | Core gender forms. |
+
+### Rules
+
+- **Address users** with `Sie`, buttons and actions in the infinitive: `Programm hinzufügen`.
+- **Delete and remove:** `löschen` when a thing stops existing or data is wiped, `entfernen` when a
+  link goes away and the thing stays. Clearing a field or filter follows core (`Löschen`) unless
+  that is ambiguous next to a delete action, then `Zurücksetzen`.
+- **Edit and update:** actions that open a form are `… bearbeiten` (`Programm bearbeiten` for "Update
+  program"), `aktualisieren` only for refreshing, recalculating and events.
+- **Cleanup tasks:** `Bereinigung`.
+- **Placeholders do not decline.** Keep `{$a}` where any value fits: `Programm „{$a}“ wurde gelöscht`.
+- **Counts:** never `{$a} Nutzer/innen`, singular breaks. Use `Anzahl der Nutzer/innen: {$a}`.
+- **Moodle** is not declined: `in Moodle`.
+- **Quotes:** `„text“`.
+- **Status words** are capitalised as labels (`Abgelaufen`, `Widerrufen`) and follow the noun in
+  sentences.
+- **Word sense:** status `Open` is `Offen`, not `Öffnen`. Start and end are easy to swap in column
+  labels, check them.
