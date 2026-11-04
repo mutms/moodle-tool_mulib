@@ -61,6 +61,7 @@ final class mulib {
     /** @var string[] translations shipped in lang/ of all MuTMS plugins, tested by tool_mulib */
     public const array TRANSLATIONS = [
         'cs',
+        'de',
     ];
 
     /**
@@ -73,6 +74,34 @@ final class mulib {
      */
     public static function is_mutms_plugin(string $component): bool {
         return in_array($component, self::MUTMS_PLUGINS, true);
+    }
+
+    /**
+     * Delete translations of MuTMS plugins from downloaded language packs,
+     * translations shipped with the plugins must be used instead.
+     *
+     * NOTE: this can be disabled via tool_mulib/purgedownloadedlang setting.
+     *
+     * @return int number of deleted files
+     */
+    public static function purge_downloaded_translations(): int {
+        if (!get_config('tool_mulib', 'purgedownloadedlang')) {
+            return 0;
+        }
+        $deleted = 0;
+        foreach (self::MUTMS_PLUGINS as $component) {
+            $deleted += lang_util::purge_downloaded_translations($component, self::TRANSLATIONS);
+        }
+        return $deleted;
+    }
+
+    /**
+     * Language pack installed or updated observer.
+     *
+     * @param \core\event\base $event
+     */
+    public static function callback_langpack_installed(\core\event\base $event): void {
+        self::purge_downloaded_translations();
     }
 
     /**

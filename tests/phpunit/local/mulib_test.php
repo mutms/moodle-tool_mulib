@@ -30,6 +30,7 @@ use tool_mulib\local\mulib;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * @covers \tool_mulib\local\mulib
+ * @covers \tool_mulib\task\lang_cleanup
  */
 final class mulib_test extends \advanced_testcase {
     protected function setUp(): void {
@@ -237,5 +238,65 @@ JSON;
             $uuids[] = mulib::uuid7();
         }
         $this->assertCount(100, array_unique($uuids));
+    }
+
+    public function test_purge_downloaded_translations(): void {
+        global $CFG;
+
+        \tool_mulib\tests\fake_langpack::install('cs');
+        $file = "$CFG->langotherroot/cs/tool_mulib.php";
+        file_put_contents($file, "<?php\n\$string['pluginname'] = 'Zatuchlý blábol z AMOS';\n");
+        $fr = "$CFG->langotherroot/fr/tool_mulib.php";
+        mkdir(dirname($fr), $CFG->directorypermissions, true);
+        file_put_contents($fr, "<?php\n\$string['pluginname'] = 'Baguette périmée';\n");
+        get_string_manager()->reset_caches();
+
+        $string = [];
+        include(__DIR__ . '/../../../lang/cs/tool_mulib.php');
+        $shipped = $string['pluginname'];
+        $this->assertNotSame('Zatuchlý blábol z AMOS', $shipped);
+
+        $this->assertSame('Zatuchlý blábol z AMOS', get_string_manager()->get_string('pluginname', 'tool_mulib', null, 'cs'));
+
+        set_config('purgedownloadedlang', 0, 'tool_mulib');
+        $this->assertSame(0, mulib::purge_downloaded_translations());
+        $this->assertFileExists($file);
+
+        set_config('purgedownloadedlang', 1, 'tool_mulib');
+        $this->assertSame(1, mulib::purge_downloaded_translations());
+        $this->assertFileDoesNotExist($file);
+        $this->assertFileExists($fr);
+        $this->assertSame($shipped, get_string_manager()->get_string('pluginname', 'tool_mulib', null, 'cs'));
+        $this->assertSame('Předvolby', get_string_manager()->get_string('preferences', 'core', null, 'cs'));
+        $this->assertSame('Evropa/Praha', get_string_manager()->get_string('europe/prague', 'core_timezones', null, 'cs'));
+        $this->assertSame('Pondělí', get_string_manager()->get_string('monday', 'core_calendar', null, 'cs'));
+    }
+
+    public function test_callback_langpack_installed(): void {
+        global $CFG;
+
+        \tool_mulib\tests\fake_langpack::install('de');
+        $file = "$CFG->langotherroot/de/tool_mulib.php";
+        file_put_contents($file, "<?php\n\$string['pluginname'] = 'Zatuchlý blábol z AMOS';\n");
+
+        \tool_langimport\event\langpack_updated::event_with_langcode('de')->trigger();
+        $this->assertFileDoesNotExist($file);
+
+        file_put_contents($file, "<?php\n\$string['pluginname'] = 'Zatuchlý blábol z AMOS';\n");
+        \tool_langimport\event\langpack_imported::event_with_langcode('de')->trigger();
+        $this->assertFileDoesNotExist($file);
+    }
+
+    public function test_lang_cleanup_task(): void {
+        global $CFG;
+
+        \tool_mulib\tests\fake_langpack::install('cs');
+        $file = "$CFG->langotherroot/cs/tool_mulib.php";
+        file_put_contents($file, "<?php\n\$string['pluginname'] = 'Zatuchlý blábol z AMOS';\n");
+
+        $task = new \tool_mulib\task\lang_cleanup();
+        $this->expectOutputString("Deleted 1 downloaded translation files conflicting with official MuTMS translations\n");
+        $task->execute();
+        $this->assertFileDoesNotExist($file);
     }
 }

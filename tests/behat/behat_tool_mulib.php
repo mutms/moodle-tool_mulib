@@ -174,6 +174,18 @@ class behat_tool_mulib extends behat_base {
     }
 
     /**
+     * Install fake minimal language pack from tool_mulib fixtures.
+     *
+     * @Given fake :lang language pack is installed
+     *
+     * @param string $lang
+     */
+    public function fake_language_pack_is_installed(string $lang): void {
+        require_once(__DIR__ . '/../classes/fake_langpack.php');
+        \tool_mulib\tests\fake_langpack::install($lang);
+    }
+
+    /**
      * @Given I skip tests if :plugin is not installed
      *
      * @param string $plugin

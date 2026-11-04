@@ -25,8 +25,43 @@ mdl-lang-check public/admin/tool/muprog
   form, `--check` only reports files that are not normalised.
 - Then have a native speaker who knows the feature review the result plugin by plugin.
 
-- Packs installed from AMOS into `$CFG->dataroot/lang/<lang>/` override `lang/<lang>/` of a plugin
-  key by key, so a change here is not visible on a site where AMOS has the same key.
+## Downloaded language packs
+
+Moodle loads `$CFG->dataroot/lang/<lang>/` (packs downloaded from AMOS) after `lang/<lang>/` of a
+plugin, so downloaded strings override the shipped ones key by key. MuTMS translations are reviewed
+together with the code, so by default `mulib::purge_downloaded_translations()` deletes the downloaded
+files of all MuTMS plugins for languages in `mulib::TRANSLATIONS`. Other languages stay.
+
+- It runs when a language pack is installed or updated (`tool_langimport` events), on install and
+  upgrade of `tool_mulib` and hourly in the `tool_mulib\task\lang_cleanup` scheduled task.
+- It is disabled by unchecking `tool_mulib/purgedownloadedlang`, in Site administration > Language >
+  MuTMS translations.
+- Language customisation (`<lang>_local` packs) is never touched, it is the supported way to change
+  individual strings on a site.
+- Other plugins can do the same with
+  `tool_mulib\local\lang_util::purge_downloaded_translations($component, $languages)`.
+
+## Testing with other languages
+
+Tests must not download language packs. `tests/fixtures/lang/<lang>/` in `tool_mulib` has
+a few core files of each language in `mulib::TRANSLATIONS` and of `en_us` (`langconfig.php`,
+`moodle.php`, `admin.php`, `calendar.php`, `calendartype_gregorian.php` and `timezones.php`, where
+the pack has them), copied from the core packs. `en_us` matters for date and time formats, the
+built-in `en` is historically Australian English (`en_AU` locale, day before month). Add more core files there when a test needs them. They make a minimal pack in the test dataroot, plugin strings come from `lang/<lang>/` of
+the plugins, everything else falls back to English. The pack is deleted with the test dataroot.
+
+- PHPUnit: `\tool_mulib\tests\fake_langpack::install('cs');`
+- Behat: `Given fake "cs" language pack is installed`
+
+String customisations work for any installed language, downloaded or fake. They are written to
+`$CFG->langlocalroot/<lang>_local/`, the same files the language customisation tool creates. Unlike the core `"language customisations"` Behat generator they
+do not depend on the current user language and do not need the slow tool checkout.
+
+- PHPUnit: `\tool_mulib\local\lang_util::customise_string('cs', 'tool_muprog', 'programs', 'Studijní plány');`,
+  `null` value removes the customisation; or the `tool_mulib` data generator
+  `create_lang_customisation(['lang' => 'cs', 'component' => ..., 'stringid' => ..., 'value' => ...])`.
+- Behat: `the following "tool_mulib > lang_customisations" exist:` with columns `lang` (empty means
+  `en`), `component` (`core`, `core_langconfig`, `mod_mudeck`, ...), `stringid` and `value`.
 
 ## Backporting
 
@@ -176,7 +211,7 @@ Core Moodle calls a site `stránky`, and it is used here too, except where it co
 
 Standard German for partners in Germany, Austria and Switzerland, formal `Sie` and `ß` like the core
 German pack. Partners adapt it locally where needed (`de_ch`, `de_du` or language customisation).
-`de` is not in `mulib::TRANSLATIONS` until the preview packs are reviewed.
+The packs are a preview produced by AI, a note in each file header says so until they are reviewed.
 
 ### Terms
 

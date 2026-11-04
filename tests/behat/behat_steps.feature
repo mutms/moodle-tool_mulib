@@ -7,6 +7,33 @@ Feature: Test tool_mulib behat steps
     And I navigate to "Users > Accounts > Bulk user actions" in site administration
     Then I should not see "Admin bookmarks"
 
+  Scenario: tool_mulib behat step: fake language pack is installed
+    Given fake "de" language pack is installed
+    And the following "users" exist:
+      | username | firstname | lastname | email                | lang |
+      | student1 | First     | Student  | student1@example.com | de   |
+    When I log in as "student1"
+    And I visit "/user/preferences.php"
+    Then I should see "Einstellungen"
+
+  Scenario: tool_mulib behat generator: lang customisations
+    Given fake "cs" language pack is installed
+    And the following "users" exist:
+      | username | firstname | lastname | email                | lang |
+      | student1 | First     | Student  | student1@example.com | en   |
+      | student2 | Second    | Student  | student2@example.com | cs   |
+    And the following "tool_mulib > lang_customisations" exist:
+      | lang | component | stringid    | value                         |
+      |      | core      | preferences | Wobbly penguin preferences    |
+      | cs   | core      | preferences | Převelice překrásné předvolby |
+    When I log in as "student1"
+    And I visit "/user/preferences.php"
+    Then I should see "Wobbly penguin preferences"
+    And I log out
+    And I log in as "student2"
+    And I visit "/user/preferences.php"
+    And I should see "Převelice překrásné předvolby"
+
   Scenario: tool_mulib behat step: I skip tests if plugin is not installed
     Given I skip tests if "tool_mulib" is not installed
     When I skip tests if "local_grgrgrgrgrgr" is not installed

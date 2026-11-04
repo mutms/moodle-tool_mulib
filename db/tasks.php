@@ -36,4 +36,13 @@ $tasks = [
         'dayofweek' => '*',
         'disabled' => 0,
     ],
+    [
+        'classname' => tool_mulib\task\lang_cleanup::class,
+        'minute' => 'R',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+        'disabled' => 0,
+    ],
 ];

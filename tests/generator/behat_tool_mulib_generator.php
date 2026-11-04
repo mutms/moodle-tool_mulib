@@ -41,6 +41,11 @@ class behat_tool_mulib_generator extends behat_generator_base {
                 'datagenerator' => 'extdb_query',
                 'required' => ['name', 'server', 'component', 'type', 'sqlquery'],
             ],
+            'lang_customisations' => [
+                'singular' => 'lang_customisation',
+                'datagenerator' => 'lang_customisation',
+                'required' => ['component', 'stringid', 'value'],
+            ],
         ];
     }
 

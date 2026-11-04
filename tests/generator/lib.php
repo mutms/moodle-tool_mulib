@@ -41,6 +41,24 @@ final class tool_mulib_generator extends component_generator_base {
     }
 
     /**
+     * Customise language string, the same way as the language customisation tool.
+     *
+     * Fields: lang (defaults to en), component, stringid and value (null removes customisation).
+     *
+     * @param stdClass|array $record
+     * @return stdClass
+     */
+    public function create_lang_customisation($record): stdClass {
+        $record = (object)(array)$record;
+        $record->lang = empty($record->lang) ? 'en' : $record->lang;
+        if (empty($record->component) || empty($record->stringid) || !property_exists($record, 'value')) {
+            throw new \core\exception\coding_exception('component, stringid and value are required');
+        }
+        \tool_mulib\local\lang_util::customise_string($record->lang, $record->component, $record->stringid, $record->value);
+        return $record;
+    }
+
+    /**
      * Create new external database server.
      *
      * NOTE: it defaults to current test database.
