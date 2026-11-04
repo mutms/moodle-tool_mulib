@@ -219,6 +219,25 @@ final class datetime_test extends muform_testcase {
         $this->assertTrue($this->submit('9/26/2026')->is_invalid());
     }
 
+    public function test_us_english(): void {
+        global $USER;
+        $this->add_element();
+        fake_langpack::install('en_us');
+        force_current_language('en_us');
+        $USER->timezone = 'America/New_York';
+
+        $html = $this->render(new simple_form($this->get_url(), ['starts' => 1790443723]));
+        $this->assertStringContainsString('value="9/26/2026 1:28 PM"', $html);
+        $this->assertStringContainsString('data-muform-datetime-hour12="1"', $html);
+        $this->assertSame(1790443680, $this->submit('9/26/26 1:28 pm')->get_data()->starts);
+        $this->assertSame(1790443680, $this->submit('2026-09-26 13:28')->get_data()->starts);
+        $this->assertTrue($this->submit('26.9.2026')->is_invalid());
+
+        force_current_language('en');
+        $html = $this->render(new simple_form($this->get_url(), ['starts' => 1790443723]));
+        $this->assertStringNotContainsString('data-muform-datetime-hour12', $html);
+    }
+
     public function test_required(): void {
         $this->add_element(true);
         $form = $this->submit('');

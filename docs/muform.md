@@ -214,8 +214,8 @@ need steps like 0.5 or units, use a `text` element with a validator.
 user's timezone with a date picker on top. There is no "enabled" checkbox, an empty value is simply
 `null`. With JavaScript the typed text is sent to a small server endpoint and the form submits the
 timestamp. Without JavaScript the server parses the text itself. The display format is always the
-`muform_datetimeformat` lang string of the user's language, `Y-m-d H:i` in English and `j. n. Y H:i`
-in Czech. Forms cannot change it, so users see and type dates the same way everywhere.
+`muform_datetimeformat` lang string of the user's language: `Y-m-d H:i` in English, `n/j/Y g:i A`
+in US English (`lang/en_us` of tool_mulib overrides only this string) and `j. n. Y H:i` in Czech. Forms cannot change it, so users see and type dates the same way everywhere.
 
 Users may type:
 
@@ -228,7 +228,9 @@ Users may type:
   usually start in the afternoon. The picker opens empty fields on today at the same time;
 - a 2-digit year, which means 20yy, or a day and month with the closing dot, `4. 11.`, which means the
   current year;
-- a time only, `14:30`, which means today;
+- times with `AM`/`PM` in any case, with or without dots and space, `2:30pm` or `2 p.m.`, and 24 hour
+  times in every language. Formats with AM/PM also switch the picker hours to `12 AM … 11 PM`;
+- a time only, `14:30` or `2 pm`, which means today;
 - text matching the display format exactly, if a language uses one with month names.
 
 Anything else is invalid. Nothing is guessed: `4.11` might be a time, `tomorrow` works only in English,

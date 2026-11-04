@@ -58,7 +58,12 @@ final class mulib {
         'tool_mutrain',
     ];
 
-    /** @var string[] translations shipped in lang/ of all MuTMS plugins, tested by tool_mulib */
+    /**
+     * @var string[] full translations shipped in lang/ of all MuTMS plugins, tested by tool_mulib
+     *
+     * NOTE: child packs that override only a few strings, such as lang/en_us in tool_mulib,
+     *       are not listed here, they are neither required nor purged from downloaded packs.
+     */
     public const array TRANSLATIONS = [
         'cs',
         'de',

@@ -45,17 +45,19 @@ const performPost = Fetch.performPost as jest.Mock;
  * @param options.defaultminute default minute
  * @param options.firstday first day of week, 0 is Sunday
  * @param options.timezone timezone of the element
+ * @param options.hour12 hours with AM and PM
  * @returns html
  */
 function fixture(value: string, timestamp: string, components: string,
-    {defaulthour = 0, defaultminute = 0, firstday = 1, timezone = 'Europe/Prague'} = {}): string {
+    {defaulthour = 0, defaultminute = 0, firstday = 1, timezone = 'Europe/Prague', hour12 = false} = {}): string {
     return wrap('starts', 'datetime',
         '<div class="muform-datetime d-flex"><input type="text" class="form-control" id="id_starts" name="starts"'
         + ` value="${value}" data-muform-datetime-timestamp="${timestamp}"`
         + ` data-muform-datetime-components='${components}' data-muform-datetime-timezone="${timezone}"`
         + ' data-muform-datetime-lang="en"'
         + ` data-muform-datetime-defaulthour="${defaulthour}" data-muform-datetime-defaultminute="${defaultminute}">`
-        + `<span data-muform-datetime-picker data-muform-datetime-step="15" data-muform-datetime-firstday="${firstday}"></span>`
+        + `<span data-muform-datetime-picker data-muform-datetime-step="15" data-muform-datetime-firstday="${firstday}"`
+        + `${hour12 ? ' data-muform-datetime-hour12="1"' : ''}></span>`
         + '</div>');
 }
 
@@ -343,6 +345,22 @@ describe('tool_mulib/muform/element/datetime', () => {
         } finally {
             jest.useRealTimers();
         }
+    });
+
+    it('shows hours with AM and PM when the display format uses them', async() => {
+        const hours = async(hour12: boolean): Promise<string[]> => {
+            const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS, {hour12}));
+            await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
+            const select = wrapper.querySelector<HTMLSelectElement>('.muform-datetime-panel select[aria-label="Hour"]')!;
+            expect(select.value).toBe('19');
+            return Array.from(select.options).map((option) => option.textContent ?? '');
+        };
+        const twelve = await hours(true);
+        expect(twelve).toHaveLength(24);
+        expect([twelve[0], twelve[1], twelve[11], twelve[12], twelve[19]].map((label) => label.replace(/\s/g, ' ')))
+            .toEqual(['12 AM', '1 AM', '11 AM', '12 PM', '7 PM']);
+        const plain = await hours(false);
+        expect([plain[0], plain[9], plain[19]]).toEqual(['00', '09', '19']);
     });
 
     it('does nothing for frozen elements', async() => {

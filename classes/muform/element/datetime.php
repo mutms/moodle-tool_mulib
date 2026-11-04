@@ -143,6 +143,7 @@ final class datetime extends element {
         $context['pickerstep'] = self::PICKER_STEP;
         $context['defaulthour'] = $this->defaulthour;
         $context['defaultminute'] = $this->defaultminute;
+        $context['hour12'] = calendar::uses_12_hour_clock(current_language());
         $context['firstday'] = \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday();
         return $context;
     }

@@ -144,12 +144,32 @@ final class calendar {
     /**
      * Display format for given language, a PHP date() format from lang string.
      *
+     * NOTE: strftime() style formats used in langconfig are not supported,
+     * ISO format is used instead.
+     *
      * @param string $lang language code
      * @return string
      */
     public static function get_format(string $lang): string {
         $format = get_string_manager()->get_string('muform_datetimeformat', 'tool_mulib', null, $lang);
-        return trim($format) === '' ? 'Y-m-d H:i' : $format;
+        if (trim($format) === '') {
+            return 'Y-m-d H:i';
+        }
+        if (str_contains($format, '%')) {
+            debugging("Invalid muform_datetimeformat '$format' in language '$lang', PHP date() format expected", DEBUG_DEVELOPER);
+            return 'Y-m-d H:i';
+        }
+        return $format;
+    }
+
+    /**
+     * Does the display format of the language use 12 hour clock with AM and PM?
+     *
+     * @param string $lang
+     * @return bool
+     */
+    public static function uses_12_hour_clock(string $lang): bool {
+        return (bool)preg_match('/[gh]/', preg_replace('/\\\\./', '', self::get_format($lang)));
     }
 
     /**
@@ -206,30 +226,39 @@ final class calendar {
             return (int)$text;
         }
 
-        // Time only means today.
-        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/D', $text, $matches)) {
+        // Time with optional seconds and AM/PM, the hour alone is allowed only with AM/PM.
+        $time = '(?<hour>\d{1,2})(?:[:.](?<minute>\d{2})(?:[:.](?<second>\d{2}))?)?\s*(?:(?<ampm>[AaPp])\.?\s*[Mm]\.?)?';
+
+        // Time only means today, it needs a colon or AM/PM, texts with dots only such as "4.11.26" are dates.
+        if (
+            preg_match('/^' . $time . '$/D', $text, $matches)
+            && (str_contains($text, ':') || ($matches['ampm'] ?? '') !== '')
+        ) {
             $now = new \DateTime('now', $tz);
+            [$hour, $minute, $second] = self::get_time_parts($text, $matches);
             return self::build_timestamp(
                 $text,
                 $tz,
                 (int)$now->format('Y'),
                 (int)$now->format('n'),
                 (int)$now->format('j'),
-                (int)$matches[1],
-                (int)$matches[2],
-                (int)($matches[3] ?? 0)
+                $hour,
+                $minute,
+                $second
             );
         }
 
         // Numeric dates with optional time and offset, the separator must be the same in the date.
         $format = self::get_format($lang);
         $order = self::get_date_order($format);
-        $regex = '/^(\d{1,4})\s*([.\/-])\s*(\d{1,2})\s*(?:(\2)\s*(\d{1,4})?)?'
-            . '(?:(?:\s*,\s*|\s+|T)(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?\s*(Z|[+-]\d{2}:?\d{2})?$/D';
+        $regex = '/^(?<first>\d{1,4})\s*(?<separator>[.\/-])\s*(?<second_>\d{1,2})'
+            . '\s*(?:(?<closed>\k<separator>)\s*(?<third>\d{1,4})?)?'
+            . '(?:(?:\s*,\s*|\s+|T)' . $time . ')?\s*(?<offset>Z|[+-]\d{2}:?\d{2})?$/D';
         if (preg_match($regex, $text, $matches)) {
-            [, $first, $separator, $second] = $matches;
-            $closed = ($matches[4] ?? '') !== '';
-            $third = $matches[5] ?? '';
+            $first = $matches['first'];
+            $second = $matches['second_'];
+            $closed = ($matches['closed'] ?? '') !== '';
+            $third = $matches['third'] ?? '';
             if (strlen($first) === 4) {
                 // ISO style year first.
                 if ($third === '') {
@@ -241,7 +270,7 @@ final class calendar {
             } else {
                 if ($third === '') {
                     // Day and month without year need the closing dot, "4.11" might be a time.
-                    if (!$closed || $separator !== '.') {
+                    if (!$closed || $matches['separator'] !== '.') {
                         throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
                     }
                     $year = (int)(new \DateTime('now', $tz))->format('Y');
@@ -258,30 +287,49 @@ final class calendar {
                     [$day, $month] = [(int)$first, (int)$second];
                 }
             }
-            $hastime = ($matches[6] ?? '') !== '';
-            $offset = $matches[9] ?? '';
+            if (($matches['hour'] ?? '') !== '') {
+                [$hour, $minute, $seconds] = self::get_time_parts($text, $matches);
+            } else {
+                [$hour, $minute, $seconds] = [$defaulthour, $defaultminute, 0];
+            }
+            $offset = $matches['offset'] ?? '';
             if ($offset !== '') {
                 $tz = new \DateTimeZone($offset === 'Z' ? 'UTC' : $offset);
             }
-            return self::build_timestamp(
-                $text,
-                $tz,
-                $year,
-                $month,
-                $day,
-                $hastime ? (int)$matches[6] : $defaulthour,
-                $hastime ? (int)$matches[7] : $defaultminute,
-                $hastime ? (int)($matches[8] ?? 0) : 0
-            );
+            return self::build_timestamp($text, $tz, $year, $month, $day, $hour, $minute, $seconds);
         }
 
-        // Custom display formats with texts, fields missing in format are reset to zero instead of current time.
+        // Display formats with texts such as month names, fields missing in format are reset to zero.
         $date = \DateTime::createFromFormat('!' . $format, $text, $tz);
-        if ($date && !self::has_warnings()) {
+        if ($date && !self::has_warnings() && (int)$date->format('Y') >= 1000) {
             return $date->getTimestamp();
         }
 
         throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+    }
+
+    /**
+     * Hour, minute and second from matched time, AM/PM converted to 24 hours.
+     *
+     * @param string $text original text for error messages
+     * @param array $matches with keys hour, minute, second and ampm
+     * @return int[] hour, minute and second
+     */
+    private static function get_time_parts(string $text, array $matches): array {
+        $hour = (int)$matches['hour'];
+        $minute = (int)($matches['minute'] ?? 0);
+        $second = (int)($matches['second'] ?? 0);
+        if (($matches['minute'] ?? '') === '' && ($matches['ampm'] ?? '') === '') {
+            throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+        }
+        $ampm = strtolower($matches['ampm'] ?? '');
+        if ($ampm !== '') {
+            if ($hour < 1 || $hour > 12) {
+                throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+            }
+            $hour = ($hour % 12) + ($ampm === 'p' ? 12 : 0);
+        }
+        return [$hour, $minute, $second];
     }
 
     /**

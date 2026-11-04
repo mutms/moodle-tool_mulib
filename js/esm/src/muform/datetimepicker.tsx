@@ -62,6 +62,8 @@ export interface PickerProps {
     step: number;
     /** First day of week from Moodle, 0 is Sunday, null means the language default. */
     firstDay?: number | null;
+    /** Hours are shown with AM and PM. */
+    hour12?: boolean;
     /** Disabled elements have no picker. */
     disabled: boolean;
     /** Localised texts. */
@@ -152,7 +154,9 @@ function addDays(parts: Components, days: number): Components {
     return {...parts, year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate()};
 }
 
-export default function DateTimePicker({input, step, firstDay: moodleFirstDay, disabled, strings, apply}: PickerProps) {
+export default function DateTimePicker(
+    {input, step, firstDay: moodleFirstDay, hour12 = false, disabled, strings, apply}: PickerProps
+) {
     const lang = document.documentElement.lang || 'en';
     const timezone = input.dataset.muformDatetimeTimezone ?? '';
     const [open, setOpen] = useState(false);
@@ -268,6 +272,10 @@ export default function DateTimePicker({input, step, firstDay: moodleFirstDay, d
         minutes.sort((a, b) => a - b);
     }
     const hours = Array.from({length: 24}, (_, i) => i);
+    const hourFormat = new Intl.DateTimeFormat(lang, {hour: 'numeric', hour12: true});
+    const hourLabel = (hour: number): string => (
+        hour12 ? hourFormat.format(new Date(2026, 0, 5, hour)) : String(hour).padStart(2, '0')
+    );
 
     return (
         <>
@@ -361,7 +369,7 @@ export default function DateTimePicker({input, step, firstDay: moodleFirstDay, d
                         <div className="d-flex align-items-center gap-1 mb-2">
                             <select className="form-select form-select-sm w-auto" aria-label={strings.hour} value={parts.hour}
                                 onChange={(event) => setParts({...parts, hour: Number(event.target.value)})}>
-                                {hours.map((hour) => <option key={hour} value={hour}>{String(hour).padStart(2, '0')}</option>)}
+                                {hours.map((hour) => <option key={hour} value={hour}>{hourLabel(hour)}</option>)}
                             </select>
                             <span aria-hidden="true">:</span>
                             <select className="form-select form-select-sm w-auto" aria-label={strings.minute} value={parts.minute}

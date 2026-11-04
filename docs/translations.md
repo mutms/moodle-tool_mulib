@@ -13,6 +13,13 @@ Read this before adding, changing or translating any string.
 - For standard Moodle terms follow the core language pack of the target language
   (`$CFG->dataroot/lang/<lang>/`, for example `moodle.php`, `admin.php`, `cohort.php`). Do not follow
   packs of other plugins blindly, their quality varies.
+- `muform_datetimeformat` in tool_mulib is a PHP `date()` format, not the `strftime` style with `%`
+  used in Moodle langconfig: Czech `j. n. Y H:i` shows `4. 11. 2026 14:30`, US English `n/j/Y g:i A`
+  shows `11/6/2026 2:30 PM`. The same string decides the day and month order users type. Formats
+  with `%` are ignored and ISO `Y-m-d H:i` is used instead.
+- English variants such as `lang/en_us` are child packs of `en`, they contain only the strings that
+  differ, for example `muform_datetimeformat` in tool_mulib. Such override-only packs are not listed in
+  `mulib::TRANSLATIONS`.
 - `mulib::TRANSLATIONS` lists the languages every plugin must ship. `tests/phpunit/lang_test.php` in
   `tool_mulib` fails when a plugin has missing or extra strings in any of them.
 - In an mpd development VM check placeholders, HTML tags, URLs and string order too:

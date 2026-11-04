@@ -173,6 +173,7 @@ class datetime_default extends NativeElement {
       input: this.input,
       step: Number(span.dataset.muformDatetimeStep) || 5,
       firstDay: span.dataset.muformDatetimeFirstday === void 0 ? null : Number(span.dataset.muformDatetimeFirstday),
+      hour12: span.dataset.muformDatetimeHour12 === "1",
       disabled: this.state.disabled,
       strings: this.strings,
       apply: /* @__PURE__ */ __name((text) => this.applyText(text), "apply")

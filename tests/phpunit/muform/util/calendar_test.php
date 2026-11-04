@@ -39,6 +39,14 @@ final class calendar_test extends \advanced_testcase {
 
         fake_langpack::install('cs');
         $this->assertSame('j. n. Y H:i', calendar::get_format('cs'));
+
+        // Formats from langconfig are not compatible.
+        lang_util::customise_string('cs', 'tool_mulib', 'muform_datetimeformat', '%d.%m.%Y %H:%M');
+        $this->assertSame('Y-m-d H:i', calendar::get_format('cs'));
+        $this->assertDebuggingCalled("Invalid muform_datetimeformat '%d.%m.%Y %H:%M' in language 'cs', PHP date() format expected");
+
+        lang_util::customise_string('cs', 'tool_mulib', 'muform_datetimeformat', ' ');
+        $this->assertSame('Y-m-d H:i', calendar::get_format('cs'));
     }
 
     public function test_parse(): void {
@@ -96,6 +104,48 @@ final class calendar_test extends \advanced_testcase {
         $this->assertSame($expected + 14 * HOURSECS + 30 * MINSECS, calendar::parse('4. 11. 14:30', $prague, 'cs'));
     }
 
+    public function test_parse_us(): void {
+        $this->resetAfterTest();
+        fake_langpack::install('en_us');
+        $ny = new \DateTimeZone('America/New_York');
+        $nov6 = (new \DateTime('2026-11-06 00:00', $ny))->getTimestamp();
+        $nov6time = (new \DateTime('2026-11-06 14:30', $ny))->getTimestamp();
+
+        // Plugin ships en_us override of the display format.
+        $this->assertSame('n/j/Y g:i A', calendar::get_format('en_us'));
+        $this->assertTrue(calendar::uses_12_hour_clock('en_us'));
+        $this->assertFalse(calendar::uses_12_hour_clock('en'));
+        $this->assertSame('11/6/2026 2:30 PM', calendar::describe($nov6time, $ny, 'en_us')['text']);
+        $this->assertSame('11/6/2026 12:00 AM', calendar::describe($nov6, $ny, 'en_us')['text']);
+
+        $texts = [
+            '11/6/2026 2:30 PM', '11/6/26 2:30 pm', '11/6/2026 2:30PM', '11/6/2026 2:30 p.m.', '11/06/2026, 02:30 PM',
+            '11/6/2026 14:30', '2026-11-06 14:30', '2026-11-06 2:30 PM',
+        ];
+        foreach ($texts as $text) {
+            $this->assertSame($nov6time, calendar::parse($text, $ny, 'en_us'), $text);
+        }
+        $this->assertSame($nov6 + 14 * HOURSECS, calendar::parse('11/6/2026 2 PM', $ny, 'en_us'));
+        $this->assertSame($nov6 + 15 * MINSECS, calendar::parse('11/6/2026 12:15 AM', $ny, 'en_us'));
+        $this->assertSame($nov6 + 12 * HOURSECS, calendar::parse('11/6/2026 12:00 pm', $ny, 'en_us'));
+        $this->assertSame($nov6, calendar::parse('11/6/2026', $ny, 'en_us'));
+        $this->assertSame($nov6 + 23 * HOURSECS + 59 * MINSECS, calendar::parse('11/6/26', $ny, 'en_us', 23, 59));
+
+        // Time only means today.
+        $today = (new \DateTime('now', $ny))->setTime(14, 0)->getTimestamp();
+        $this->assertSame($today, calendar::parse('2 pm', $ny, 'en_us'));
+        $this->assertSame($today, calendar::parse('2:00PM', $ny, 'en_us'));
+
+        foreach (['13/6/2026', '11/31/2026', '11/6/2026 13:00 PM', '11/6/2026 0:30 am', '11/6/2026 2', '11/6/2026 2 xm'] as $text) {
+            try {
+                calendar::parse($text, $ny, 'en_us');
+                $this->fail('Exception expected for: ' . $text);
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringContainsString($text, $e->getMessage());
+            }
+        }
+    }
+
     public function test_parse_custom_format(): void {
         $this->resetAfterTest();
         $prague = new \DateTimeZone('Europe/Prague');
@@ -113,6 +163,13 @@ final class calendar_test extends \advanced_testcase {
         lang_util::customise_string('en', 'tool_mulib', 'muform_datetimeformat', 'F j, Y H:i');
         $this->assertSame(1790443680, calendar::parse('September 26, 2026 19:28', $prague, 'en'));
         $this->assertSame($nov4, calendar::parse('11/4/2026', $prague, 'en'));
+        // Years are never shorter than 4 digits in exact format matches.
+        try {
+            calendar::parse('September 26, 26 19:28', $prague, 'en');
+            $this->fail('Exception expected');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('September 26, 26 19:28', $e->getMessage());
+        }
     }
 
     public function test_parse_default_time(): void {

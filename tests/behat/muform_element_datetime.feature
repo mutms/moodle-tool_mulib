@@ -180,3 +180,21 @@ Feature: muform datetime element
     And the following muform fields match:
       | starts | 2026-11-04 08:00 |
       | ends   | 2026-12-15 23:59 |
+
+  @javascript
+  Scenario: US users type dates in US format with AM and PM
+    Given fake "en_us" language pack is installed
+    And I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_element_datetime.php" with parameters "lang=en_us"
+    When I set the following muform fields:
+      | starts | 11/6/26 2:30 pm |
+      | ends   | 11/6/2026       |
+    Then the "value" attribute of "[data-muform-name='starts'] input[type='text']" "css_element" should contain "11/6/2026 2:30 PM"
+    And the "value" attribute of "[data-muform-name='ends'] input[type='text']" "css_element" should contain "11/6/2026 11:59 PM"
+    When I set the following muform fields:
+      | starts | 6.11.2026 14:30 |
+    Then the "value" attribute of "[data-muform-name='starts'] input[type='text']" "css_element" should contain "6/11/2026 2:30 PM"
+    When I press "Save changes"
+    Then I should see "Form submitted" in the "#muform_state" "css_element"
+    And the following muform fields match:
+      | starts | 2026-06-11 14:30 |
+      | ends   | 2026-11-06 23:59 |
