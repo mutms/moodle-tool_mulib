@@ -62,7 +62,8 @@ final class tool_mulib_muform_fixture_datetime_form extends form {
         }
         $this->add($starts);
 
-        $this->add(new datetime('ends', 'Ends', ['placeholder' => 'No end date']));
+        // End dates typed without time mean the end of the day.
+        $this->add((new datetime('ends', 'Ends', ['placeholder' => 'No end date']))->set_default_time('23:59'));
 
         $this->add(new buttons('buttons'));
         $this->add(new submit(), 'buttons');

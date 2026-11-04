@@ -26,6 +26,7 @@ use tool_mulib\hook\muform_definition;
 use tool_mulib\muform\element\datetime;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use tool_mulib\tests\fake_langpack;
 
 /**
  * Datetime element tests.
@@ -49,14 +50,17 @@ final class datetime_test extends muform_testcase {
      * Add datetime element via hook.
      *
      * @param bool $required
-     * @param string|null $format
      * @param bool $frozen
+     * @param string|null $defaulttime
      */
-    private function add_element(bool $required = false, ?string $format = null, bool $frozen = false): void {
-        $hook = function (muform_definition $hook) use ($required, $format, $frozen): void {
-            $element = (new datetime('starts', 'Starts', ['placeholder' => 'Any time'], $format))
+    private function add_element(bool $required = false, bool $frozen = false, ?string $defaulttime = null): void {
+        $hook = function (muform_definition $hook) use ($required, $frozen, $defaulttime): void {
+            $element = (new datetime('starts', 'Starts', ['placeholder' => 'Any time']))
                 ->set_required($required)
                 ->set_frozen($frozen);
+            if ($defaulttime !== null) {
+                $element->set_default_time($defaulttime);
+            }
             $hook->form->add($element);
         };
         \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
@@ -79,7 +83,8 @@ final class datetime_test extends muform_testcase {
         $this->assertSame(1790450923, $this->submit(' 1790450923 ')->get_data()->starts);
         $this->assertSame(1790443723, $this->submit('2026-09-26 19:28:43')->get_data()->starts);
         $this->assertSame(1790443680, $this->submit('2026-09-26 19:28')->get_data()->starts);
-        $this->assertSame(1790443680, $this->submit('26 September 2026 19:28')->get_data()->starts);
+        $this->assertSame(1790443680, $this->submit('2026-09-26T19:28')->get_data()->starts);
+        $this->assertSame(1790373600, $this->submit('2026-09-26')->get_data()->starts);
         $this->assertNull($this->submit('')->get_data()->starts);
         $this->assertNull($this->submit('0')->get_data()->starts);
         $this->assertNull($this->submit(['x'])->get_data()->starts);
@@ -111,8 +116,12 @@ final class datetime_test extends muform_testcase {
         );
         $this->assertStringContainsString('data-muform-datetime-timezone="Europe/Prague"', $html);
         $this->assertStringContainsString('data-muform-datetime-lang="en"', $html);
-        $this->assertStringContainsString('data-muform-datetime-format="Y-m-d H:i"', $html);
         $this->assertStringContainsString('data-muform-datetime-step="5"', $html);
+        $this->assertStringContainsString('data-muform-datetime-defaulthour="0"', $html);
+        $this->assertStringContainsString('data-muform-datetime-defaultminute="0"', $html);
+        $this->assertStringContainsString('data-muform-datetime-firstday="1"', $html);
+        $describedby = 'aria-describedby="id_error_starts' . $suffix . ' id_starts' . $suffix . '_timezone"';
+        $this->assertStringContainsString($describedby, $html);
         $this->assertStringContainsString('placeholder="Any time"', $html);
         $this->assertStringContainsString(
             '<div class="form-text text-muted w-100" id="id_starts' . $suffix . '_timezone">Time zone: '
@@ -134,6 +143,82 @@ final class datetime_test extends muform_testcase {
         $this->assertStringContainsString('data-muform-datetime-timezone="UTC"', $html);
     }
 
+    public function test_invalid_guesses(): void {
+        $this->add_element();
+        foreach (['26 September 2026 19:28', 'tomorrow', '4.11', '2026-02-31', '26.9.2026'] as $text) {
+            $form = $this->submit($text);
+            $this->assertTrue($form->is_invalid(), $text);
+            $this->assertSame(['Invalid date and time'], $this->get_rendered_errors($form, 'starts'));
+        }
+    }
+
+    public function test_default_time(): void {
+        $this->add_element(false, false, '23:59');
+        $this->assertSame(1790459940, $this->submit('2026-09-26')->get_data()->starts);
+        $this->assertSame(1790443680, $this->submit('2026-09-26 19:28')->get_data()->starts);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString('data-muform-datetime-defaulthour="23"', $html);
+        $this->assertStringContainsString('data-muform-datetime-defaultminute="59"', $html);
+
+        $element = new datetime('ends', 'Ends');
+        $this->assertSame($element, $element->set_default_time('7:05'));
+        foreach (['24:00', '12:60', '12', '12:5', 'noon', ''] as $time) {
+            try {
+                $element->set_default_time($time);
+                $this->fail('Exception expected for: ' . $time);
+            } catch (\core\exception\coding_exception $e) {
+                $this->assertStringContainsString('Invalid default time', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_timezone_label(): void {
+        global $USER;
+        $this->add_element();
+
+        // Users in site timezone do not see the timezone on every field.
+        $this->setTimezone('Europe/Prague');
+        $USER->timezone = '99';
+        $form = new simple_form($this->get_url(), ['starts' => 1790443723]);
+        $html = $this->render($form);
+        $suffix = $form->get_idsuffix();
+        $this->assertStringNotContainsString('_timezone', $html);
+        $this->assertStringContainsString('aria-describedby="id_error_starts' . $suffix . '"', $html);
+        $this->assertStringContainsString('data-muform-datetime-timezone="Europe/Prague"', $html);
+
+        $USER->timezone = 'America/New_York';
+        $html = $this->render(new simple_form($this->get_url(), ['starts' => 1790443723]));
+        $this->assertStringContainsString('_timezone">Time zone: ', $html);
+    }
+
+    public function test_first_day(): void {
+        global $CFG;
+        $this->add_element();
+
+        $CFG->calendar_startwday = 0;
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString('data-muform-datetime-firstday="0"', $html);
+        set_user_preference('calendar_startwday', 6);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString('data-muform-datetime-firstday="6"', $html);
+    }
+
+    public function test_czech(): void {
+        $this->add_element();
+        fake_langpack::install('cs');
+        force_current_language('cs');
+
+        $form = new simple_form($this->get_url(), ['starts' => 1790443723]);
+        $html = $this->render($form);
+        $this->assertStringContainsString('value="26. 9. 2026 19:28"', $html);
+        $this->assertStringContainsString('data-muform-datetime-lang="cs"', $html);
+
+        $this->assertSame(1790443680, $this->submit('26.9.2026 19:28')->get_data()->starts);
+        $this->assertSame(1790443680, $this->submit('26. 9. 26 19:28')->get_data()->starts);
+        $this->assertSame(1790373600, $this->submit('26. 9. 2026')->get_data()->starts);
+        $this->assertTrue($this->submit('9/26/2026')->is_invalid());
+    }
+
     public function test_required(): void {
         $this->add_element(true);
         $form = $this->submit('');
@@ -148,17 +233,8 @@ final class datetime_test extends muform_testcase {
         $this->assertTrue($form->is_valid());
     }
 
-    public function test_display_format(): void {
-        $this->add_element(false, 'j. n. Y H:i');
-        $form = new simple_form($this->get_url(), ['starts' => 1790443723]);
-        $this->assertStringContainsString('value="26. 9. 2026 19:28"', $this->render($form));
-        $this->assertStringContainsString('data-muform-datetime-format="j. n. Y H:i"', $this->render($form));
-        $this->assertSame(1790443680, $this->submit('26. 9. 2026 19:28')->get_data()->starts);
-        $this->assertSame(1790443723, $this->submit('2026-09-26 19:28:43')->get_data()->starts);
-    }
-
     public function test_frozen(): void {
-        $this->add_element(false, null, true);
+        $this->add_element(false, true);
         $this->simulate_post(simple_form::class, ['name' => 'x', 'starts' => '1790450923', 'submit' => '1']);
         $form = new simple_form($this->get_url(), ['starts' => 1790357323]);
         $this->assertSame(1790357323, $form->get_data()->starts);

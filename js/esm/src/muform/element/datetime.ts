@@ -204,6 +204,7 @@ export default class extends NativeElement {
         this.unmountPicker = mountReactApp(span, DateTimePicker, {
             input: this.input,
             step: Number(span.dataset.muformDatetimeStep) || 5,
+            firstDay: span.dataset.muformDatetimeFirstday === undefined ? null : Number(span.dataset.muformDatetimeFirstday),
             disabled: this.state.disabled,
             strings: this.strings,
             apply: (text: string) => this.applyText(text),

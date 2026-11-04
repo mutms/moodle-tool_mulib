@@ -157,7 +157,7 @@ download, also in a dialog.
 | `text`             | `(name, label, attributes)`                                                  | `string`, cleaned                                          | blank after trim |
 | `textarea`         | `(name, label, attributes)`                                                  | `string`, cleaned, `\n` line ends                          | blank after trim |
 | `number`           | `(name, label, attributes)`                                                  | `int`, `float` or `null`                                   | `null`           |
-| `datetime`         | `(name, label, attributes, displayformat = null)`                            | `int` timestamp or `null`                                  | `null`           |
+| `datetime`         | `(name, label, attributes)`                                                  | `int` timestamp or `null`                                  | `null`           |
 | `duration`         | `(name, label, units = ['d', 'h', 'i'])`                                     | `int` seconds                                              | `0`              |
 | `dateinterval`     | `(name, label, units = ['y', 'm', 'w', 'd'])`                                | ISO 8601 duration `string` or `null`                       | `null`           |
 | `secret`           | `(name, label, attributes, allowclear = false)`                              | `null` keep, `''` cleared, `string` new                    | see below        |
@@ -213,9 +213,31 @@ need steps like 0.5 or units, use a `text` element with a validator.
 `datetime` is the only date element, because Moodle stores timestamps. It is a text input in the
 user's timezone with a date picker on top. There is no "enabled" checkbox, an empty value is simply
 `null`. With JavaScript the typed text is sent to a small server endpoint and the form submits the
-timestamp. Without JavaScript the server parses the text itself: a timestamp, the display format, or
-anything PHP understands, like `tomorrow 10:00`. The display format is the `muform_datetimeformat`
-lang string, `Y-m-d H:i` by default.
+timestamp. Without JavaScript the server parses the text itself. The display format is always the
+`muform_datetimeformat` lang string of the user's language, `Y-m-d H:i` in English and `j. n. Y H:i`
+in Czech. Forms cannot change it, so users see and type dates the same way everywhere.
+
+Users may type:
+
+- numeric dates in the day and month order of the display format, with `.`, `/` or `-` and any
+  spaces: `4. 11. 2026 14:30` or `4.11.26 14.30` in Czech. ISO dates with the year first, like
+  `2026-11-04T14:30`, work in every language, and they are the only numeric dates the English ISO
+  format accepts;
+- a date without time, which gets the default time of the element. That is `00:00` unless the form sets
+  something else, for example `->set_default_time('23:59')` for end dates or `'15:00'` for events that
+  usually start in the afternoon. The picker opens empty fields on today at the same time;
+- a 2-digit year, which means 20yy, or a day and month with the closing dot, `4. 11.`, which means the
+  current year;
+- a time only, `14:30`, which means today;
+- text matching the display format exactly, if a language uses one with month names.
+
+Anything else is invalid. Nothing is guessed: `4.11` might be a time, `tomorrow` works only in English,
+and PHP would read `4/11/2026` as April. In Behat use core timestamps such as `##tomorrow noon##`.
+
+The picker takes the first day of the week from Moodle (`calendar_startwday` and the user preference),
+and month and weekday names from the browser in the page language. "Today" is in the user's Moodle
+timezone. The timezone line under the input is only shown to users whose timezone differs from the
+site timezone.
 
 `duration` is a number of seconds and never `null`. It shows one input per unit, days, hours and
 minutes by default, and adds them up on the server, so 90 minutes comes back as 1 hour 30 minutes.

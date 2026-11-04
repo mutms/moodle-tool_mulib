@@ -25,8 +25,8 @@ use tool_mulib\muform\util\calendar;
  * Behat helper for datetime element.
  *
  * Table values are timestamps (##tomorrow noon## works), empty string for no value,
- * or any text the server can parse. Timestamps are formatted with the timezone
- * and display format the page was rendered with before typing them.
+ * or any numeric date text the server can parse. Timestamps are formatted with the timezone
+ * and language the page was rendered with before typing them.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -38,7 +38,7 @@ final class datetime extends base {
         $value = trim($value);
         $input = $this->get_text_input();
         if (preg_match('/^-?\d+$/D', $value)) {
-            $value = calendar::describe((int)$value, $this->get_timezone($input), $this->get_format($input))['text'];
+            $value = calendar::describe((int)$value, $this->get_timezone($input), $this->get_lang($input))['text'];
         }
         $input->setValue($value);
         $session = $this->context->getSession();
@@ -70,9 +70,12 @@ final class datetime extends base {
         }
         $input = $this->get_text_input();
         $tz = $this->get_timezone($input);
-        $format = $this->get_format($input);
+        $lang = $this->get_lang($input);
+        $hour = (int)$input->getAttribute('data-muform-datetime-defaulthour');
+        $minute = (int)$input->getAttribute('data-muform-datetime-defaultminute');
         try {
-            return calendar::parse($expected, $tz, $format) === calendar::parse($actual, $tz, $format);
+            return calendar::parse($expected, $tz, $lang, $hour, $minute)
+                === calendar::parse($actual, $tz, $lang, $hour, $minute);
         } catch (\InvalidArgumentException $e) {
             return false;
         }
@@ -98,12 +101,12 @@ final class datetime extends base {
     }
 
     /**
-     * Display format the page was rendered with.
+     * Language the page was rendered with, it decides the display format.
      *
      * @param NodeElement $input
      * @return string
      */
-    private function get_format(NodeElement $input): string {
-        return (string)$input->getAttribute('data-muform-datetime-format');
+    private function get_lang(NodeElement $input): string {
+        return (string)$input->getAttribute('data-muform-datetime-lang');
     }
 }

@@ -201,6 +201,7 @@ Core Moodle calls a site `stránky`, and it is used here too, except where it co
 - **Moodle:** declined after a preposition, `v Moodlu`, `do Moodlu`. Unchanged as a label after a
   noun, `Uživatel Moodle`.
 - **Quotes:** `„text“`.
+- **Dates:** `4. 11. 2026 14:30` (ČSN 01 6910), `muform_datetimeformat` is `j. n. Y H:i`.
 - **Gender of status words** follows the noun they describe, so check where the string is shown. Period
   statuses are neuter (`Zrušené`), certification statuses are feminine (`Platná`).
 - **Word sense:** check the feature, not the dictionary. `escape HTML` is `escapovat HTML`, not `uniknout`.
@@ -283,6 +284,7 @@ The packs are a preview produced by AI, a note in each file header says so until
 - **Counts:** never `{$a} Nutzer/innen`, singular breaks. Use `Anzahl der Nutzer/innen: {$a}`.
 - **Moodle** is not declined: `in Moodle`.
 - **Quotes:** `„text“`.
+- **Dates:** `04.11.2026 14:30` (DIN 5008), `muform_datetimeformat` is `d.m.Y H:i`.
 - **Status words** are capitalised as labels (`Abgelaufen`, `Widerrufen`) and follow the noun in
   sentences.
 - **Word sense:** status `Open` is `Offen`, not `Öffnen`. Start and end are easy to swap in column

@@ -78,12 +78,27 @@ final class datetime_test extends route_testcase {
         $this->assertNull($payload['components']);
     }
 
-    public function test_custom_format(): void {
-        $body = ['text' => '26. 9. 2026 19:28', 'timezone' => 'Europe/Prague', 'lang' => 'en', 'format' => 'j. n. Y H:i'];
-        $payload = $this->post($body);
+    public function test_default_time(): void {
+        $body = ['text' => '2026-09-26', 'timezone' => 'Europe/Prague', 'lang' => 'en'];
+        $this->assertSame(1790373600, $this->post($body)['timestamp']);
+        $payload = $this->post($body + ['defaulthour' => 23, 'defaultminute' => 59]);
+        $this->assertSame(1790459940, $payload['timestamp']);
+        $this->assertSame('2026-09-26 23:59', $payload['text']);
+        // Explicit time wins.
+        $payload = $this->post(['text' => '2026-09-26 19:28'] + $body + ['defaulthour' => 23, 'defaultminute' => 59]);
+        $this->assertSame(1790443680, $payload['timestamp']);
+    }
+
+    public function test_czech(): void {
+        \tool_mulib\tests\fake_langpack::install('cs');
+        $payload = $this->post(['text' => '26.9.26 19:28', 'timezone' => 'Europe/Prague', 'lang' => 'cs']);
         $this->assertTrue($payload['valid']);
         $this->assertSame('26. 9. 2026 19:28', $payload['text']);
         $this->assertSame(1790443680, $payload['timestamp']);
+
+        // US order is not guessed for Czech.
+        $payload = $this->post(['text' => '9/26/2026', 'timezone' => 'Europe/Prague', 'lang' => 'cs']);
+        $this->assertFalse($payload['valid']);
     }
 
     public function test_invalid_text(): void {
@@ -113,6 +128,16 @@ final class datetime_test extends route_testcase {
             Utils::streamFor(json_encode(['text' => 'now', 'timezone' => 'UTC', 'lang' => 'xx'])),
         );
         $this->assertSame(400, $response->getStatusCode());
+
+        foreach ([['defaulthour' => 24], ['defaulthour' => -1], ['defaultminute' => 60]] as $default) {
+            $response = $this->process_api_request(
+                'POST',
+                '/muform/datetime',
+                ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
+                Utils::streamFor(json_encode(['text' => '26.9.2026', 'timezone' => 'UTC', 'lang' => 'en'] + $default)),
+            );
+            $this->assertSame(400, $response->getStatusCode(), json_encode($default));
+        }
     }
 
     public function test_no_login_needed(): void {

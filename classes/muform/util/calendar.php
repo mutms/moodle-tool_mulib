@@ -22,7 +22,7 @@ namespace tool_mulib\muform\util;
  * the datetime Behat helper and the datetime normalisation API endpoint.
  *
  * Timestamps are the primary representation of dates, text is what users see and type.
- * Everything is explicit (timezone, display format), there is no hidden dependency
+ * Everything is explicit (timezone, language), there is no hidden dependency
  * on the current user, so the stateless endpoint can use it too.
  *
  * Interval parts are arrays with keys y, m, w, d, h, i, s (years, months, weeks,
@@ -153,19 +153,51 @@ final class calendar {
     }
 
     /**
+     * Order of day, month and year in numeric dates typed by users, the same as in the display format.
+     *
+     * @param string $format display format
+     * @return string dmy, mdy or ymd, formats without full date mean ymd
+     */
+    private static function get_date_order(string $format): string {
+        // Escaped characters are literal text.
+        $format = preg_replace('/\\\\./', '', $format);
+        $positions = [];
+        foreach (['d' => '/[dj]/', 'm' => '/[mnMF]/', 'y' => '/[Yy]/'] as $part => $regex) {
+            if (!preg_match($regex, $format, $matches, PREG_OFFSET_CAPTURE)) {
+                return 'ymd';
+            }
+            $positions[$part] = $matches[0][1];
+        }
+        asort($positions);
+        $order = implode('', array_keys($positions));
+        return in_array($order, ['dmy', 'mdy'], true) ? $order : 'ymd';
+    }
+
+    /**
      * Convert text to timestamp.
      *
-     * Empty text means no value, integers are timestamps, otherwise the text is
-     * parsed using the display format first and then anything PHP understands
-     * such as ISO dates, "26 September 2026 14:30" or "tomorrow 10:00".
+     * Empty text means no value, integers are timestamps. Numeric dates such as
+     * "4. 11. 2026 14:30", "4.11.26", "4. 11.", "11/4/2026" or "2026-11-04T14:30"
+     * are parsed in the day and month order of the display format of the language, ISO dates
+     * with year first are always accepted, dates without time get the default time
+     * and dates without year get the current year. Otherwise the text must match
+     * the display format exactly, PHP is never allowed to guess.
      *
      * @param string $text
      * @param \DateTimeZone $tz timezone of texts without explicit offset
-     * @param string $format display format
+     * @param string $lang language of the display format
+     * @param int $defaulthour hour of dates without time
+     * @param int $defaultminute minute of dates without time
      * @return int|null null for empty text
      * @throws \InvalidArgumentException when text cannot be parsed
      */
-    public static function parse(string $text, \DateTimeZone $tz, string $format): ?int {
+    public static function parse(
+        string $text,
+        \DateTimeZone $tz,
+        string $lang,
+        int $defaulthour = 0,
+        int $defaultminute = 0
+    ): ?int {
         $text = trim($text);
         if ($text === '') {
             return null;
@@ -174,21 +206,113 @@ final class calendar {
             return (int)$text;
         }
 
-        // Fields missing in format are reset to zero instead of current time.
+        // Time only means today.
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/D', $text, $matches)) {
+            $now = new \DateTime('now', $tz);
+            return self::build_timestamp(
+                $text,
+                $tz,
+                (int)$now->format('Y'),
+                (int)$now->format('n'),
+                (int)$now->format('j'),
+                (int)$matches[1],
+                (int)$matches[2],
+                (int)($matches[3] ?? 0)
+            );
+        }
+
+        // Numeric dates with optional time and offset, the separator must be the same in the date.
+        $format = self::get_format($lang);
+        $order = self::get_date_order($format);
+        $regex = '/^(\d{1,4})\s*([.\/-])\s*(\d{1,2})\s*(?:(\2)\s*(\d{1,4})?)?'
+            . '(?:(?:\s*,\s*|\s+|T)(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?\s*(Z|[+-]\d{2}:?\d{2})?$/D';
+        if (preg_match($regex, $text, $matches)) {
+            [, $first, $separator, $second] = $matches;
+            $closed = ($matches[4] ?? '') !== '';
+            $third = $matches[5] ?? '';
+            if (strlen($first) === 4) {
+                // ISO style year first.
+                if ($third === '') {
+                    throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+                }
+                [$year, $month, $day] = [(int)$first, (int)$second, (int)$third];
+            } else if (strlen($first) > 2 || $order === 'ymd') {
+                throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+            } else {
+                if ($third === '') {
+                    // Day and month without year need the closing dot, "4.11" might be a time.
+                    if (!$closed || $separator !== '.') {
+                        throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+                    }
+                    $year = (int)(new \DateTime('now', $tz))->format('Y');
+                } else if (strlen($third) === 2) {
+                    $year = 2000 + (int)$third;
+                } else if (strlen($third) === 4) {
+                    $year = (int)$third;
+                } else {
+                    throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+                }
+                if ($order === 'mdy') {
+                    [$month, $day] = [(int)$first, (int)$second];
+                } else {
+                    [$day, $month] = [(int)$first, (int)$second];
+                }
+            }
+            $hastime = ($matches[6] ?? '') !== '';
+            $offset = $matches[9] ?? '';
+            if ($offset !== '') {
+                $tz = new \DateTimeZone($offset === 'Z' ? 'UTC' : $offset);
+            }
+            return self::build_timestamp(
+                $text,
+                $tz,
+                $year,
+                $month,
+                $day,
+                $hastime ? (int)$matches[6] : $defaulthour,
+                $hastime ? (int)$matches[7] : $defaultminute,
+                $hastime ? (int)($matches[8] ?? 0) : 0
+            );
+        }
+
+        // Custom display formats with texts, fields missing in format are reset to zero instead of current time.
         $date = \DateTime::createFromFormat('!' . $format, $text, $tz);
         if ($date && !self::has_warnings()) {
             return $date->getTimestamp();
         }
 
-        try {
-            $date = new \DateTime($text, $tz);
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text, 0, $e);
-        }
-        if (self::has_warnings()) {
-            // For example 30th of February is rolled over to March by PHP.
+        throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+    }
+
+    /**
+     * Validate date and time parts and convert them to timestamp.
+     *
+     * @param string $text original text for error messages
+     * @param \DateTimeZone $tz
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $hour
+     * @param int $minute
+     * @param int $second
+     * @return int
+     */
+    private static function build_timestamp(
+        string $text,
+        \DateTimeZone $tz,
+        int $year,
+        int $month,
+        int $day,
+        int $hour,
+        int $minute,
+        int $second
+    ): int {
+        if ($year < 1000 || !checkdate($month, $day, $year) || $hour > 23 || $minute > 59 || $second > 59) {
             throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
         }
+        $date = new \DateTime('now', $tz);
+        $date->setDate($year, $month, $day);
+        $date->setTime($hour, $minute, $second);
         return $date->getTimestamp();
     }
 
@@ -197,16 +321,16 @@ final class calendar {
      *
      * @param int|null $timestamp
      * @param \DateTimeZone $tz
-     * @param string $format display format
+     * @param string $lang language of the display format
      * @return array with keys text, timestamp and components (year, month, day, hour, minute, second)
      */
-    public static function describe(?int $timestamp, \DateTimeZone $tz, string $format): array {
+    public static function describe(?int $timestamp, \DateTimeZone $tz, string $lang): array {
         if ($timestamp === null) {
             return ['text' => '', 'timestamp' => null, 'components' => null];
         }
         $date = (new \DateTime('@' . $timestamp))->setTimezone($tz);
         return [
-            'text' => $date->format($format),
+            'text' => $date->format(self::get_format($lang)),
             'timestamp' => $timestamp,
             'components' => [
                 'year' => (int)$date->format('Y'),

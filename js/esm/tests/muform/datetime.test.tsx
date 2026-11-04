@@ -40,16 +40,27 @@ const performPost = Fetch.performPost as jest.Mock;
  * @param value text
  * @param timestamp timestamp or empty
  * @param components JSON or empty
+ * @param options default time, first day of week and timezone
+ * @param options.defaulthour default hour
+ * @param options.defaultminute default minute
+ * @param options.firstday first day of week, 0 is Sunday
+ * @param options.timezone timezone of the element
  * @returns html
  */
-function fixture(value: string, timestamp: string, components: string): string {
+function fixture(value: string, timestamp: string, components: string,
+    {defaulthour = 0, defaultminute = 0, firstday = 1, timezone = 'Europe/Prague'} = {}): string {
     return wrap('starts', 'datetime',
         '<div class="muform-datetime d-flex"><input type="text" class="form-control" id="id_starts" name="starts"'
         + ` value="${value}" data-muform-datetime-timestamp="${timestamp}"`
-        + ` data-muform-datetime-components='${components}' data-muform-datetime-timezone="Europe/Prague"`
-        + ' data-muform-datetime-lang="en" data-muform-datetime-format="Y-m-d H:i:s">'
-        + '<span data-muform-datetime-picker data-muform-datetime-step="15"></span></div>');
+        + ` data-muform-datetime-components='${components}' data-muform-datetime-timezone="${timezone}"`
+        + ' data-muform-datetime-lang="en"'
+        + ` data-muform-datetime-defaulthour="${defaulthour}" data-muform-datetime-defaultminute="${defaultminute}">`
+        + `<span data-muform-datetime-picker data-muform-datetime-step="15" data-muform-datetime-firstday="${firstday}"></span>`
+        + '</div>');
 }
+
+/** Body fields sent with every request of the default fixture. */
+const BODY = {timezone: 'Europe/Prague', lang: 'en', defaulthour: 0, defaultminute: 0};
 
 const COMPONENTS = '{"year":2026,"month":9,"day":26,"hour":19,"minute":28,"second":43}';
 
@@ -139,16 +150,16 @@ describe('tool_mulib/muform/element/datetime', () => {
         const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
         const carrier = wrapper.querySelector<HTMLInputElement>('input[type="hidden"]')!;
 
-        text.value = 'tomorrow 10:00';
+        text.value = '2026-09-27 10:00';
         await fire(text, new Event('input', {bubbles: true}));
-        expect(carrier.value).toBe('tomorrow 10:00');
+        expect(carrier.value).toBe('2026-09-27 10:00');
 
         answers.push({
             valid: true, text: '2026-09-27 10:00:00', timestamp: 1790496000,
             components: {year: 2026, month: 9, day: 27, hour: 10, minute: 0, second: 0}, timezone: 'Europe/Prague',
         });
         await fire(text, new Event('change', {bubbles: true}));
-        expect(bodies).toEqual([{text: 'tomorrow 10:00', timezone: 'Europe/Prague', lang: 'en', format: 'Y-m-d H:i:s'}]);
+        expect(bodies).toEqual([{text: '2026-09-27 10:00', ...BODY}]);
         expect(text.value).toBe('2026-09-27 10:00:00');
         expect(carrier.value).toBe('1790496000');
         expect(text.dataset.muformDatetimeTimestamp).toBe('1790496000');
@@ -202,7 +213,7 @@ describe('tool_mulib/muform/element/datetime', () => {
         });
         const apply = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Apply')!;
         await fire(apply, new MouseEvent('click', {bubbles: true}));
-        expect(bodies.at(-1)).toEqual({text: '2026-10-03 08:15:43', timezone: 'Europe/Prague', lang: 'en', format: 'Y-m-d H:i:s'});
+        expect(bodies.at(-1)).toEqual({text: '2026-10-03 08:15:43', ...BODY});
         expect(text.value).toBe('2026-10-03 08:15:43');
         expect(wrapper.querySelector<HTMLInputElement>('input[type="hidden"]')!.value).toBe('1791008143');
         expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
@@ -230,7 +241,7 @@ describe('tool_mulib/muform/element/datetime', () => {
             components: {year: 2026, month: 9, day: 10, hour: 19, minute: 28, second: 43}, timezone: 'Europe/Prague',
         });
         await fire(panel.querySelector('[data-muform-datetime-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
-        expect(bodies.at(-1)).toEqual({text: '2026-09-10 19:28:43', timezone: 'Europe/Prague', lang: 'en', format: 'Y-m-d H:i:s'});
+        expect(bodies.at(-1)).toEqual({text: '2026-09-10 19:28:43', ...BODY});
         expect(text.value).toBe('2026-09-10 19:28:43');
         expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
     });
@@ -286,6 +297,52 @@ describe('tool_mulib/muform/element/datetime', () => {
             await settle();
         });
         expect(wrapper.querySelector('button[aria-label="Pick"]')).toBeNull();
+    });
+
+    it('starts the week on the day configured in Moodle', async() => {
+        const weekdays = async(firstday: number): Promise<string[]> => {
+            const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS, {firstday}));
+            await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
+            const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
+            return Array.from(panel.querySelectorAll('thead th')).map((th) => th.textContent ?? '');
+        };
+        expect(await weekdays(1)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+        expect(await weekdays(0)).toEqual(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+        expect(await weekdays(6)).toEqual(['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
+    });
+
+    it('opens empty values on today in the element timezone with the default time', async() => {
+        // 23:30 UTC on 4 November is already 5 November in Prague and still 4 November in New York.
+        jest.useFakeTimers({now: new Date('2026-11-04T23:30:00Z'), doNotFake: ['setTimeout', 'queueMicrotask']});
+        try {
+            const {wrapper} = await make(fixture('', '', '', {defaulthour: 23, defaultminute: 59}));
+            await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
+            const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
+            expect(panel.querySelector('[aria-live]')!.textContent).toBe('November 2026');
+            expect(panel.querySelector('[data-muform-datetime-day="5"]')!.getAttribute('aria-pressed')).toBe('true');
+            expect(panel.querySelector('[data-muform-datetime-day="5"]')!.getAttribute('aria-current')).toBe('date');
+            expect(panel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('23');
+            const minute = panel.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!;
+            expect(minute.value).toBe('59');
+            expect(Array.from(minute.options).map((option) => option.value)).toEqual(['0', '15', '30', '45', '59']);
+
+            answers.push({
+                valid: true, text: '2026-11-05 23:59:00', timestamp: 1793919540,
+                components: {year: 2026, month: 11, day: 5, hour: 23, minute: 59, second: 0}, timezone: 'Europe/Prague',
+            });
+            const apply = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Apply')!;
+            await fire(apply, new MouseEvent('click', {bubbles: true}));
+            expect(bodies.at(-1)).toEqual({...BODY, text: '2026-11-05 23:59:00', defaulthour: 23, defaultminute: 59});
+
+            const {wrapper: ny} = await make(fixture('', '', '', {timezone: 'America/New_York'}));
+            await fire(ny.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
+            const nypanel = ny.querySelector<HTMLElement>('.muform-datetime-panel')!;
+            expect(nypanel.querySelector('[data-muform-datetime-day="4"]')!.getAttribute('aria-pressed')).toBe('true');
+            expect(nypanel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('0');
+            expect(nypanel.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('0');
+        } finally {
+            jest.useRealTimers();
+        }
     });
 
     it('does nothing for frozen elements', async() => {

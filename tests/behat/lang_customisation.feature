@@ -1,62 +1,68 @@
 @tool @tool_mulib @MuTMS
-Feature: Language customisations of MuTMS strings
-  In order to adapt shipped MuTMS translations
+Feature: Language customisations with fake language packs
+  In order to adapt translations
   As an admin
-  I need language customisations to work with shipped translations and fake language packs
+  I need language customisations to work with fake language packs and generated customisations
+
+  # NOTE: language customisation tool checks out only core, core_langconfig and tool_customlang
+  # strings when running Behat (MDL-70014), so core strings are customised here,
+  # MuTMS strings and the purge of downloaded translations are covered by PHPUnit tests.
 
   Background:
-    # Checkout of the language customisation tool is very slow.
     Given I mark this test as slow setting a timeout factor of 4
     And fake "cs" language pack is installed
 
   @javascript
-  Scenario: Customise MuTMS string in the language customisation tool
+  Scenario: Customise string in fake language pack via the language customisation tool
     Given I log in as "admin"
     And I navigate to "Language > Language customisation" in site administration
     And I set the field "lng" to "cs"
     And I press "Open language pack for editing"
     And I press "Continue"
-    And I set the field "Show strings of these components" to "tool_mulib.php"
-    And I set the field "String identifier" to "purgedownloadedlang"
+    And I set the field "Show strings of these components" to "moodle.php"
+    And I set the field "String identifier" to "preferences"
     And I press "Show strings"
-    And I set the field "tool_mulib/purgedownloadedlang" to "Kouzelný skřítek MuTMS"
+    And I set the field "core/preferences" to "Převelice překrásné předvolby"
     And I press "Save changes to the language pack"
     And I should see "There are 1 modified strings."
     And I click on "Continue" "button"
-    When I visit "/admin/settings.php?section=tool_mulib_lang&lang=cs"
-    Then I should see "Kouzelný skřítek MuTMS"
-    # Not customised strings come from the shipped translation.
+    When I visit "/user/preferences.php?lang=cs"
+    Then I should see "Převelice překrásné předvolby"
+    And I should see "Upřednostňovaný jazyk"
+    # Shipped MuTMS translations are used together with the fake pack.
+    And I visit "/admin/settings.php?section=tool_mulib_lang"
     And I should see "Překlady MuTMS"
     # Customisations are never purged.
     And I run the "tool_mulib\task\lang_cleanup" task
-    And I visit "/admin/settings.php?section=tool_mulib_lang&lang=cs"
-    And I should see "Kouzelný skřítek MuTMS"
-    And I visit "/admin/settings.php?section=tool_mulib_lang&lang=en"
-    And I should see "Use translations shipped with MuTMS"
+    And I visit "/user/preferences.php"
+    And I should see "Převelice překrásné předvolby"
+    And I visit "/user/preferences.php?lang=en"
+    And I should see "Preferences"
+    And I should not see "Převelice překrásné předvolby"
 
   @javascript
-  Scenario: Generated customisations are kept by the language customisation tool
+  Scenario: Generated customisations are imported and kept by the language customisation tool
     Given the following "tool_mulib > lang_customisations" exist:
-      | lang | component  | stringid      | value          |
-      | cs   | tool_mulib | lang_settings | Ukecaný rohlík |
+      | lang | component | stringid    | value                         |
+      | cs   | core      | preferences | Převelice překrásné předvolby |
     And I log in as "admin"
     And I navigate to "Language > Language customisation" in site administration
     And I set the field "lng" to "cs"
     And I press "Open language pack for editing"
     And I press "Continue"
-    And I set the field "Show strings of these components" to "tool_mulib.php"
-    And I set the field "String identifier" to "lang_settings"
+    And I set the field "Show strings of these components" to "moodle.php"
+    And I set the field "String identifier" to "preferences"
     And I press "Show strings"
     # Checkout imports customisations from files.
-    And the field "tool_mulib/lang_settings" matches value "Ukecaný rohlík"
-    And I set the field "String identifier" to "purgedownloadedlang"
+    And the field "core/preferences" matches value "Převelice překrásné předvolby"
+    And I set the field "String identifier" to "preferredlanguage"
     And I press "Show strings"
-    And I set the field "tool_mulib/purgedownloadedlang" to "Kouzelný skřítek MuTMS"
+    And I set the field "core/preferredlanguage" to "Ukecaný rohlík"
     And I press "Save changes to the language pack"
     And I click on "Continue" "button"
-    When I visit "/admin/settings.php?section=tool_mulib_lang&lang=cs"
-    Then I should see "Ukecaný rohlík"
-    And I should see "Kouzelný skřítek MuTMS"
+    When I visit "/user/preferences.php?lang=cs"
+    Then I should see "Převelice překrásné předvolby"
+    And I should see "Ukecaný rohlík"
 
   @javascript
   Scenario: Customisations generated after checkout are kept by the language customisation tool
@@ -67,14 +73,14 @@ Feature: Language customisations of MuTMS strings
     And I press "Continue"
     # Database records of the tool exist now, they must be updated by the generator.
     And the following "tool_mulib > lang_customisations" exist:
-      | lang | component  | stringid      | value          |
-      | cs   | tool_mulib | lang_settings | Ukecaný rohlík |
-    And I set the field "Show strings of these components" to "tool_mulib.php"
-    And I set the field "String identifier" to "purgedownloadedlang"
+      | lang | component | stringid    | value                         |
+      | cs   | core      | preferences | Převelice překrásné předvolby |
+    And I set the field "Show strings of these components" to "moodle.php"
+    And I set the field "String identifier" to "preferredlanguage"
     And I press "Show strings"
-    And I set the field "tool_mulib/purgedownloadedlang" to "Kouzelný skřítek MuTMS"
+    And I set the field "core/preferredlanguage" to "Ukecaný rohlík"
     And I press "Save changes to the language pack"
     And I click on "Continue" "button"
-    When I visit "/admin/settings.php?section=tool_mulib_lang&lang=cs"
-    Then I should see "Ukecaný rohlík"
-    And I should see "Kouzelný skřítek MuTMS"
+    When I visit "/user/preferences.php?lang=cs"
+    Then I should see "Převelice překrásné předvolby"
+    And I should see "Ukecaný rohlík"

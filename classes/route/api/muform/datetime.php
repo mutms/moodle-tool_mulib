@@ -35,7 +35,7 @@ use tool_mulib\muform\util\calendar;
  * Normalisation of date and time text typed into the muform datetime element.
  *
  * A pure function without session or data access: the browser sends the text,
- * timezone and language it was rendered with and gets back the timestamp,
+ * timezone, language and default time it was rendered with and gets back the timestamp,
  * the normalised text and the date components, or valid false.
  *
  * @package     tool_mulib
@@ -67,7 +67,8 @@ class datetime {
                         'text' => new scalar_type(param::RAW, required: true),
                         'timezone' => new scalar_type(param::RAW, required: true),
                         'lang' => new scalar_type(param::LANG, required: true),
-                        'format' => new scalar_type(param::RAW, required: false),
+                        'defaulthour' => new scalar_type(param::INT, required: false),
+                        'defaultminute' => new scalar_type(param::INT, required: false),
                     ],
                 ),
             ),
@@ -91,20 +92,21 @@ class datetime {
             throw new invalid_parameter_exception('Invalid language');
         }
 
-        $format = (string)($body['format'] ?? '');
-        if ($format === '') {
-            $format = calendar::get_format($lang);
+        $defaulthour = (int)($body['defaulthour'] ?? 0);
+        $defaultminute = (int)($body['defaultminute'] ?? 0);
+        if ($defaulthour < 0 || $defaulthour > 23 || $defaultminute < 0 || $defaultminute > 59) {
+            throw new invalid_parameter_exception('Invalid default time');
         }
 
         $text = (string)($body['text'] ?? '');
         try {
-            $timestamp = calendar::parse($text, $tz, $format);
+            $timestamp = calendar::parse($text, $tz, $lang, $defaulthour, $defaultminute);
         } catch (\InvalidArgumentException $e) {
             $payload = ['valid' => false, 'text' => $text, 'timestamp' => null, 'components' => null, 'timezone' => $timezone];
             return new payload_response(payload: $payload, request: $request, response: $response);
         }
 
-        $payload = calendar::describe($timestamp, $tz, $format);
+        $payload = calendar::describe($timestamp, $tz, $lang);
         $payload['valid'] = true;
         $payload['timezone'] = $timezone;
         return new payload_response(payload: $payload, request: $request, response: $response);

@@ -3,7 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 /**
  * Client of the datetime normalisation endpoint, the browser never interprets dates itself.
  *
- * The input carries the timezone, language and display format it was rendered with
+ * The input carries the timezone, language and default time it was rendered with
  * as data attributes, the endpoint answers with the three representations of the date.
  *
  * @module     tool_mulib/muform/datetimeapi
@@ -18,7 +18,8 @@ async function normalise(input, text) {
       text,
       timezone: input.dataset.muformDatetimeTimezone ?? "",
       lang: input.dataset.muformDatetimeLang ?? "",
-      format: input.dataset.muformDatetimeFormat ?? ""
+      defaulthour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+      defaultminute: Number(input.dataset.muformDatetimeDefaultminute) || 0
     };
     const response = await Fetch.performPost("tool_mulib", "muform/datetime", { body });
     const answer = await response.json();

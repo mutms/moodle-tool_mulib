@@ -17,7 +17,9 @@
  * Calendar and time picker of the datetime element, a React island.
  *
  * The picker only edits date parts, the text sent to the element is parsed
- * by the server. Month and weekday names come from Intl for display only.
+ * by the server. Month and weekday names come from Intl for display only,
+ * the first day of week comes from Moodle. "Today" is in the timezone of the element,
+ * empty values start at the default time of the element.
  *
  * @module     tool_mulib/muform/datetimepicker
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -58,6 +60,8 @@ export interface PickerProps {
     input: HTMLInputElement;
     /** Minute step of the minute select. */
     step: number;
+    /** First day of week from Moodle, 0 is Sunday, null means the language default. */
+    firstDay?: number | null;
     /** Disabled elements have no picker. */
     disabled: boolean;
     /** Localised texts. */
@@ -72,12 +76,16 @@ interface WeekInfo {
 }
 
 /**
- * First day of week for the page language, 1 is Monday and 7 is Sunday.
+ * First day of week, 1 is Monday and 7 is Sunday.
  *
- * @param lang page language tag
+ * @param moodle first day from Moodle, 0 is Sunday, null when not known
+ * @param lang page language tag used when Moodle did not tell
  * @returns weekday number
  */
-function firstDayOfWeek(lang: string): number {
+function firstDayOfWeek(moodle: number | null | undefined, lang: string): number {
+    if (moodle !== null && moodle !== undefined && Number.isInteger(moodle) && moodle >= 0 && moodle <= 6) {
+        return moodle === 0 ? 7 : moodle;
+    }
     try {
         const locale = new Intl.Locale(lang) as unknown as {getWeekInfo?: () => WeekInfo; weekInfo?: WeekInfo};
         const info = locale.getWeekInfo ? locale.getWeekInfo() : locale.weekInfo;
@@ -88,31 +96,37 @@ function firstDayOfWeek(lang: string): number {
 }
 
 /**
- * Current date and time rounded down to the minute step.
+ * Today's date in a timezone, the browser may be in a different one.
  *
- * @param step minute step
- * @returns parts
+ * @param timezone IANA timezone of the element
+ * @returns year, month and day
  */
-function nowParts(step: number): Components {
+export function todayIn(timezone: string): Pick<Components, 'year' | 'month' | 'day'> {
     const now = new Date();
-    return {
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-        day: now.getDate(),
-        hour: now.getHours(),
-        minute: now.getMinutes() - (now.getMinutes() % step),
-        second: 0,
-    };
+    try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric',
+        }).formatToParts(now);
+        const part = (type: string): number => Number(parts.find((item) => item.type === type)?.value);
+        return {year: part('year'), month: part('month'), day: part('day')};
+    } catch {
+        return {year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate()};
+    }
 }
 
 /**
- * Today's date parts without time.
+ * Starting parts of an empty value: today with the default time of the element.
  *
- * @returns year, month and day
+ * @param input the datetime text input
+ * @returns parts
  */
-function nowDate(): Pick<Components, 'year' | 'month' | 'day'> {
-    const now = new Date();
-    return {year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate()};
+function emptyParts(input: HTMLInputElement): Components {
+    return {
+        ...todayIn(input.dataset.muformDatetimeTimezone ?? ''),
+        hour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+        minute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
+        second: 0,
+    };
 }
 
 /**
@@ -138,17 +152,18 @@ function addDays(parts: Components, days: number): Components {
     return {...parts, year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate()};
 }
 
-export default function DateTimePicker({input, step, disabled, strings, apply}: PickerProps) {
+export default function DateTimePicker({input, step, firstDay: moodleFirstDay, disabled, strings, apply}: PickerProps) {
     const lang = document.documentElement.lang || 'en';
+    const timezone = input.dataset.muformDatetimeTimezone ?? '';
     const [open, setOpen] = useState(false);
-    const [parts, setParts] = useState<Components>(() => readComponents(input) ?? nowParts(step));
+    const [parts, setParts] = useState<Components>(() => readComponents(input) ?? emptyParts(input));
     const [view, setView] = useState({year: parts.year, month: parts.month});
     const [focusDay, setFocusDay] = useState(false);
     const gridRef = useRef<HTMLTableElement>(null);
 
     const onOpenChange = (state: boolean): void => {
         if (state) {
-            const current = readComponents(input) ?? nowParts(step);
+            const current = readComponents(input) ?? emptyParts(input);
             setParts(current);
             setView({year: current.year, month: current.month});
         }
@@ -218,14 +233,14 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
     const monthFormat = new Intl.DateTimeFormat(lang, {month: 'long', year: 'numeric'});
     const monthName = monthFormat.format(new Date(view.year, view.month - 1, 1));
     const weekdayFormat = new Intl.DateTimeFormat(lang, {weekday: 'short'});
-    const firstDay = firstDayOfWeek(lang);
+    const firstDay = firstDayOfWeek(moodleFirstDay, lang);
     const weekdays = Array.from({length: 7}, (_, i) => {
         // The 4th of January 2026 is a Sunday, so the 5th is Monday which is weekday 1.
         const weekday = ((firstDay - 1 + i) % 7) + 1;
         return weekdayFormat.format(new Date(2026, 0, 4 + weekday));
     });
 
-    const today = nowDate();
+    const today = todayIn(timezone);
     const first = new Date(view.year, view.month - 1, 1);
     const firstWeekday = first.getDay() === 0 ? 7 : first.getDay();
     const leading = (firstWeekday - firstDay + 7) % 7;
@@ -357,7 +372,8 @@ export default function DateTimePicker({input, step, disabled, strings, apply}: 
                             </select>
                         </div>
                         <div className="d-flex gap-1">
-                            <button type="button" className="btn btn-sm btn-light" onClick={() => select({...parts, ...nowDate()})}>
+                            <button type="button" className="btn btn-sm btn-light"
+                                onClick={() => select({...parts, ...todayIn(timezone)})}>
                                 {strings.today}
                             </button>
                             <button type="button" className="btn btn-sm btn-light" onClick={() => applyAndClose('')}>
