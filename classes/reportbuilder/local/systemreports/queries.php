@@ -99,6 +99,7 @@ final class queries extends system_report {
     protected function add_filters(): void {
         $filters = [
             'query:name',
+            'query:type',
         ];
         $this->add_filters_from_entities($filters);
 

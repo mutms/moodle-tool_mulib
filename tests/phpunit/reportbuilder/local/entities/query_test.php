@@ -20,6 +20,7 @@
 namespace tool_mulib\phpunit\reportbuilder\local\entities;
 
 use tool_mulib\local\extdb\query;
+use core_reportbuilder\local\filters\select;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -96,5 +97,91 @@ final class query_test extends \advanced_testcase {
         $this->assertSame('Program allocation', $this->format_column('type', $query1->id));
         $this->assertSame('Cohort rule', $this->format_column('type', $query2->id));
         $this->assertSame('xyz&lt;b&gt;', $this->format_column('type', $query3id));
+    }
+
+    /**
+     * Returns ids of queries matching entity filter.
+     *
+     * @param string $filtername
+     * @param array $values
+     * @return array
+     */
+    private function get_filtered_ids(string $filtername, array $values): array {
+        global $DB;
+
+        $entity = new \tool_mulib\reportbuilder\local\entities\query();
+        $entity->initialise();
+        $alias = $entity->get_table_alias('tool_mulib_extdb_query');
+        $filter = $entity->get_filter($filtername);
+        $classname = $filter->get_filter_class();
+        [$where, $params] = $classname::create($filter)->get_sql_filter($values);
+        $where = $where === '' ? '1=1' : $where;
+
+        $sql = "SELECT {$alias}.id
+                  FROM {tool_mulib_extdb_query} {$alias}
+                 WHERE {$where}
+              ORDER BY {$alias}.id ASC";
+        return array_map('intval', $DB->get_fieldset_sql($sql, $params));
+    }
+
+    public function test_type_filter(): void {
+        /** @var \tool_mulib_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('tool_mulib');
+        $server = $generator->create_extdb_server([]);
+
+        $query1 = query::create((object)[
+            'serverid' => $server->id,
+            'name' => 'Query 1',
+            'component' => 'tool_muprog',
+            'type' => 'allocation',
+            'sqlquery' => 'SELECT * FROM m_user',
+        ]);
+        $query2 = query::create((object)[
+            'serverid' => $server->id,
+            'name' => 'Query 2',
+            'component' => 'tool_mucohort',
+            'type' => 'rule',
+            'sqlquery' => 'SELECT * FROM m_user',
+        ]);
+        $query3 = query::create((object)[
+            'serverid' => $server->id,
+            'name' => 'Query 3',
+            'component' => 'tool_muprog',
+            'type' => 'allocation',
+            'sqlquery' => 'SELECT * FROM m_user',
+        ]);
+
+        $entity = new \tool_mulib\reportbuilder\local\entities\query();
+        $entity->initialise();
+        $filter = $entity->get_filter('type');
+        $options = $filter->get_options();
+        $this->assertSame('Program allocation', $options['tool_muprog/allocation']);
+        $this->assertSame('Cohort rule', $options['tool_mucohort/rule']);
+
+        $this->assertSame(
+            [(int)$query1->id, (int)$query2->id, (int)$query3->id],
+            $this->get_filtered_ids('type', ['query:type_operator' => select::ANY_VALUE])
+        );
+        $this->assertSame(
+            [(int)$query1->id, (int)$query3->id],
+            $this->get_filtered_ids('type', [
+                'query:type_operator' => select::EQUAL_TO,
+                'query:type_value' => 'tool_muprog/allocation',
+            ])
+        );
+        $this->assertSame(
+            [(int)$query2->id],
+            $this->get_filtered_ids('type', [
+                'query:type_operator' => select::EQUAL_TO,
+                'query:type_value' => 'tool_mucohort/rule',
+            ])
+        );
+        $this->assertSame(
+            [(int)$query2->id],
+            $this->get_filtered_ids('type', [
+                'query:type_operator' => select::NOT_EQUAL_TO,
+                'query:type_value' => 'tool_muprog/allocation',
+            ])
+        );
     }
 }
