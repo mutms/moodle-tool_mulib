@@ -239,7 +239,7 @@ final class lang_util_test extends \advanced_testcase {
 
     public function test_customise_string_customlang_sync(): void {
         global $CFG, $DB;
-        require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/customlang/locallib.php');
+        require_once($CFG->dirroot . '/admin/tool/customlang/locallib.php');
 
         // Simulate existing checkout of the language customisation tool.
         $componentid = $DB->insert_record('tool_customlang_components', ['name' => 'tool_mulib', 'version' => '1']);
