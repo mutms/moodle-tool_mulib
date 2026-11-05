@@ -17,7 +17,8 @@
     @template tool_mulib/muform/wizard
 
     Layout of a multi-page form rendered by tool_mulib\muform\wizard::render():
-    the stepper above the stage form in a card, horizontal when there is enough space.
+    the stepper above the stage form in a card, horizontal when there is enough space,
+    or in a sticky column left of the form when the wizard is wide.
     Completed and current steps are active, reachable steps are links, the current one is highlighted,
     later steps are muted.
 
@@ -37,8 +38,9 @@
         "formhtml": "<form>...</form>"
     }
 }}
+<div class="muform-wizard-container">
 <div class="muform-wizard">
-    <nav aria-label="{{title}}" class="muform-wizard-stages mb-4">
+    <nav aria-label="{{title}}" class="muform-wizard-stages">
         <ol class="muform-stepper">
             {{#stages}}
             <li class="muform-stepper-item{{#is_active}} active{{/is_active}}{{#is_current}} current{{/is_current}}{{^is_current}}{{^is_link}} disabled{{/is_link}}{{/is_current}}"{{#is_current}} aria-current="step"{{/is_current}}>
@@ -54,4 +56,5 @@
             {{{formhtml}}}
         </div>
     </div>
+</div>
 </div>

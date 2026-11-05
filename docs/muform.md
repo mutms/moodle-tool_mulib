@@ -583,6 +583,11 @@ JavaScript they open the normal page. `create_report_action()` makes a report bu
 Use a wizard when creating something takes several steps. The state is stored in
 `tool_mulib_muform_wizard`, one row per running wizard, and the forms know nothing about it.
 
+Wizards and their stepper are intended for full page forms, open them with plain links, not dialogs.
+Going back to earlier steps, reloads and long stage forms get awkward in a dialog. For a short flow in a
+dialog, such as choosing a type before the real form, render the next form when
+`$handler->is_dialog()` is true instead.
+
 The row id travels in the URL, but the row can only be loaded by the same user in the same login
 session and by the same wizard, because it is protected by a hash of all of these. Include the page
 parameters in the wizard name, like `'auth_musaml_user_upload:' . $idp->id`, and the data cannot be
@@ -624,7 +629,9 @@ Wizards are full pages, so they use `redirect()` and `$OUTPUT` directly. The Bac
 `reload` element, not `cancel`, because dialogs close on cancel. Cancel and the final submit delete
 the row. `render()` shows a stepper above the form: numbered steps joined by a line, completed and
 current steps highlighted, reachable steps as links. It is vertical in narrow containers and horizontal
-from 30rem width (a CSS container query, so it also works in narrow page regions).
+from 30rem width when there are at most 6 steps. Wizards at least 64rem wide, such as full page
+forms on desktop, show the vertical stepper in a sticky column left of the form. All of this uses
+CSS container queries, so it follows the width of the wizard, not the screen.
 
 ## Custom fields
 
