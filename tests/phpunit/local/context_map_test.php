@@ -20,7 +20,11 @@
 namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\context_map;
-use context, context_system, context_coursecat, context_course, context_module;
+use context;
+use context_system;
+use context_coursecat;
+use context_course;
+use context_module;
 use tool_mulib\local\sql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
