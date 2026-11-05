@@ -130,10 +130,19 @@ final class query extends base {
         ))
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
-            ->add_fields("{$queryalias}.type")
+            ->add_fields("{$queryalias}.type, {$queryalias}.component")
             ->set_is_sortable(true)
             ->set_callback(static function (?string $value, \stdClass $row): string {
-                return s($row->type); // TODO: ask the query class for name of type.
+                if ($row->type === null) {
+                    return '';
+                }
+                $qman = \core\di::get(\tool_mulib\local\extdb\query_manager::class);
+                $classname = $qman->get_class((string)$row->component, $row->type);
+                if ($classname) {
+                    return $classname::get_name();
+                }
+                // Plugin providing this query type is not available.
+                return s($row->type);
             });
 
         $columns[] = (new column(
