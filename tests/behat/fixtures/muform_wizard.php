@@ -57,9 +57,10 @@ if (optional_param('cancelled', 0, PARAM_BOOL)) {
 }
 
 if ($state === null) {
-    $wizard = wizard::load('tool_mulib_fixture', optional_param(wizard::PARAM, 0, PARAM_INT));
+    $stages = ['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'];
+    $wizard = wizard::load('tool_mulib_fixture', $stages);
     if (!$wizard) {
-        $wizard = wizard::start('tool_mulib_fixture');
+        $wizard = wizard::start('tool_mulib_fixture', $stages);
         redirect($wizard->get_url($pageurl));
     }
     $data = $wizard->get_data();
@@ -71,11 +72,8 @@ if ($state === null) {
             'summary' => false,
         };
     };
-    $requested = optional_param(wizard::STAGE_PARAM, null, PARAM_ALPHA);
-    $stages = $wizard->resolve_stages(['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'], $isvalid, $requested);
-    $stage = wizard::current_stage($stages);
+    $stage = $wizard->resolve_stages($isvalid);
     $formurl = $wizard->get_url($pageurl, $stage);
-    $previous = ['choice' => 'details', 'summary' => 'choice'];
 
     if ($stage === 'details') {
         $form = new tool_mulib_muform_wizard_details_form($formurl, $data);
@@ -96,8 +94,8 @@ if ($state === null) {
         $wizard->delete();
         redirect(new \core\url($pageurl, ['cancelled' => 1]));
     }
-    if ($form->is_reloaded() && isset($previous[$stage]) && $form->get_element('back')->get_value()) {
-        redirect($wizard->get_url($pageurl, $previous[$stage]));
+    if ($form->is_reloaded() && $wizard->get_previous_stage() !== null && $form->get_element('back')->get_value()) {
+        redirect($wizard->get_url($pageurl, $wizard->get_previous_stage()));
     }
     if ($submitted = $form->get_data()) {
         if ($stage === 'summary') {
@@ -122,7 +120,7 @@ if ($state !== null) {
     $text = 'Stage ' . $stage . ($form->is_invalid() ? ' is invalid' : '');
     echo html_writer::div($text, 'alert alert-info', ['id' => 'muform_state']);
     echo html_writer::tag('pre', s(json_encode((object)$data, JSON_UNESCAPED_SLASHES)), ['id' => 'wizard_data']);
-    echo $wizard->render($OUTPUT, $stages, $pageurl, $form);
+    echo $wizard->render($OUTPUT, $pageurl, $form);
 }
 
 echo $OUTPUT->footer();

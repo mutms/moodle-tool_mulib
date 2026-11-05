@@ -104,6 +104,7 @@ $string['muform_searching'] = 'Hledání...';
 $string['muform_seconds'] = 'sekund';
 $string['muform_show'] = 'Zobrazit';
 $string['muform_steps'] = 'Kroky';
+$string['muform_stepskipped'] = 'přeskočeno';
 $string['muform_tagnotstandard'] = 'Lze použít pouze standardní štítky';
 $string['muform_timezone'] = 'Časové pásmo: {$a}';
 $string['muform_today'] = 'Dnes';

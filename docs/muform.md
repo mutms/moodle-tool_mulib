@@ -588,36 +588,47 @@ Multi-step full page forms, open them with plain links, never in dialogs. State 
 `tool_mulib_muform_wizard`, bound to the user, login session and wizard name; put the page parameters
 into the name. Rows older than a day are deleted.
 
-Each stage is its own form class with the stored data as current data. A stage is completed only
-after `complete_stage()`, valid data never skips a stage. Completing a stage again resets the later
-ones. Leave out stages that do not apply. `is_finished()` says all stages are completed,
+Stages never change, `start()` and `load()` get the same stage names with labels. Each stage is its
+own form class with the stored data as current data. A stage is completed only after
+`complete_stage()`, valid data never skips a stage. Completing a stage again resets the later ones.
+Stages that do not apply now are passed to `resolve_stages()` as skipped, the stepper shows them
+greyed out. Stage names are lowercase letters, `?stage=` requests a completed stage.
 `set_data()` stores defaults without completing anything.
 
 ```php
 $name = 'auth_musaml_user_upload:' . $idp->id;
-$wizard = wizard::load($name, optional_param(wizard::PARAM, 0, PARAM_INT));
+$stages = ['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'];
+$wizard = wizard::load($name, $stages);
 if (!$wizard) {
-    $wizard = wizard::start($name);
+    $wizard = wizard::start($name, $stages);
     redirect($wizard->get_url($pageurl));
 }
 $data = $wizard->get_data();
-$stages = $wizard->resolve_stages(['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'],
-    fn(string $stage) => mapping_import::is_stage_valid($stage, $data), optional_param(wizard::STAGE_PARAM, null, PARAM_ALPHA));
-$stage = wizard::current_stage($stages);
+$isvalid = function (string $stage) use ($data): bool {
+    return match ($stage) {
+        'source' => mapping_import::is_source_valid($data),
+        'columns' => mapping_import::is_columns_valid($data),
+        'options' => mapping_import::is_options_valid($data),
+    };
+};
+$stage = $wizard->resolve_stages($isvalid);
+if ($wizard->is_finished()) {
+    // All stages completed, do the job, delete the wizard and redirect.
+}
 $form = new user_upload_source($wizard->get_url($pageurl, $stage), $data, ['idp' => $idp]);
 if ($form->is_cancelled()) {
     $wizard->delete();
     redirect($returnurl);
 }
-if ($form->is_reloaded() && $form->get_element('back')->get_value()) {
-    redirect($wizard->get_url($pageurl, 'source'));
+if ($form->is_reloaded() && $wizard->get_previous_stage() !== null && $form->get_element('back')->get_value()) {
+    redirect($wizard->get_url($pageurl, $wizard->get_previous_stage()));
 }
 if ($submitted = $form->get_data()) {
     $wizard->complete_stage($stage, mapping_import::save_source($data, $submitted, $form));
     redirect($wizard->get_url($pageurl));
 }
 echo $OUTPUT->header();
-echo $wizard->render($OUTPUT, $stages, $pageurl, $form);
+echo $wizard->render($OUTPUT, $pageurl, $form);
 ```
 
 The Back button is a `reload` element. Cancel and the final submit delete the row. The stepper is

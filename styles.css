@@ -189,6 +189,14 @@
 .muform-stepper-item.disabled .muform-stepper-label {
     color: var(--bs-secondary-color);
 }
+/* Stages that do not apply now, the wizard moves past them. */
+.muform-stepper-item.skipped .muform-stepper-number,
+.muform-stepper-item.skipped .muform-stepper-label {
+    opacity: 0.5;
+}
+.muform-stepper-item.skipped .muform-stepper-label {
+    text-decoration: line-through;
+}
 .muform-stepper-item a.muform-stepper-label {
     text-decoration: none;
 }

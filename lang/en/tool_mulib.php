@@ -104,6 +104,7 @@ $string['muform_searching'] = 'Searching...';
 $string['muform_seconds'] = 'seconds';
 $string['muform_show'] = 'Show';
 $string['muform_steps'] = 'Steps';
+$string['muform_stepskipped'] = 'skipped';
 $string['muform_tagnotstandard'] = 'Only standard tags can be used';
 $string['muform_timezone'] = 'Time zone: {$a}';
 $string['muform_today'] = 'Today';

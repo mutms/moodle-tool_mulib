@@ -111,6 +111,7 @@ $string['muform_searching'] = 'Suche läuft ...';
 $string['muform_seconds'] = 'Sekunden';
 $string['muform_show'] = 'Anzeigen';
 $string['muform_steps'] = 'Schritte';
+$string['muform_stepskipped'] = 'übersprungen';
 $string['muform_tagnotstandard'] = 'Nur Standard-Tags können verwendet werden';
 $string['muform_timezone'] = 'Zeitzone: {$a}';
 $string['muform_today'] = 'Heute';
