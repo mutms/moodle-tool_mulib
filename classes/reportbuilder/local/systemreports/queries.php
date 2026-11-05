@@ -78,6 +78,7 @@ final class queries extends system_report {
         $columns = [
             'query:name',
             'query:context',
+            'query:type',
         ];
         $this->add_columns_from_entities($columns);
 
