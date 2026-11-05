@@ -289,6 +289,9 @@ dialog.muform-dialog .modal-body {
     height: 2.2rem;
     padding: 0;
 }
+.muform-datetime-panel .muform-datetime-rangelabel {
+    min-width: 4.5rem;
+}
 
 /* muform: secrets and shared keys are masked text inputs, never password inputs. */
 .muform-secret-masked,
@@ -356,6 +359,12 @@ dialog.muform-dialog .modal-body {
 }
 .muform .felement .muform-width-full {
     width: 100%;
+}
+
+/* muform: date and time ranges such as "11/6/2026 11:30 PM - 1:30 AM +1" do not fit the default input size. */
+.muform .felement .muform-datetimerange-input {
+    width: 20rem;
+    max-width: 100%;
 }
 
 /* muform: duration and date interval unit inputs, three digits. */

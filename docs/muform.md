@@ -158,6 +158,7 @@ download, also in a dialog.
 | `textarea`         | `(name, label, attributes)`                                                  | `string`, cleaned, `\n` line ends                          | blank after trim |
 | `number`           | `(name, label, attributes)`                                                  | `int`, `float` or `null`                                   | `null`           |
 | `datetime`         | `(name, label, attributes)`                                                  | `int` timestamp or `null`                                  | `null`           |
+| `datetimerange`    | `(name, label, attributes)`                                                  | `['start' => int, 'end' => int]` or `null`                 | `null`           |
 | `duration`         | `(name, label, units = ['d', 'h', 'i'])`                                     | `int` seconds                                              | `0`              |
 | `dateinterval`     | `(name, label, units = ['y', 'm', 'w', 'd'])`                                | ISO 8601 duration `string` or `null`                       | `null`           |
 | `secret`           | `(name, label, attributes, allowclear = false)`                              | `null` keep, `''` cleared, `string` new                    | see below        |
@@ -240,6 +241,36 @@ The picker takes the first day of the week from Moodle (`calendar_startwday` and
 and month and weekday names from the browser in the page language. "Today" is in the user's Moodle
 timezone. The timezone line under the input is only shown to users whose timezone differs from the
 site timezone.
+
+`datetimerange` is for sessions and events: one text input with start and end, such as
+`2026-11-06 11:30 – 12:30`, and the value `['start' => int, 'end' => int]` or `null`. Current data
+may be an array or object with `start` and `end` keys. A date and a start time with two end
+times is what people expect. It also avoids an end date that is wrong when the session crosses
+midnight in the user's timezone.
+
+- The start is anything `datetime` accepts. `set_default_time()` works the same way.
+- The separator is an en or em dash, with or without spaces, or a hyphen with spaces around it. Dates
+  contain hyphens too, so every possible split is tried and exactly one must give a valid range.
+- Ranges are at most 24 hours long, by design. Use two `datetime` elements for anything that may
+  last longer. The limit is the same wall clock time on the next day, so a range over a daylight
+  saving change may have 23 or 25 hours.
+- An end time without a date means the first such time after the start: `23:30 - 01:30` ends
+  the next day, `11:30 - 11:30` is a whole day. `01:30 +1` (also `01:30+1`) and a full end date
+  such as `2026-11-07 01:30` are accepted too, they must not go past the limit, so `11:30 - 12:30 +1`
+  is invalid. Dotted times like `13.30` are fine in the end.
+- Text with only a start gets `set_default_duration($seconds)`; without a default
+  duration the end is required. `set_max_duration($seconds)` sets a shorter limit and limits the
+  durations offered by the picker. Longer values from code, such as current data, a default or
+  submitted timestamps, are trimmed to 24 hours with a debugging message, longer default durations too.
+- The field always shows the start and the end time, with ` +1` when the end is on the next day in the
+  user's timezone. Users in other timezones may see the `+1` or not, the timestamps stay the same. A hint
+  under the input shows the duration, and the end date when it is on another day. Across a daylight
+  saving change the hint shows the real duration: `01:30 – 03:30` lasts one hour in spring.
+- The picker shows the calendar with start time, end time and a duration select. Changing the start
+  keeps the duration. Picking an end time sets the first such time after the start.
+- For reading, `calendar::format_range_html($range, $tz, $lang)` prints the airline style
+  `2026-11-06 23:30 – 01:30<sup>+1</sup>` with the full end date in the title. Frozen elements use it.
+  Copied text is `… 01:30+1`, which the element accepts again.
 
 `duration` is a number of seconds and never `null`. It shows one input per unit, days, hours and
 minutes by default, and adds them up on the server, so 90 minutes comes back as 1 hour 30 minutes.
@@ -495,7 +526,8 @@ Then the following muform fields match:
 
 The first column is the element name, or its exact label when no element has that name. The second
 column is what a user would enter: option keys (or labels), comma separated for multiple values,
-`2026-09-26 10:00` for dates, seconds for durations, ISO strings for intervals, `[clear]` to clear a
+`2026-09-26 10:00` for dates, `2026-11-06 23:30 - 01:30` or two hyphenated timestamps such as
+`##tomorrow 10:00##-##tomorrow 11:00##` for date ranges, seconds for durations, ISO strings for intervals, `[clear]` to clear a
 secret. Checkboxes are checked by anything except empty or `0`. Files are uploaded with
 `I upload "lib/tests/fixtures/empty.txt" file to "attachments" muform filemanager`.
 

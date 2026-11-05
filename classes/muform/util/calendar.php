@@ -53,6 +53,16 @@ final class calendar {
         's' => ['muform_numsecond', 'tool_mulib', 'numseconds', 'core'],
     ];
 
+    /** @var string time with optional seconds and AM/PM, the hour alone is allowed only with AM/PM */
+    private const string TIME_REGEX = '(?<hour>\d{1,2})(?:[:.](?<minute>\d{2})(?:[:.](?<second>\d{2}))?)?'
+        . '\s*(?:(?<ampm>[AaPp])\.?\s*[Mm]\.?)?';
+
+    /** @var string separator of start and end in ranges, ISO dates contain hyphens, so plain hyphens need spaces */
+    private const string RANGE_SEPARATOR_REGEX = '/\s+-\s+|\s*[\x{2013}\x{2014}]\s*/u';
+
+    /** @var string separator of start and end in range texts */
+    public const string RANGE_SEPARATOR = " \u{2013} ";
+
     /** @var string ISO 8601 duration with the designators in fixed order, at least one part */
     private const string INTERVAL_REGEX = '/^P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?'
         . '(?:T(?=\d)(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/D';
@@ -226,8 +236,7 @@ final class calendar {
             return (int)$text;
         }
 
-        // Time with optional seconds and AM/PM, the hour alone is allowed only with AM/PM.
-        $time = '(?<hour>\d{1,2})(?:[:.](?<minute>\d{2})(?:[:.](?<second>\d{2}))?)?\s*(?:(?<ampm>[AaPp])\.?\s*[Mm]\.?)?';
+        $time = self::TIME_REGEX;
 
         // Time only means today, it needs a colon or AM/PM, texts with dots only such as "4.11.26" are dates.
         if (
@@ -389,6 +398,306 @@ final class calendar {
                 'second' => (int)$date->format('s'),
             ],
         ];
+    }
+
+    /**
+     * Time part of the display format, such as "H:i" or "g:i A".
+     *
+     * @param string $lang
+     * @return string
+     */
+    public static function get_time_format(string $lang): string {
+        $format = self::get_format($lang);
+        // Skip escaped characters, they are literal text.
+        if (preg_match('/(?<!\\\\)[GHgh]/', $format, $matches, PREG_OFFSET_CAPTURE)) {
+            $time = trim(substr($format, $matches[0][1]));
+            if ($time !== '') {
+                return $time;
+            }
+        }
+        return 'H:i';
+    }
+
+    /**
+     * Convert range text such as "2026-11-06 11:30 – 12:30" to start and end timestamps.
+     *
+     * The start is anything parse() accepts. The end is a time, which means the first
+     * such time after the start, a time with "+N" days after the start date, such as "01:30 +1",
+     * or a full date and time. Ranges longer than 24 hours of wall clock time are not valid,
+     * see is_valid_range(). Start and end are separated with a dash, plain hyphens
+     * need spaces around them because dates contain hyphens. When there are more ways
+     * to split the text, exactly one must give a valid range. Text without end gets
+     * the default duration.
+     *
+     * @param string $text
+     * @param \DateTimeZone $tz
+     * @param string $lang language of the display format
+     * @param int $defaulthour hour of dates without time
+     * @param int $defaultminute minute of dates without time
+     * @param int|null $defaultduration seconds added to start when end is missing, null means end is required
+     * @return array|null with keys start and end, null for empty text
+     * @throws \InvalidArgumentException when text cannot be parsed or the range is not valid
+     */
+    public static function parse_range(
+        string $text,
+        \DateTimeZone $tz,
+        string $lang,
+        int $defaulthour = 0,
+        int $defaultminute = 0,
+        ?int $defaultduration = null
+    ): ?array {
+        $text = trim($text);
+        if ($text === '') {
+            return null;
+        }
+
+        preg_match_all(self::RANGE_SEPARATOR_REGEX, $text, $separators, PREG_OFFSET_CAPTURE);
+        if (!$separators[0]) {
+            if ($defaultduration === null || $defaultduration <= 0) {
+                throw new \InvalidArgumentException('Cannot parse date and time range text: ' . $text);
+            }
+            $start = self::parse_range_start($text, $tz, $lang, $defaulthour, $defaultminute);
+            if (!self::is_valid_range($start, $start + $defaultduration, $tz)) {
+                throw new \InvalidArgumentException('Cannot parse date and time range text: ' . $text);
+            }
+            return ['start' => $start, 'end' => $start + $defaultduration];
+        }
+
+        $results = [];
+        foreach ($separators[0] as [$separator, $offset]) {
+            $starttext = substr($text, 0, $offset);
+            $endtext = substr($text, $offset + strlen($separator));
+            try {
+                $start = self::parse_range_start($starttext, $tz, $lang, $defaulthour, $defaultminute);
+                $end = self::parse_range_end($endtext, $start, $tz, $lang, $defaulthour, $defaultminute);
+            } catch (\InvalidArgumentException $e) {
+                continue;
+            }
+            if (!self::is_valid_range($start, $end, $tz)) {
+                continue;
+            }
+            $results[$start . '-' . $end] = ['start' => $start, 'end' => $end];
+        }
+        if (count($results) !== 1) {
+            // Nothing is guessed, ambiguous texts are invalid.
+            throw new \InvalidArgumentException('Cannot parse date and time range text: ' . $text);
+        }
+        return reset($results);
+    }
+
+    /**
+     * Is the range valid: the end is after the start and at most 24 hours of wall clock time later?
+     *
+     * Wall clock time means the same time on the next day is the limit, so ranges over
+     * a daylight saving change may have 23 or 25 hours.
+     *
+     * @param int $start
+     * @param int $end
+     * @param \DateTimeZone $tz timezone of the wall clock
+     * @return bool
+     */
+    public static function is_valid_range(int $start, int $end, \DateTimeZone $tz): bool {
+        return $end > $start && $end <= self::get_range_limit($start, $tz);
+    }
+
+    /**
+     * The latest end of a range: the same wall clock time on the next day.
+     *
+     * @param int $start
+     * @param \DateTimeZone $tz timezone of the wall clock
+     * @return int
+     */
+    public static function get_range_limit(int $start, \DateTimeZone $tz): int {
+        return (new \DateTime('@' . $start))->setTimezone($tz)->modify('+1 day')->getTimestamp();
+    }
+
+    /**
+     * Start of range, timestamps are not allowed here.
+     *
+     * @param string $text
+     * @param \DateTimeZone $tz
+     * @param string $lang
+     * @param int $defaulthour
+     * @param int $defaultminute
+     * @return int
+     */
+    private static function parse_range_start(
+        string $text,
+        \DateTimeZone $tz,
+        string $lang,
+        int $defaulthour,
+        int $defaultminute
+    ): int {
+        $text = trim($text);
+        if ($text === '' || preg_match('/^-?\d+$/D', $text)) {
+            throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+        }
+        return self::parse($text, $tz, $lang, $defaulthour, $defaultminute);
+    }
+
+    /**
+     * End of range, a time after start, a time with "+N" days or a full date.
+     *
+     * The caller checks the result with is_valid_range().
+     *
+     * @param string $text
+     * @param int $start
+     * @param \DateTimeZone $tz
+     * @param string $lang
+     * @param int $defaulthour
+     * @param int $defaultminute
+     * @return int
+     */
+    private static function parse_range_end(
+        string $text,
+        int $start,
+        \DateTimeZone $tz,
+        string $lang,
+        int $defaulthour,
+        int $defaultminute
+    ): int {
+        $text = trim($text);
+        if ($text === '' || preg_match('/^-?\d+$/D', $text)) {
+            throw new \InvalidArgumentException('Cannot parse date and time text: ' . $text);
+        }
+
+        $regex = '/^' . self::TIME_REGEX . '(?:\s*\+\s*(?<days>\d{1,3}))?$/D';
+        // Unlike in parse() dotted times such as "14.30" are fine here, dates need a year or the closing dot.
+        if (preg_match($regex, $text, $matches) && (($matches['minute'] ?? '') !== '' || ($matches['ampm'] ?? '') !== '')) {
+            [$hour, $minute, $second] = self::get_time_parts($text, $matches);
+            $hasdays = ($matches['days'] ?? '') !== '';
+            $days = $hasdays ? (int)$matches['days'] : 0;
+            while (true) {
+                $date = (new \DateTime('@' . $start))->setTimezone($tz);
+                $date->setTime(12, 0, 0);
+                $date->modify('+' . $days . ' days');
+                $end = self::build_timestamp(
+                    $text,
+                    $tz,
+                    (int)$date->format('Y'),
+                    (int)$date->format('n'),
+                    (int)$date->format('j'),
+                    $hour,
+                    $minute,
+                    $second
+                );
+                if ($end > $start || $hasdays || $days > 0) {
+                    return $end;
+                }
+                // Time without days means the first such time after start.
+                $days = 1;
+            }
+        }
+
+        return self::parse($text, $tz, $lang, $defaulthour, $defaultminute);
+    }
+
+    /**
+     * Number of calendar days between start and end in a timezone.
+     *
+     * @param int $start
+     * @param int $end
+     * @param \DateTimeZone $tz
+     * @return int
+     */
+    public static function get_day_offset(int $start, int $end, \DateTimeZone $tz): int {
+        $utc = new \DateTimeZone('UTC');
+        $startday = new \DateTime((new \DateTime('@' . $start))->setTimezone($tz)->format('Y-m-d'), $utc);
+        $endday = new \DateTime((new \DateTime('@' . $end))->setTimezone($tz)->format('Y-m-d'), $utc);
+        return intdiv($endday->getTimestamp() - $startday->getTimestamp(), DAYSECS);
+    }
+
+    /**
+     * Human readable duration in days, hours, minutes and seconds, such as "1 hour 30 minutes".
+     *
+     * @param int $seconds
+     * @return string
+     */
+    public static function get_duration_text(int $seconds): string {
+        $seconds = max(0, $seconds);
+        $parts = [
+            'd' => intdiv($seconds, DAYSECS),
+            'h' => intdiv($seconds % DAYSECS, HOURSECS),
+            'i' => intdiv($seconds % HOURSECS, MINSECS),
+            's' => $seconds % MINSECS,
+        ];
+        $text = self::to_text($parts);
+        return $text === '' ? self::to_text(['i' => 0], true) : $text;
+    }
+
+    /**
+     * Describe a range in text, timestamp and component form.
+     *
+     * The text is the start in the display format followed by the end time, with "+N"
+     * when the end is N days after the start date, parse_range() reads it back.
+     *
+     * @param array|null $range with keys start and end
+     * @param \DateTimeZone $tz
+     * @param string $lang language of the display format
+     * @return array with keys text, start, end, duration, dayoffset, startcomponents, endcomponents,
+     *      endtext (full end date and time) and hint (duration, end date when it is on another day)
+     */
+    public static function describe_range(?array $range, \DateTimeZone $tz, string $lang): array {
+        if ($range === null) {
+            return [
+                'text' => '', 'start' => null, 'end' => null, 'duration' => null, 'dayoffset' => null,
+                'startcomponents' => null, 'endcomponents' => null, 'endtext' => '', 'hint' => '',
+            ];
+        }
+        $start = (int)$range['start'];
+        $end = (int)$range['end'];
+        $startinfo = self::describe($start, $tz, $lang);
+        $endinfo = self::describe($end, $tz, $lang);
+        $dayoffset = self::get_day_offset($start, $end, $tz);
+        $endtime = (new \DateTime('@' . $end))->setTimezone($tz)->format(self::get_time_format($lang));
+
+        $text = $startinfo['text'] . self::RANGE_SEPARATOR . $endtime;
+        if ($dayoffset > 0) {
+            $text .= ' +' . $dayoffset;
+        }
+
+        $duration = self::get_duration_text($end - $start);
+        if ($dayoffset === 0) {
+            $hint = $duration;
+        } else {
+            $a = (object)['duration' => $duration, 'end' => $endinfo['text']];
+            $hint = get_string_manager()->get_string('muform_datetimerangeends', 'tool_mulib', $a, $lang);
+        }
+
+        return [
+            'text' => $text,
+            'start' => $start,
+            'end' => $end,
+            'duration' => $end - $start,
+            'dayoffset' => $dayoffset,
+            'startcomponents' => $startinfo['components'],
+            'endcomponents' => $endinfo['components'],
+            'endtext' => $endinfo['text'],
+            'hint' => $hint,
+        ];
+    }
+
+    /**
+     * Range for reading in HTML, the airline style "2026-11-06 23:30 – 01:30<sup>+1</sup>".
+     *
+     * Copied text is "2026-11-06 23:30 – 01:30+1", which parse_range() accepts.
+     *
+     * @param array|null $range with keys start and end
+     * @param \DateTimeZone $tz
+     * @param string $lang language of the display format
+     * @return string HTML, empty string for null
+     */
+    public static function format_range_html(?array $range, \DateTimeZone $tz, string $lang): string {
+        if ($range === null) {
+            return '';
+        }
+        $info = self::describe_range($range, $tz, $lang);
+        $endtime = (new \DateTime('@' . $info['end']))->setTimezone($tz)->format(self::get_time_format($lang));
+        $html = s(self::describe($info['start'], $tz, $lang)['text']) . self::RANGE_SEPARATOR . s($endtime);
+        if ($info['dayoffset'] > 0) {
+            $html .= \html_writer::tag('sup', '+' . $info['dayoffset'], ['title' => $info['endtext']]);
+        }
+        return \html_writer::span($html, 'muform-datetimerange-text text-nowrap');
     }
 
     /**

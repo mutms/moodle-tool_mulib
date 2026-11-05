@@ -14,10 +14,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Calendar and time picker of the datetime element, a React island.
+ * Calendar and time picker of the datetime and datetimerange elements, a React island.
  *
  * The picker only edits date parts, the text sent to the element is parsed
- * by the server. Month and weekday names come from Intl for display only,
+ * by the server. In range mode it also edits the end time or duration, changing
+ * the start keeps the duration. Month and weekday names come from Intl for display only,
  * the first day of week comes from Moodle. "Today" is in the timezone of the element,
  * empty values start at the default time of the element.
  *
@@ -39,6 +40,7 @@ import {
 } from '@floating-ui/react';
 import {useEffect, useRef, useState} from 'react';
 import {formatComponents, readComponents, type Components} from './datetimeapi';
+import {readEndComponents} from './datetimerangeapi';
 
 /** Localised texts of the picker. */
 export interface PickerStrings {
@@ -52,6 +54,22 @@ export interface PickerStrings {
     monthnext: string;
     yearprev: string;
     yearnext: string;
+}
+
+/** Duration offered in range mode. */
+export interface PickerDuration {
+    seconds: number;
+    label: string;
+}
+
+/** Range mode of the picker, used by the datetimerange element. */
+export interface RangeOptions {
+    /** Durations offered in the duration select. */
+    durations: PickerDuration[];
+    /** Seconds of empty values, null means one hour. */
+    defaultDuration: number | null;
+    /** Localised texts. */
+    strings: {start: string; end: string; duration: string};
 }
 
 /** Picker props. */
@@ -70,6 +88,8 @@ export interface PickerProps {
     strings: PickerStrings;
     /** Sends text to the server, empty text clears the value. */
     apply: (text: string) => Promise<void>;
+    /** Range mode, the input carries the end in data attributes. */
+    range?: RangeOptions | null;
 }
 
 /** Locale week information, not yet in the TypeScript DOM library. */
@@ -154,14 +174,72 @@ function addDays(parts: Components, days: number): Components {
     return {...parts, year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate()};
 }
 
+/**
+ * Wall clock minutes since the epoch, timezone transitions are ignored on purpose.
+ *
+ * @param parts date parts
+ * @returns minutes
+ */
+function wallMinutes(parts: Components): number {
+    return Math.floor(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) / 60000);
+}
+
+/**
+ * Date parts from wall clock minutes.
+ *
+ * @param minutes minutes since the epoch
+ * @param second seconds to keep
+ * @returns parts
+ */
+function fromWallMinutes(minutes: number, second: number): Components {
+    const date = new Date(minutes * 60000);
+    return {
+        year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(),
+        hour: date.getUTCHours(), minute: date.getUTCMinutes(), second,
+    };
+}
+
+/**
+ * Days between the start date and end date.
+ *
+ * @param start start parts
+ * @param end end parts
+ * @returns number of days
+ */
+function dayOffset(start: Components, end: Components): number {
+    const day = (parts: Components): number => Date.UTC(parts.year, parts.month - 1, parts.day) / 86400000;
+    return Math.round(day(end) - day(start));
+}
+
+/**
+ * Wall clock minutes of the current range, the default duration for empty values.
+ *
+ * @param input the datetimerange text input
+ * @param start current start parts
+ * @param range range options
+ * @returns positive number of minutes
+ */
+function rangeMinutes(input: HTMLInputElement, start: Components, range: RangeOptions): number {
+    const end = readEndComponents(input);
+    if (end) {
+        const minutes = wallMinutes(end) - wallMinutes(start);
+        // Ranges are at most one day long.
+        if (minutes > 0 && minutes <= 24 * 60) {
+            return minutes;
+        }
+    }
+    return Math.max(1, Math.round((range.defaultDuration ?? 3600) / 60));
+}
+
 export default function DateTimePicker(
-    {input, step, firstDay: moodleFirstDay, hour12 = false, disabled, strings, apply}: PickerProps
+    {input, step, firstDay: moodleFirstDay, hour12 = false, disabled, strings, apply, range = null}: PickerProps
 ) {
     const lang = document.documentElement.lang || 'en';
     const timezone = input.dataset.muformDatetimeTimezone ?? '';
     const [open, setOpen] = useState(false);
     const [parts, setParts] = useState<Components>(() => readComponents(input) ?? emptyParts(input));
     const [view, setView] = useState({year: parts.year, month: parts.month});
+    const [duration, setDuration] = useState<number>(() => (range ? rangeMinutes(input, parts, range) : 0));
     const [focusDay, setFocusDay] = useState(false);
     const gridRef = useRef<HTMLTableElement>(null);
 
@@ -170,6 +248,9 @@ export default function DateTimePicker(
             const current = readComponents(input) ?? emptyParts(input);
             setParts(current);
             setView({year: current.year, month: current.month});
+            if (range) {
+                setDuration(rangeMinutes(input, current, range));
+            }
         }
         setOpen(state);
     };
@@ -263,19 +344,48 @@ export default function DateTimePicker(
     const selectedInView = parts.year === view.year && parts.month === view.month;
     const focusable = selectedInView ? parts.day : 1;
 
-    const minutes: number[] = [];
-    for (let minute = 0; minute < 60; minute += step) {
-        minutes.push(minute);
-    }
-    if (!minutes.includes(parts.minute)) {
-        minutes.push(parts.minute);
-        minutes.sort((a, b) => a - b);
-    }
+    const minuteOptions = (current: number): number[] => {
+        const minutes: number[] = [];
+        for (let minute = 0; minute < 60; minute += step) {
+            minutes.push(minute);
+        }
+        if (!minutes.includes(current)) {
+            minutes.push(current);
+            minutes.sort((a, b) => a - b);
+        }
+        return minutes;
+    };
+    const minutes = minuteOptions(parts.minute);
     const hours = Array.from({length: 24}, (_, i) => i);
     const hourFormat = new Intl.DateTimeFormat(lang, {hour: 'numeric', hour12: true});
     const hourLabel = (hour: number): string => (
         hour12 ? hourFormat.format(new Date(2026, 0, 5, hour)) : String(hour).padStart(2, '0')
     );
+
+    const endParts = fromWallMinutes(wallMinutes(parts) + duration, parts.second);
+    const selectedText = (start: Components): string => {
+        if (!range) {
+            return formatComponents(start);
+        }
+        // Full ISO end, the server shortens it to a time with +N days.
+        const end = fromWallMinutes(wallMinutes(start) + duration, start.second);
+        return formatComponents(start) + ' \u2013 ' + formatComponents(end);
+    };
+    const setEndTime = (hour: number, minute: number): void => {
+        // The first such time after the start, the same rule as typed end times.
+        let minutes = wallMinutes({...parts, hour, minute}) - wallMinutes(parts);
+        if (minutes <= 0) {
+            minutes += 24 * 60;
+        }
+        setDuration(minutes);
+    };
+    const durations = range ? range.durations.map((item) => ({minutes: Math.round(item.seconds / 60), label: item.label})) : [];
+    if (range && !durations.some((item) => item.minutes === duration)) {
+        const label = `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`;
+        durations.push({minutes: duration, label});
+        durations.sort((a, b) => a.minutes - b.minutes);
+    }
+    const endOffset = dayOffset(parts, endParts);
 
     return (
         <>
@@ -354,7 +464,7 @@ export default function DateTimePicker(
                                                         data-muform-datetime-day={day}
                                                         onClick={() => select({...parts, year: view.year, month: view.month, day})}
                                                         onDoubleClick={() => applyAndClose(
-                                                            formatComponents({...parts, year: view.year, month: view.month, day})
+                                                            selectedText({...parts, year: view.year, month: view.month, day})
                                                         )}
                                                     >
                                                         {day}
@@ -366,7 +476,9 @@ export default function DateTimePicker(
                                 ))}
                             </tbody>
                         </table>
-                        <div className="d-flex align-items-center gap-1 mb-2">
+                        <div className="d-flex align-items-center gap-1 mb-2" role={range ? 'group' : undefined}
+                            aria-label={range ? range.strings.start : undefined}>
+                            {range && <span className="muform-datetime-rangelabel" aria-hidden="true">{range.strings.start}</span>}
                             <select className="form-select form-select-sm w-auto" aria-label={strings.hour} value={parts.hour}
                                 onChange={(event) => setParts({...parts, hour: Number(event.target.value)})}>
                                 {hours.map((hour) => <option key={hour} value={hour}>{hourLabel(hour)}</option>)}
@@ -379,6 +491,38 @@ export default function DateTimePicker(
                                 ))}
                             </select>
                         </div>
+                        {range && (
+                            <div className="d-flex align-items-center gap-1 mb-2" role="group" aria-label={range.strings.end}
+                                data-muform-datetimerange-end>
+                                <span className="muform-datetime-rangelabel" aria-hidden="true">{range.strings.end}</span>
+                                <select className="form-select form-select-sm w-auto" aria-label={strings.hour}
+                                    value={endParts.hour}
+                                    onChange={(event) => setEndTime(Number(event.target.value), endParts.minute)}>
+                                    {hours.map((hour) => <option key={hour} value={hour}>{hourLabel(hour)}</option>)}
+                                </select>
+                                <span aria-hidden="true">:</span>
+                                <select className="form-select form-select-sm w-auto" aria-label={strings.minute}
+                                    value={endParts.minute}
+                                    onChange={(event) => setEndTime(endParts.hour, Number(event.target.value))}>
+                                    {minuteOptions(endParts.minute).map((minute) => (
+                                        <option key={minute} value={minute}>{String(minute).padStart(2, '0')}</option>
+                                    ))}
+                                </select>
+                                {endOffset > 0 && <sup data-muform-datetimerange-dayoffset>+{endOffset}</sup>}
+                            </div>
+                        )}
+                        {range && (
+                            <div className="d-flex align-items-center gap-1 mb-2">
+                                <select className="form-select form-select-sm w-auto" aria-label={range.strings.duration}
+                                    title={range.strings.duration} value={duration}
+                                    data-muform-datetimerange-duration
+                                    onChange={(event) => setDuration(Number(event.target.value))}>
+                                    {durations.map((item) => (
+                                        <option key={item.minutes} value={item.minutes}>{item.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="d-flex gap-1">
                             <button type="button" className="btn btn-sm btn-light"
                                 onClick={() => select({...parts, ...todayIn(timezone)})}>
@@ -388,7 +532,7 @@ export default function DateTimePicker(
                                 {strings.clear}
                             </button>
                             <button type="button" className="btn btn-sm btn-primary ms-auto"
-                                onClick={() => applyAndClose(formatComponents(parts))}>
+                                onClick={() => applyAndClose(selectedText(parts))}>
                                 {strings.apply}
                             </button>
                         </div>

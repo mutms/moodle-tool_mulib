@@ -255,6 +255,279 @@ final class calendar_test extends \advanced_testcase {
         $this->assertSame('26. 9. 2026 19:28', calendar::describe(1790443723, $prague, 'cs')['text']);
     }
 
+    /**
+     * Timestamp of a wall time in a timezone.
+     *
+     * @param string $text Y-m-d H:i
+     * @param \DateTimeZone $tz
+     * @return int
+     */
+    private static function at(string $text, \DateTimeZone $tz): int {
+        return (new \DateTime($text, $tz))->getTimestamp();
+    }
+
+    public function test_get_time_format(): void {
+        $this->resetAfterTest();
+        $this->assertSame('H:i', calendar::get_time_format('en'));
+        fake_langpack::install('en_us');
+        $this->assertSame('g:i A', calendar::get_time_format('en_us'));
+        fake_langpack::install('cs');
+        $this->assertSame('H:i', calendar::get_time_format('cs'));
+        lang_util::customise_string('cs', 'tool_mulib', 'muform_datetimeformat', 'j. \h\o\d. n. Y');
+        $this->assertSame('H:i', calendar::get_time_format('cs'));
+    }
+
+    public function test_parse_range(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $start = self::at('2026-11-06 11:30', $prague);
+        $range = ['start' => $start, 'end' => self::at('2026-11-06 12:30', $prague)];
+
+        $this->assertNull(calendar::parse_range('', $prague, 'en'));
+        $this->assertNull(calendar::parse_range('  ', $prague, 'en', 0, 0, 3600));
+
+        $this->assertSame($range, calendar::parse_range("2026-11-06 11:30 \u{2013} 12:30", $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range("2026-11-06 11:30\u{2013}12:30", $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range("2026-11-06 11:30 \u{2014} 12:30", $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range('2026-11-06 11:30 - 12:30', $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range('2026-11-06T11:30 - 2026-11-06 12:30', $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range('2026 - 11 - 06 11:30 - 12:30', $prague, 'en'));
+        $this->assertSame($range, calendar::parse_range('2026-11-06 11:30 - 12:30 +0', $prague, 'en'));
+
+        // Start only gets the default duration.
+        $this->assertSame($range, calendar::parse_range('2026-11-06 11:30', $prague, 'en', 0, 0, 3600));
+        $this->assertSame(
+            ['start' => self::at('2026-11-06 09:00', $prague), 'end' => self::at('2026-11-06 10:30', $prague)],
+            calendar::parse_range('2026-11-06', $prague, 'en', 9, 0, 5400)
+        );
+
+        // End time before start means the next day, +N is optional.
+        $night = ['start' => self::at('2026-11-06 23:30', $prague), 'end' => self::at('2026-11-07 01:30', $prague)];
+        $this->assertSame($night, calendar::parse_range('2026-11-06 23:30 - 01:30', $prague, 'en'));
+        $this->assertSame($night, calendar::parse_range('2026-11-06 23:30 - 01:30 +1', $prague, 'en'));
+        $this->assertSame($night, calendar::parse_range("2026-11-06 23:30 \u{2013} 01:30+1", $prague, 'en'));
+        $this->assertSame($night, calendar::parse_range('2026-11-06 23:30 - 01:30 + 1', $prague, 'en'));
+        $this->assertSame($night, calendar::parse_range('2026-11-06 23:30 - 2026-11-07 01:30', $prague, 'en'));
+
+        // Same time means a whole day.
+        $this->assertSame(
+            ['start' => $start, 'end' => self::at('2026-11-07 11:30', $prague)],
+            calendar::parse_range('2026-11-06 11:30 - 11:30', $prague, 'en')
+        );
+
+        $this->assertSame(
+            ['start' => $start, 'end' => self::at('2026-11-07 11:30', $prague)],
+            calendar::parse_range('2026-11-06 11:30 - 2026-11-07 11:30', $prague, 'en')
+        );
+        $this->assertSame(
+            ['start' => $start, 'end' => self::at('2026-11-07 11:00', $prague)],
+            calendar::parse_range('2026-11-06 11:30 - 11:00 +1', $prague, 'en')
+        );
+
+        // Timezone of the user decides the day.
+        $utc = new \DateTimeZone('UTC');
+        $this->assertSame(
+            ['start' => self::at('2026-11-06 23:30', $utc), 'end' => self::at('2026-11-07 00:30', $utc)],
+            calendar::parse_range('2026-11-06 23:30 - 00:30', $utc, 'en')
+        );
+    }
+
+    public function test_parse_range_dst(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+
+        // Clocks go back from 03:00 to 02:00 on 25 October 2026.
+        $range = calendar::parse_range('2026-10-25 01:30 - 03:30', $prague, 'en');
+        $this->assertSame(3 * HOURSECS, $range['end'] - $range['start']);
+
+        // Clocks go forward from 02:00 to 03:00 on 29 March 2026.
+        $range = calendar::parse_range('2026-03-29 01:30 - 03:30', $prague, 'en');
+        $this->assertSame(HOURSECS, $range['end'] - $range['start']);
+
+        // The limit is the same wall clock time on the next day, 25 or 23 hours across DST changes.
+        $range = calendar::parse_range('2026-10-24 12:00 - 12:00', $prague, 'en');
+        $this->assertSame(25 * HOURSECS, $range['end'] - $range['start']);
+        $range = calendar::parse_range('2026-03-28 12:00 - 12:00', $prague, 'en');
+        $this->assertSame(23 * HOURSECS, $range['end'] - $range['start']);
+        try {
+            calendar::parse_range('2026-03-28 12:00', $prague, 'en', 0, 0, DAYSECS);
+            $this->fail('Exception expected');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringStartsWith('Cannot parse date and time range text: ', $e->getMessage());
+        }
+    }
+
+    public function test_parse_range_czech_and_us(): void {
+        $this->resetAfterTest();
+        fake_langpack::install('cs');
+        $prague = new \DateTimeZone('Europe/Prague');
+        $night = ['start' => self::at('2026-11-06 23:30', $prague), 'end' => self::at('2026-11-07 01:30', $prague)];
+        $this->assertSame($night, calendar::parse_range("6. 11. 2026 23:30 \u{2013} 01:30 +1", $prague, 'cs'));
+        $this->assertSame($night, calendar::parse_range('6.11.26 23.30 - 1.30', $prague, 'cs'));
+        $this->assertSame($night, calendar::parse_range('6. 11. 2026 23:30 - 7. 11. 2026 1:30', $prague, 'cs'));
+
+        fake_langpack::install('en_us');
+        $ny = new \DateTimeZone('America/New_York');
+        $night = ['start' => self::at('2026-11-06 23:30', $ny), 'end' => self::at('2026-11-07 01:30', $ny)];
+        $this->assertSame($night, calendar::parse_range("11/6/2026 11:30 PM \u{2013} 1:30 AM +1", $ny, 'en_us'));
+        $this->assertSame($night, calendar::parse_range('11/6/2026 11:30 pm - 1:30am', $ny, 'en_us'));
+        $this->assertSame($night, calendar::parse_range('11/6/2026 11:30 PM - 1:30 AM+1', $ny, 'en_us'));
+    }
+
+    public function test_parse_range_invalid(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $invalid = [
+            '2026-11-06 11:30',
+            '2026-11-06 11:30 -',
+            "\u{2013} 12:30",
+            '1793917800 - 1793925000',
+            '2026-11-06 11:30 - 1793925000',
+            '2026-11-06 11:30 - 12',
+            '2026-11-06 11:30 - 10:30 +0',
+            '2026-11-06 11:30 - 2026-11-06 10:30',
+            '2026-11-06 11:30 - 2026-11-06 11:30',
+            '2026-11-06 11:30 - 25:00',
+            '2026-11-06 11:30 - 12:30 +x',
+            '2026-11-06 11:30 - 12:30 - 13:30',
+            '2026-11-06 11:30 - 12:30 +1',
+            '2026-11-06 11:30 - 02:30 +2',
+            '2026-11-06 23:30 - 01:30 +2',
+            '2026-11-06 11:30 - 2026-11-08 02:30',
+            '2026-11-06 11:30 - 2026-11-07 11:31',
+            'tomorrow - 12:30',
+            '2026-11-06 11:30-12:30',
+        ];
+        foreach ($invalid as $text) {
+            try {
+                calendar::parse_range($text, $prague, 'en');
+                $this->fail('Exception expected for: ' . $text);
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringStartsWith('Cannot parse date and time range text: ', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_describe_range(): void {
+        $this->resetAfterTest();
+        $prague = new \DateTimeZone('Europe/Prague');
+
+        $empty = calendar::describe_range(null, $prague, 'en');
+        $this->assertSame('', $empty['text']);
+        $this->assertNull($empty['start']);
+        $this->assertNull($empty['end']);
+        $this->assertSame('', $empty['hint']);
+
+        $start = self::at('2026-11-06 11:30', $prague);
+        $end = self::at('2026-11-06 13:00', $prague);
+        $info = calendar::describe_range(['start' => $start, 'end' => $end], $prague, 'en');
+        $this->assertSame("2026-11-06 11:30 \u{2013} 13:00", $info['text']);
+        $this->assertSame($start, $info['start']);
+        $this->assertSame($end, $info['end']);
+        $this->assertSame(5400, $info['duration']);
+        $this->assertSame(0, $info['dayoffset']);
+        $this->assertSame('1 hour 30 minutes', $info['hint']);
+        $this->assertSame(13, $info['endcomponents']['hour']);
+        $this->assertSame(['start' => $start, 'end' => $end], calendar::parse_range($info['text'], $prague, 'en'));
+
+        $end = self::at('2026-11-07 01:30', $prague);
+        $info = calendar::describe_range(['start' => $start, 'end' => $end], $prague, 'en');
+        $this->assertSame("2026-11-06 11:30 \u{2013} 01:30 +1", $info['text']);
+        $this->assertSame(1, $info['dayoffset']);
+        $this->assertSame('14 hours, ends 2026-11-07 01:30', $info['hint']);
+        $this->assertSame(['start' => $start, 'end' => $end], calendar::parse_range($info['text'], $prague, 'en'));
+
+        // Viewers in other timezones see a different day offset.
+        $tokyo = new \DateTimeZone('Asia/Tokyo');
+        $start = self::at('2026-11-06 14:00', $prague);
+        $end = self::at('2026-11-06 17:00', $prague);
+        $info = calendar::describe_range(['start' => $start, 'end' => $end], $tokyo, 'en');
+        $this->assertSame("2026-11-06 22:00 \u{2013} 01:00 +1", $info['text']);
+        $this->assertSame(['start' => $start, 'end' => $end], calendar::parse_range($info['text'], $tokyo, 'en'));
+        $this->assertSame(0, calendar::describe_range(['start' => $start, 'end' => $end], $prague, 'en')['dayoffset']);
+
+        // The longest range.
+        $end = self::at('2026-11-07 14:00', $prague);
+        $info = calendar::describe_range(['start' => $start, 'end' => $end], $prague, 'en');
+        $this->assertSame("2026-11-06 14:00 \u{2013} 14:00 +1", $info['text']);
+        $this->assertSame('1 day, ends 2026-11-07 14:00', $info['hint']);
+        $this->assertSame(['start' => $start, 'end' => $end], calendar::parse_range($info['text'], $prague, 'en'));
+
+        fake_langpack::install('en_us');
+        $ny = new \DateTimeZone('America/New_York');
+        $start = self::at('2026-11-06 23:30', $ny);
+        $end = self::at('2026-11-07 01:30', $ny);
+        $info = calendar::describe_range(['start' => $start, 'end' => $end], $ny, 'en_us');
+        $this->assertSame("11/6/2026 11:30 PM \u{2013} 1:30 AM +1", $info['text']);
+        $this->assertSame(['start' => $start, 'end' => $end], calendar::parse_range($info['text'], $ny, 'en_us'));
+    }
+
+    public function test_format_range_html(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $this->assertSame('', calendar::format_range_html(null, $prague, 'en'));
+
+        $start = self::at('2026-11-06 11:30', $prague);
+        $range = ['start' => $start, 'end' => self::at('2026-11-06 12:30', $prague)];
+        $this->assertSame(
+            "<span class=\"muform-datetimerange-text text-nowrap\">2026-11-06 11:30 \u{2013} 12:30</span>",
+            calendar::format_range_html($range, $prague, 'en')
+        );
+
+        $range = ['start' => self::at('2026-11-06 23:30', $prague), 'end' => self::at('2026-11-07 01:30', $prague)];
+        $html = calendar::format_range_html($range, $prague, 'en');
+        $this->assertSame(
+            "<span class=\"muform-datetimerange-text text-nowrap\">2026-11-06 23:30 \u{2013} 01:30"
+                . "<sup title=\"2026-11-07 01:30\">+1</sup></span>",
+            $html
+        );
+        // Copied text can be pasted back.
+        $this->assertSame($range, calendar::parse_range(strip_tags($html), $prague, 'en'));
+    }
+
+    public function test_is_valid_range(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $valid = fn(string $start, string $end): bool
+            => calendar::is_valid_range(self::at($start, $prague), self::at($end, $prague), $prague);
+        $this->assertTrue($valid('2026-11-06 11:30', '2026-11-06 11:31'));
+        $this->assertTrue($valid('2026-11-06 11:30', '2026-11-07 11:30'));
+        $this->assertFalse($valid('2026-11-06 11:30', '2026-11-06 11:30'));
+        $this->assertFalse($valid('2026-11-06 11:30', '2026-11-06 11:00'));
+        $this->assertFalse($valid('2026-11-06 11:30', '2026-11-07 11:31'));
+        // Wall clock time decides across DST changes.
+        $this->assertTrue($valid('2026-10-24 12:00', '2026-10-25 12:00'));
+        $this->assertFalse($valid('2026-03-28 12:00', '2026-03-29 12:01'));
+        $this->assertFalse(calendar::is_valid_range(
+            self::at('2026-03-28 12:00', $prague),
+            self::at('2026-03-28 12:00', $prague) + DAYSECS,
+            $prague
+        ));
+    }
+
+    public function test_get_range_limit(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $this->assertSame(
+            self::at('2026-11-07 11:30', $prague),
+            calendar::get_range_limit(self::at('2026-11-06 11:30', $prague), $prague)
+        );
+        $start = self::at('2026-10-24 12:00', $prague);
+        $this->assertSame($start + 25 * HOURSECS, calendar::get_range_limit($start, $prague));
+    }
+
+    public function test_get_duration_text(): void {
+        $this->assertSame('0 minutes', calendar::get_duration_text(0));
+        $this->assertSame('30 minutes', calendar::get_duration_text(1800));
+        $this->assertSame('1 hour', calendar::get_duration_text(3600));
+        $this->assertSame('1 day 2 hours 5 seconds', calendar::get_duration_text(DAYSECS + 2 * HOURSECS + 5));
+    }
+
+    public function test_get_day_offset(): void {
+        $prague = new \DateTimeZone('Europe/Prague');
+        $offset = fn(string $start, string $end): int
+            => calendar::get_day_offset(self::at($start, $prague), self::at($end, $prague), $prague);
+        $this->assertSame(0, $offset('2026-11-06 00:00', '2026-11-06 23:59'));
+        $this->assertSame(1, $offset('2026-11-06 23:59', '2026-11-07 00:00'));
+        // DST change day is shorter or longer.
+        $this->assertSame(2, $offset('2026-10-24 12:00', '2026-10-26 00:30'));
+        $this->assertSame(1, $offset('2026-03-29 00:00', '2026-03-30 00:00'));
+    }
+
     public function test_get_timezone_name(): void {
         $this->assertSame('UTC', calendar::get_timezone_name('UTC'));
         $this->assertSame(get_string('europe/prague', 'core_timezones'), calendar::get_timezone_name('Europe/Prague'));

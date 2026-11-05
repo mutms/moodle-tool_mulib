@@ -40,6 +40,8 @@ $handler->render($form);
   selected. Reuse the traits in `classes/muform/util/autocomplete/`: `user_trait`, `cohort_trait`,
   `category_context_trait`, and `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
 - Multi-page forms: `tool_mulib\muform\wizard`; custom fields: the `customfields` element.
+- Sessions and events with start and end: one `datetimerange` element (text `2026-11-06 23:30 – 01:30 +1`,
+  value `['start' => int, 'end' => int]`, at most 24 hours, `set_default_duration()`), not two `datetime` elements.
 - Behat: `I set the following muform fields [in the "dialog[open]" "css_element"]:` and
   `the following muform fields [...] match:`, first column is the element name or its exact label.
 
