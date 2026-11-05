@@ -20,6 +20,7 @@
 namespace tool_mulib\phpunit\reportbuilder\local\systemreports;
 
 use tool_mulib\local\extdb\query;
+use tool_mulib\tests\extdb\fake_queries;
 use tool_mulib\reportbuilder\local\systemreports\queries;
 use core_reportbuilder\system_report_factory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -38,6 +39,7 @@ final class queries_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+        fake_queries::register();
     }
 
     /**
@@ -62,27 +64,27 @@ final class queries_test extends \advanced_testcase {
         query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 1',
-            'component' => 'tool_muprog',
-            'type' => 'allocation',
+            'component' => 'tool_mulib',
+            'type' => 'alpha',
             'sqlquery' => 'SELECT id AS userid FROM m_user',
             'note' => 'Some note',
         ]);
         query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 2',
-            'component' => 'tool_mucohort',
-            'type' => 'rule',
+            'component' => 'tool_mulib',
+            'type' => 'beta',
             'sqlquery' => 'SELECT username FROM m_user',
         ]);
 
         $this->setAdminUser();
         $html = $this->get_report_html();
         $this->assertStringContainsString('Query 1', $html);
-        $this->assertStringContainsString('Program allocation', $html);
+        $this->assertStringContainsString('Alpha query', $html);
         $this->assertStringContainsString('SELECT id AS userid FROM m_user', $html);
         $this->assertStringContainsString('Some note', $html);
         $this->assertStringContainsString('Query 2', $html);
-        $this->assertStringContainsString('Cohort rule', $html);
+        $this->assertStringContainsString('Beta query', $html);
         $this->assertStringContainsString('Some server', $html);
     }
 }

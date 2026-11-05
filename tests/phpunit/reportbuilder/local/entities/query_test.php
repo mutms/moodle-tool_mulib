@@ -20,6 +20,7 @@
 namespace tool_mulib\phpunit\reportbuilder\local\entities;
 
 use tool_mulib\local\extdb\query;
+use tool_mulib\tests\extdb\fake_queries;
 use core_reportbuilder\local\filters\select;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -37,6 +38,7 @@ final class query_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+        fake_queries::register();
     }
 
     /**
@@ -73,15 +75,15 @@ final class query_test extends \advanced_testcase {
         $query1 = query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 1',
-            'component' => 'tool_muprog',
-            'type' => 'allocation',
+            'component' => 'tool_mulib',
+            'type' => 'alpha',
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
         $query2 = query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 2',
-            'component' => 'tool_mucohort',
-            'type' => 'rule',
+            'component' => 'tool_mulib',
+            'type' => 'beta',
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
         // Query type from plugin that is not available, it cannot be created via API.
@@ -94,8 +96,8 @@ final class query_test extends \advanced_testcase {
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
 
-        $this->assertSame('Program allocation', $this->format_column('type', $query1->id));
-        $this->assertSame('Cohort rule', $this->format_column('type', $query2->id));
+        $this->assertSame('Alpha query', $this->format_column('type', $query1->id));
+        $this->assertSame('Beta query', $this->format_column('type', $query2->id));
         $this->assertSame('xyz&lt;b&gt;', $this->format_column('type', $query3id));
     }
 
@@ -132,22 +134,22 @@ final class query_test extends \advanced_testcase {
         $query1 = query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 1',
-            'component' => 'tool_muprog',
-            'type' => 'allocation',
+            'component' => 'tool_mulib',
+            'type' => 'alpha',
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
         $query2 = query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 2',
-            'component' => 'tool_mucohort',
-            'type' => 'rule',
+            'component' => 'tool_mulib',
+            'type' => 'beta',
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
         $query3 = query::create((object)[
             'serverid' => $server->id,
             'name' => 'Query 3',
-            'component' => 'tool_muprog',
-            'type' => 'allocation',
+            'component' => 'tool_mulib',
+            'type' => 'alpha',
             'sqlquery' => 'SELECT * FROM m_user',
         ]);
 
@@ -155,8 +157,8 @@ final class query_test extends \advanced_testcase {
         $entity->initialise();
         $filter = $entity->get_filter('type');
         $options = $filter->get_options();
-        $this->assertSame('Program allocation', $options['tool_muprog/allocation']);
-        $this->assertSame('Cohort rule', $options['tool_mucohort/rule']);
+        $this->assertSame('Alpha query', $options['tool_mulib/alpha']);
+        $this->assertSame('Beta query', $options['tool_mulib/beta']);
 
         $this->assertSame(
             [(int)$query1->id, (int)$query2->id, (int)$query3->id],
@@ -166,21 +168,21 @@ final class query_test extends \advanced_testcase {
             [(int)$query1->id, (int)$query3->id],
             $this->get_filtered_ids('type', [
                 'query:type_operator' => select::EQUAL_TO,
-                'query:type_value' => 'tool_muprog/allocation',
+                'query:type_value' => 'tool_mulib/alpha',
             ])
         );
         $this->assertSame(
             [(int)$query2->id],
             $this->get_filtered_ids('type', [
                 'query:type_operator' => select::EQUAL_TO,
-                'query:type_value' => 'tool_mucohort/rule',
+                'query:type_value' => 'tool_mulib/beta',
             ])
         );
         $this->assertSame(
             [(int)$query2->id],
             $this->get_filtered_ids('type', [
                 'query:type_operator' => select::NOT_EQUAL_TO,
-                'query:type_value' => 'tool_muprog/allocation',
+                'query:type_value' => 'tool_mulib/alpha',
             ])
         );
     }
