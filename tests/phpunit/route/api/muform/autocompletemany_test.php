@@ -22,17 +22,18 @@ use core\context\system;
 use core\tests\router\route_testcase;
 use GuzzleHttp\Psr7\Utils;
 use tool_mulib\route\api\muform\autocompletemany;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Multiple values autocomplete endpoint tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\route\api\muform\autocompletemany
  */
+#[CoversClass(\tool_mulib\route\api\muform\autocompletemany::class)]
+#[Group('MuTMS')]
 final class autocompletemany_test extends route_testcase {
     #[\Override]
     public function setUp(): void {

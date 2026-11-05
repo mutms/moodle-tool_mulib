@@ -28,6 +28,8 @@ use tool_mulib\muform\element\checkboxcards;
 use tool_mulib\muform\util\options;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Check box cards element tests.
@@ -35,10 +37,10 @@ use tool_mulib\phpunit\muform\muform_testcase;
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\checkboxcards
- * @covers \tool_mulib\muform\util\cards
  */
+#[CoversClass(\tool_mulib\muform\element\checkboxcards::class)]
+#[CoversClass(\tool_mulib\muform\util\cards::class)]
+#[Group('MuTMS')]
 final class checkboxcards_test extends muform_testcase {
     /**
      * Add the tested element via hook.

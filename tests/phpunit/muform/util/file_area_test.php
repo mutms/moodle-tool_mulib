@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\muform\util;
 use core\context\system;
 use core\exception\coding_exception;
 use tool_mulib\muform\util\file_area;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * File area util tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\util\file_area
  */
+#[CoversClass(\tool_mulib\muform\util\file_area::class)]
+#[Group('MuTMS')]
 final class file_area_test extends \advanced_testcase {
     public function test_construct(): void {
         $syscontext = system::instance();

@@ -32,25 +32,26 @@ use tool_mulib\muform\element\inforawhtml;
 use tool_mulib\muform\element\section;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Custom fields element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\customfields
- * @covers \tool_mulib\muform\customfield\base
- * @covers \tool_mulib\muform\customfield\checkbox
- * @covers \tool_mulib\muform\customfield\date
- * @covers \tool_mulib\muform\customfield\mutrain
- * @covers \tool_mulib\muform\customfield\number
- * @covers \tool_mulib\muform\customfield\select
- * @covers \tool_mulib\muform\customfield\text
- * @covers \tool_mulib\muform\customfield\textarea
  */
+#[CoversClass(\tool_mulib\muform\element\customfields::class)]
+#[CoversClass(\tool_mulib\muform\customfield\base::class)]
+#[CoversClass(\tool_mulib\muform\customfield\checkbox::class)]
+#[CoversClass(\tool_mulib\muform\customfield\date::class)]
+#[CoversClass(\tool_mulib\muform\customfield\mutrain::class)]
+#[CoversClass(\tool_mulib\muform\customfield\number::class)]
+#[CoversClass(\tool_mulib\muform\customfield\select::class)]
+#[CoversClass(\tool_mulib\muform\customfield\text::class)]
+#[CoversClass(\tool_mulib\muform\customfield\textarea::class)]
+#[Group('MuTMS')]
 final class customfields_test extends muform_testcase {
     /** @var array field controllers indexed by shortname */
     private array $fields = [];

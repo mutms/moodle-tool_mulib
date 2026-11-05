@@ -28,17 +28,19 @@ use tool_mulib\muform\util\display_manager;
 use tool_mulib\muform\element\text;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Display manager tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\util\display_manager
  */
+#[CoversClass(\tool_mulib\muform\util\display_manager::class)]
+#[Group('MuTMS')]
 final class display_manager_test extends muform_testcase {
     /**
      * Operator test data.
@@ -84,12 +86,12 @@ final class display_manager_test extends muform_testcase {
     /**
      * Test operators.
      *
-     * @dataProvider matches_provider
      * @param string $op
      * @param mixed $depvalue
      * @param mixed $value
      * @param bool $expected
      */
+    #[DataProvider('matches_provider')]
     public function test_matches(string $op, mixed $depvalue, mixed $value, bool $expected): void {
         $this->assertSame($expected, display_manager::matches($op, $depvalue, $value));
     }

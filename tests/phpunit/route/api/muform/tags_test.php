@@ -24,19 +24,20 @@ use core_tag_tag;
 use GuzzleHttp\Psr7\Utils;
 use tool_mulib\muform\tagarea\course;
 use tool_mulib\route\api\muform\tags;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tags suggestion endpoint tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\route\api\muform\tags
- * @covers \tool_mulib\muform\tagarea\base
- * @covers \tool_mulib\muform\tagarea\course
  */
+#[CoversClass(\tool_mulib\route\api\muform\tags::class)]
+#[CoversClass(\tool_mulib\muform\tagarea\base::class)]
+#[CoversClass(\tool_mulib\muform\tagarea\course::class)]
+#[Group('MuTMS')]
 final class tags_test extends route_testcase {
     #[\Override]
     public function setUp(): void {

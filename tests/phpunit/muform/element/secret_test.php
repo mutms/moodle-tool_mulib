@@ -26,17 +26,18 @@ use tool_mulib\hook\muform_definition;
 use tool_mulib\muform\element\secret;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Secret element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\secret
  */
+#[CoversClass(\tool_mulib\muform\element\secret::class)]
+#[Group('MuTMS')]
 final class secret_test extends muform_testcase {
     /**
      * Add secret element via hook.

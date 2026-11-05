@@ -20,27 +20,26 @@
 
 namespace tool_mulib\phpunit\local;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+
 /**
  * JSON schema helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2024 Open LMS
  * @copyright   2025 Petr Skoda
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @coversDefaultClass \tool_mulib\local\json_schema
  */
+#[CoversClass(\tool_mulib\local\json_schema::class)]
+#[Group('MuTMS')]
 final class json_schema_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
     }
 
-    /**
-     * @covers ::validate
-     */
     public function test_validate(): void {
         $schema = <<<'JSON'
 {
@@ -137,9 +136,6 @@ JSON;
         $this->assertSame(['/somedate' => ['The data must match the \'date-time\' format']], $errors);
     }
 
-    /**
-     * @covers ::normalise_data
-     */
     public function test_normalise_data(): void {
         $data = ['a', 1, false];
         $this->assertSame($data, \tool_mulib\local\json_schema::normalise_data($data));

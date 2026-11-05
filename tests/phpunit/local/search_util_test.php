@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\local;
 use tool_mulib\local\mulib;
 use tool_mulib\local\search_util;
 use tool_mulib\local\sql;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Search helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\search_util
  */
+#[CoversClass(\tool_mulib\local\search_util::class)]
+#[Group('MuTMS')]
 final class search_util_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

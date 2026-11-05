@@ -22,17 +22,18 @@
 namespace tool_mulib\phpunit\local\extdb;
 
 use tool_mulib\local\extdb\query_manager;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * External database query manager tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\extdb\query_manager
  */
+#[CoversClass(\tool_mulib\local\extdb\query_manager::class)]
+#[Group('MuTMS')]
 final class query_manager_test extends \advanced_testcase {
     public function test_di(): void {
         $qman = \core\di::get(query_manager::class);

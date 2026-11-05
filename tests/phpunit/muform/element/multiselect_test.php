@@ -27,17 +27,18 @@ use tool_mulib\muform\element\multiselect;
 use tool_mulib\muform\util\options;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Multiselect element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\multiselect
  */
+#[CoversClass(\tool_mulib\muform\element\multiselect::class)]
+#[Group('MuTMS')]
 final class multiselect_test extends muform_testcase {
     /**
      * Add multiselect element via hook.

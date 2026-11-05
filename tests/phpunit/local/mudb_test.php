@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\mudb;
 use xmldb_table;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * MuTMS database helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\nudb
  */
+#[CoversClass(\tool_mulib\local\mudb::class)]
+#[Group('MuTMS')]
 final class mudb_test extends \database_driver_testcase {
     protected function setUp(): void {
         parent::setUp();

@@ -20,15 +20,18 @@
 namespace tool_mulib\phpunit\db;
 
 use tool_mulib\local\context_map;
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Uninstallation tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[CoversFunction('xmldb_tool_mulib_uninstall')]
+#[Group('MuTMS')]
 final class uninstall_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
@@ -37,8 +40,6 @@ final class uninstall_test extends \advanced_testcase {
 
     /**
      * Test unisntall.
-     *
-     * @covers \xmldb_tool_mulib_uninstall
      */
     public function test_uninstall(): void {
         global $DB;

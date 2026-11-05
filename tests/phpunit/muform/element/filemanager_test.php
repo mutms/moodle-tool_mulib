@@ -30,17 +30,18 @@ use tool_mulib\muform\element\filemanager;
 use tool_mulib\muform\util\file_area;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * File manager element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\filemanager
  */
+#[CoversClass(\tool_mulib\muform\element\filemanager::class)]
+#[Group('MuTMS')]
 final class filemanager_test extends muform_testcase {
     /**
      * Add filemanager element via hook.

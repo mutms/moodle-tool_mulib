@@ -30,18 +30,19 @@ use tool_mulib\muform\element\tags;
 use tool_mulib\muform\tagarea\course;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tags element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\tags
- * @covers \tool_mulib\muform\tagarea\base
  */
+#[CoversClass(\tool_mulib\muform\element\tags::class)]
+#[CoversClass(\tool_mulib\muform\tagarea\base::class)]
+#[Group('MuTMS')]
 final class tags_test extends muform_testcase {
     /**
      * Add tags element via hook.

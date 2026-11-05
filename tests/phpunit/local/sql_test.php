@@ -25,17 +25,18 @@ use core\exception\moodle_exception;
 use core\exception\coding_exception;
 use core\exception\invalid_parameter_exception;
 use dml_exception;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * SQL fragment tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @coversDefaultClass \tool_mulib\local\sql
  */
+#[CoversClass(\tool_mulib\local\sql::class)]
+#[Group('MuTMS')]
 final class sql_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
@@ -44,8 +45,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Constructor test.
-     *
-     * @covers \tool_mulib\local\sql::normalise_parameters
      */
     public function test_constructor(): void {
         $sql = new sql('');
@@ -139,8 +138,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test replacing of comments with SQL fragments.
-     *
-     * @covers \tool_mulib\local\sql::replace_comment
      */
     public function test_replace_comment(): void {
         global $DB;
@@ -201,8 +198,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test parameter renaming.
-     *
-     * @covers \tool_mulib\local\sql::rename_params
      */
     public function test_rename_params(): void {
         $sql = new sql('a = :a AND c = :c::text AND d = :a2', ['a' => 1, 'c' => 3, 'a2' => 4, 'x' => 9]);
@@ -245,8 +240,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test wrapping.
-     *
-     * @covers \tool_mulib\local\sql::wrap
      */
     public function test_wrap(): void {
         $sql = new sql('');
@@ -278,8 +271,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test joining os sqls.
-     *
-     * @covers \tool_mulib\local\sql::join
      */
     public function test_append(): void {
         $sql0 = new sql('');
@@ -309,8 +300,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test query debugging.
-     *
-     * @covers \tool_mulib\local\sql::export_debug_query
      */
     public function test_export_debug_query(): void {
         global $DB;
@@ -339,8 +328,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test ensuring there are no left-over comments.
-     *
-     * @covers  \tool_mulib\local\sql::ensure_no_comments
      */
     public function test_ensure_no_comments(): void {
         $sql = new sql('SELECT u.* FROM {user} u WHERE u.deleted = 0');
@@ -358,10 +345,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test magic property access.
-     *
-     * @covers \tool_mulib\local\sql::__get
-     * @covers \tool_mulib\local\sql::__set
-     * @covers \tool_mulib\local\sql::__isset
      */
     public function test_magic(): void {
         $sql = new sql('a = :param', ['param' => 11]);
@@ -421,11 +404,6 @@ final class sql_test extends \advanced_testcase {
 
     /**
      * Test array access.
-     *
-     * @covers \tool_mulib\local\sql::offsetExists
-     * @covers \tool_mulib\local\sql::offsetGet
-     * @covers \tool_mulib\local\sql::offsetSet
-     * @covers \tool_mulib\local\sql::offsetUnset
      */
     public function test_array_access(): void {
         $sql = new sql('a = :param', ['param' => 11]);

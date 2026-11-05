@@ -31,23 +31,24 @@ use tool_mulib\muform\element\submit;
 use tool_mulib\phpunit\muform\fixtures\dynamic_form;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Button, buttons and section element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\button
- * @covers \tool_mulib\muform\element\submit
- * @covers \tool_mulib\muform\element\cancel
- * @covers \tool_mulib\muform\element\download
- * @covers \tool_mulib\muform\element\reload
- * @covers \tool_mulib\muform\element\buttons
- * @covers \tool_mulib\muform\element\section
  */
+#[CoversClass(\tool_mulib\muform\element\button::class)]
+#[CoversClass(\tool_mulib\muform\element\submit::class)]
+#[CoversClass(\tool_mulib\muform\element\cancel::class)]
+#[CoversClass(\tool_mulib\muform\element\download::class)]
+#[CoversClass(\tool_mulib\muform\element\reload::class)]
+#[CoversClass(\tool_mulib\muform\element\buttons::class)]
+#[CoversClass(\tool_mulib\muform\element\section::class)]
+#[Group('MuTMS')]
 final class button_test extends muform_testcase {
     public function test_defaults(): void {
         $submit = new submit();

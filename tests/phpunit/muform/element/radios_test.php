@@ -28,17 +28,18 @@ use tool_mulib\muform\element\radios;
 use tool_mulib\muform\util\options;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Radios element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\radios
  */
+#[CoversClass(\tool_mulib\muform\element\radios::class)]
+#[Group('MuTMS')]
 final class radios_test extends muform_testcase {
     public function test_options(): void {
         $element = new radios('rr', 'R', [1 => 'One', '2' => 'Two']);

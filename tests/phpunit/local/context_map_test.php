@@ -22,17 +22,18 @@ namespace tool_mulib\phpunit\local;
 use tool_mulib\local\context_map;
 use context, context_system, context_coursecat, context_course, context_module;
 use tool_mulib\local\sql;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Context map tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\context_map
  */
+#[CoversClass(\tool_mulib\local\context_map::class)]
+#[Group('MuTMS')]
 final class context_map_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

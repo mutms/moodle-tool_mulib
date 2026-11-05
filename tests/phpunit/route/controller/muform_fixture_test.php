@@ -23,19 +23,20 @@ use core\router\util;
 use core\tests\router\route_testcase;
 use tool_mulib\muform\handler\dialog;
 use tool_mulib\route\controller\muform_fixture;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Muform in a router controller.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\route\controller\muform_fixture
- * @covers \tool_mulib\muform\handler
- * @covers \tool_mulib\muform\handler\dialog
  */
+#[CoversClass(\tool_mulib\route\controller\muform_fixture::class)]
+#[CoversClass(\tool_mulib\muform\handler::class)]
+#[CoversClass(\tool_mulib\muform\handler\dialog::class)]
+#[Group('MuTMS')]
 final class muform_fixture_test extends route_testcase {
     #[\Override]
     public function setUp(): void {

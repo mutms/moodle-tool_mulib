@@ -30,21 +30,22 @@ use tool_mulib\muform\handler;
 use tool_mulib\muform\handler\dialog;
 use tool_mulib\muform\handler\page;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Form handler tests.
  *
  * Classic scripts stop after each answer, the tests use the router mode which returns the answers.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\handler
- * @covers \tool_mulib\muform\handler\dialog
- * @covers \tool_mulib\muform\handler\page
  */
+#[CoversClass(\tool_mulib\muform\handler::class)]
+#[CoversClass(\tool_mulib\muform\handler\dialog::class)]
+#[CoversClass(\tool_mulib\muform\handler\page::class)]
+#[Group('MuTMS')]
 final class handler_test extends muform_testcase {
     #[\Override]
     protected function tearDown(): void {

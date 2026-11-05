@@ -20,17 +20,18 @@
 namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\reportbuilder_util;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Report builder helper tests.
  *
- * @group      MuTMS
  * @package    tool_mulib
  * @copyright  2026 Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\reportbuilder_util
  */
+#[CoversClass(\tool_mulib\local\reportbuilder_util::class)]
+#[Group('MuTMS')]
 final class reportbuilder_util_test extends \advanced_testcase {
     public function test_is_downloading(): void {
         global $SCRIPT;

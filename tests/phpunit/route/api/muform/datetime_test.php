@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\route\api\muform;
 use core\tests\router\route_testcase;
 use GuzzleHttp\Psr7\Utils;
 use tool_mulib\route\api\muform\datetime;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Datetime normalisation endpoint tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\route\api\muform\datetime
  */
+#[CoversClass(\tool_mulib\route\api\muform\datetime::class)]
+#[Group('MuTMS')]
 final class datetime_test extends route_testcase {
     #[\Override]
     public function setUp(): void {

@@ -26,17 +26,18 @@ use tool_mulib\hook\muform_definition;
 use tool_mulib\muform\element\yesno;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Yes or No element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\yesno
  */
+#[CoversClass(\tool_mulib\muform\element\yesno::class)]
+#[Group('MuTMS')]
 final class yesno_test extends muform_testcase {
     /**
      * Add yesno element via hook.

@@ -20,17 +20,18 @@
 namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\role_util;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Date helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\role_util
  */
+#[CoversClass(\tool_mulib\local\role_util::class)]
+#[Group('MuTMS')]
 final class role_util_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

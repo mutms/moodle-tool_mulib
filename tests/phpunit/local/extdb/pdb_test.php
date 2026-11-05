@@ -22,17 +22,18 @@
 namespace tool_mulib\phpunit\local\extdb;
 
 use tool_mulib\local\extdb\pdb;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * PDO database helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\extdb\pdb
  */
+#[CoversClass(\tool_mulib\local\extdb\pdb::class)]
+#[Group('MuTMS')]
 final class pdb_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

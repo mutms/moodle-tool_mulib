@@ -28,18 +28,19 @@ use tool_mulib\muform\element\info;
 use tool_mulib\muform\element\inforawhtml;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Info and inforawhtml element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\info
- * @covers \tool_mulib\muform\element\inforawhtml
  */
+#[CoversClass(\tool_mulib\muform\element\info::class)]
+#[CoversClass(\tool_mulib\muform\element\inforawhtml::class)]
+#[Group('MuTMS')]
 final class info_test extends muform_testcase {
     public function test_info(): void {
         $hook = function (muform_definition $hook): void {

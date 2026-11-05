@@ -22,28 +22,26 @@ namespace tool_mulib\phpunit\local\notification;
 
 use tool_mulib\local\notification\util;
 use tool_mulib\local\mulib;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Notification util tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2023 Open LMS
  * @copyright   2025 Petr Skoda
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @coversDefaultClass \tool_mulib\local\notification\util
  */
+#[CoversClass(\tool_mulib\local\notification\util::class)]
+#[Group('MuTMS')]
 final class util_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
     }
 
-    /**
-     * @covers ::get_manager_classname
-     */
     public function test_get_manager_classname(): void {
         $result = util::get_manager_classname('tool_muprog');
         if (class_exists(\tool_muprog\local\notification_manager::class)) {
@@ -53,9 +51,6 @@ final class util_test extends \advanced_testcase {
         }
     }
 
-    /**
-     * @covers ::notification_create
-     */
     public function test_notification_create(): void {
         if (!get_config('tool_muprog', 'version')) {
             $this->markTestSkipped('Test requires tool_muprog plugin');
@@ -153,9 +148,6 @@ final class util_test extends \advanced_testcase {
         $this->assertSame(null, $notification->auxint2);
     }
 
-    /**
-     * @covers ::notification_update
-     */
     public function test_notification_update(): void {
         if (!get_config('tool_muprog', 'version')) {
             $this->markTestSkipped('Test requires tool_muprog plugin');
@@ -283,9 +275,6 @@ final class util_test extends \advanced_testcase {
         $this->assertSame(null, $notification->auxint2);
     }
 
-    /**
-     * @covers ::notification_delete
-     */
     public function test_notification_delete(): void {
         global $DB;
 
@@ -319,9 +308,6 @@ final class util_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('tool_mulib_notification', ['id' => $notification->id]));
     }
 
-    /**
-     * @covers ::replace_placeholders
-     */
     public function test_replace_placeholders(): void {
         $this->assertSame('abc', \tool_mulib\local\notification\util::replace_placeholders('abc', ['opr' => 'OPR']));
 
@@ -332,9 +318,6 @@ final class util_test extends \advanced_testcase {
         $this->assertSame('abc OPR (DEF) {$a}', $return);
     }
 
-    /**
-     * @covers ::filter_multilang
-     */
     public function test_filter_multilang(): void {
         $text = '<span lang="en" class="multilang">your_content_in English</span>
                 <span lang="de" class="multilang">your_content_in_German_here</span>';
@@ -358,9 +341,6 @@ final class util_test extends \advanced_testcase {
         $this->assertSame($text, \tool_mulib\local\notification\util::filter_multilang($text, false));
     }
 
-    /**
-     * @covers ::filter_multilang
-     */
     public function test_filter_multilang2(): void {
         if (!get_config('filter_multilang2', 'version')) {
             $this->markTestSkipped('Test requires filter_multilang2 plugin');
@@ -389,9 +369,6 @@ final class util_test extends \advanced_testcase {
         $this->assertSame($text, \tool_mulib\local\notification\util::filter_multilang($text, false));
     }
 
-    /**
-     * @covers ::notification_import
-     */
     public function test_notification_import(): void {
         // Invalid data tests only here, real data tests in:
         // \tool_muprog\local\notification_manager_test::test_notification_util_notification_import().

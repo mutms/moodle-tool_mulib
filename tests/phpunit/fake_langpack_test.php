@@ -19,17 +19,18 @@
 namespace tool_mulib\phpunit;
 
 use tool_mulib\tests\fake_langpack;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Fake language pack test helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\tests\fake_langpack
  */
+#[CoversClass(\tool_mulib\tests\fake_langpack::class)]
+#[Group('MuTMS')]
 final class fake_langpack_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

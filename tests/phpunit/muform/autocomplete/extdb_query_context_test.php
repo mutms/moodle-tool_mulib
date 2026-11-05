@@ -20,17 +20,18 @@
 namespace tool_mulib\phpunit\muform\autocomplete;
 
 use tool_mulib\muform\autocomplete\extdb_query_context;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * External database query context autocomplete source tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\autocomplete\extdb_query_context
  */
+#[CoversClass(\tool_mulib\muform\autocomplete\extdb_query_context::class)]
+#[Group('MuTMS')]
 final class extdb_query_context_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

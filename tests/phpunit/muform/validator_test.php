@@ -27,20 +27,20 @@ use tool_mulib\muform\element;
 use tool_mulib\muform\validator;
 use tool_mulib\muform\validator\required_if_visible;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Validator tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\validator
- * @covers \tool_mulib\muform\validator\required_if_visible
- * @covers \tool_mulib\muform\element::add_validator
- * @covers \tool_mulib\muform\element::validate
  */
+#[CoversClass(\tool_mulib\muform\validator::class)]
+#[CoversClass(\tool_mulib\muform\validator\required_if_visible::class)]
+#[CoversClass(\tool_mulib\muform\element::class)]
+#[Group('MuTMS')]
 final class validator_test extends muform_testcase {
     public function test_validators(): void {
         $classvalidator = new class extends validator {

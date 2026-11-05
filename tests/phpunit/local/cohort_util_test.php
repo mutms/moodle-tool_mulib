@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\cohort_util;
 use tool_mulib\local\mulib;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Cohort helper tests.
  *
- * @group      MuTMS
  * @package    tool_mulib
  * @copyright  2026 Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\cohort_util
  */
+#[CoversClass(\tool_mulib\local\cohort_util::class)]
+#[Group('MuTMS')]
 final class cohort_util_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();

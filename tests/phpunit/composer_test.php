@@ -21,26 +21,29 @@
 
 namespace tool_mulib\phpunit;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+
 /**
  * Composer tests of all MuTMS plugins.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[Group('MuTMS')]
 final class composer_test extends \core\tests\plugin_checks_testcase {
     /**
      * Validate composer.json content.
-     *
-     * @dataProvider all_plugins_provider
-     * @coversNothing
      *
      * @param string $component
      * @param string $plugintype
      * @param string $pluginname
      * @param string $dir
      */
+    #[DataProvider('all_plugins_provider')]
+    #[CoversNothing]
     public function test_composer_json(string $component, string $plugintype, string $pluginname, string $dir): void {
         if (!file_exists("$dir/composer.json")) {
             return;

@@ -20,17 +20,18 @@
 namespace tool_mulib\phpunit\output;
 
 use tool_mulib\output\dropdown;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Header actions tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\output\dropdown
  */
+#[CoversClass(\tool_mulib\output\dropdown::class)]
+#[Group('MuTMS')]
 final class dropdown_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

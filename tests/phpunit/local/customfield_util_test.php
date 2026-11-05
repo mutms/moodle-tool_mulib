@@ -20,17 +20,18 @@ namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\customfield_util;
 use tool_mulib\local\sql;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Custom field helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\customfield_util
  */
+#[CoversClass(\tool_mulib\local\customfield_util::class)]
+#[Group('MuTMS')]
 final class customfield_util_test extends \advanced_testcase {
     public function test_change_instances_context(): void {
         global $DB;

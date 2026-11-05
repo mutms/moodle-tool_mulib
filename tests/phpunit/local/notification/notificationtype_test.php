@@ -20,41 +20,34 @@
 
 namespace tool_mulib\phpunit\local\notification;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+
 /**
  * Notification type base tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2023 Open LMS
  * @copyright   2025 Petr Skoda
  * @author      Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @coversDefaultClass \tool_mulib\local\notification\notificationtype
  */
+#[CoversClass(\tool_mulib\local\notification\notificationtype::class)]
+#[Group('MuTMS')]
 final class notificationtype_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
     }
 
-    /**
-     * @covers ::get_component
-     */
     public function test_get_component(): void {
         $this->assertSame('tool_mulib', \tool_mulib\local\notification\notificationtype::get_component());
     }
 
-    /**
-     * @covers ::get_classname
-     */
     public function test_get_classname(): void {
         $this->assertSame('notificationtype', \tool_mulib\local\notification\notificationtype::get_notificationtype());
     }
 
-    /**
-     * @covers ::format_subject
-     */
     public function test_format_subject(): void {
         $this->assertSame(
             '',
@@ -70,9 +63,6 @@ final class notificationtype_test extends \advanced_testcase {
         );
     }
 
-    /**
-     * @covers ::format_body
-     */
     public function test_format_body(): void {
         $this->assertSame(
             '',

@@ -20,17 +20,18 @@ namespace tool_mulib\phpunit\muform\util;
 
 use core\exception\coding_exception;
 use tool_mulib\muform\util\options;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Options util tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\util\options
  */
+#[CoversClass(\tool_mulib\muform\util\options::class)]
+#[Group('MuTMS')]
 final class options_test extends \advanced_testcase {
     public function test_options(): void {
         $options = new options(['none' => 'No role', 1 => 'One']);

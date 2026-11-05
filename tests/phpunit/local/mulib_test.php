@@ -20,18 +20,19 @@
 namespace tool_mulib\phpunit\local;
 
 use tool_mulib\local\mulib;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * MuTMS helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\local\mulib
- * @covers \tool_mulib\task\lang_cleanup
  */
+#[CoversClass(\tool_mulib\local\mulib::class)]
+#[CoversClass(\tool_mulib\task\lang_cleanup::class)]
+#[Group('MuTMS')]
 final class mulib_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();

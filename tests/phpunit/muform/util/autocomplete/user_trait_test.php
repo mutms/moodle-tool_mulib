@@ -22,19 +22,21 @@ use core\context\system;
 use tool_mulib\local\sql;
 use tool_mulib\muform\autocomplete\site_user;
 use tool_mulib\muform\autocompletemany\site_users;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * User trait tests through the shipped site user sources.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\util\autocomplete\user_trait
- * @covers \tool_mulib\muform\autocomplete\site_user
- * @covers \tool_mulib\muform\autocompletemany\site_users
  */
+#[CoversTrait(\tool_mulib\muform\util\autocomplete\user_trait::class)]
+#[CoversClass(\tool_mulib\muform\autocomplete\site_user::class)]
+#[CoversClass(\tool_mulib\muform\autocompletemany\site_users::class)]
+#[Group('MuTMS')]
 final class user_trait_test extends \advanced_testcase {
     #[\Override]
     protected function setUp(): void {

@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\muform\util;
 use tool_mulib\muform\util\calendar;
 use tool_mulib\local\lang_util;
 use tool_mulib\tests\fake_langpack;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Calendar util tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\util\calendar
  */
+#[CoversClass(\tool_mulib\muform\util\calendar::class)]
+#[Group('MuTMS')]
 final class calendar_test extends \advanced_testcase {
     public function test_get_format(): void {
         $this->resetAfterTest();

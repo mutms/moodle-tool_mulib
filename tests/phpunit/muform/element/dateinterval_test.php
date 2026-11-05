@@ -27,17 +27,18 @@ use tool_mulib\hook\muform_definition;
 use tool_mulib\muform\element\dateinterval;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
 use tool_mulib\phpunit\muform\muform_testcase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Date interval element tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\element\dateinterval
  */
+#[CoversClass(\tool_mulib\muform\element\dateinterval::class)]
+#[Group('MuTMS')]
 final class dateinterval_test extends muform_testcase {
     /**
     /**

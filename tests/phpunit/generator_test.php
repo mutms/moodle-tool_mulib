@@ -20,16 +20,18 @@
 
 namespace tool_mulib\phpunit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+
 /**
  * MuTMS additional tools generator test.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2025 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib_generator
  */
+#[CoversClass(\tool_mulib_generator::class)]
+#[Group('MuTMS')]
 final class generator_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();

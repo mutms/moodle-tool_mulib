@@ -21,17 +21,18 @@ namespace tool_mulib\phpunit\muform;
 use core\exception\coding_exception;
 use core\url;
 use tool_mulib\muform\wizard;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Wizard helper tests.
  *
- * @group       MuTMS
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
- * @covers \tool_mulib\muform\wizard
  */
+#[CoversClass(\tool_mulib\muform\wizard::class)]
+#[Group('MuTMS')]
 final class wizard_test extends \advanced_testcase {
     #[\Override]
     protected function setUp(): void {
