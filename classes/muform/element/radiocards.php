@@ -20,7 +20,7 @@ namespace tool_mulib\muform\element;
 
 use core\output\core_renderer;
 use tool_mulib\muform\element;
-use tool_mulib\muform\util\cards;
+use tool_mulib\muform\util\cards_trait;
 use tool_mulib\muform\util\options;
 
 /**
@@ -33,10 +33,7 @@ use tool_mulib\muform\util\options;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class radiocards extends element {
-    /** @var options */
-    private options $options;
-    /** @var array plain text descriptions indexed by option keys */
-    private array $descriptions;
+    use cards_trait;
 
     /**
      * Constructor.
@@ -49,17 +46,7 @@ final class radiocards extends element {
     public function __construct(string $name, string $label, array|options $options, array $descriptions = []) {
         parent::__construct($name);
         $this->label = $label;
-        $this->options = is_array($options) ? new options($options) : $options;
-        $this->descriptions = cards::validate_descriptions($descriptions, $this->options);
-    }
-
-    /**
-     * Returns options.
-     *
-     * @return options
-     */
-    public function get_options(): options {
-        return $this->options;
+        $this->init_cards($options, $descriptions);
     }
 
     #[\Override]
@@ -80,10 +67,6 @@ final class radiocards extends element {
     #[\Override]
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
-        $context['nolabelfor'] = true;
-        $selected = ($this->value === null) ? [] : [$this->value];
-        $groups = $this->options->get_template_data($context['id'], $selected);
-        $context['groups'] = cards::add_descriptions($groups, $this->descriptions);
-        return $context;
+        return $this->add_cards_template_data($context, ($this->value === null) ? [] : [$this->value]);
     }
 }

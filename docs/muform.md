@@ -411,10 +411,15 @@ option and returns `null`. For short lists like roles, `checkboxes` is nicer tha
 card with its title and an optional plain text description underneath, indexed by the same keys as
 the options. Descriptions are always visible and linked to the input with `aria-describedby`, the
 whole card is clickable. Use them instead of help buttons when users must understand what the
-options mean before choosing, for example cohort types or consequences of a conversion. Cards are
-always stacked, there is no inline variant. The look is inspired by Bootstrap 6 field group cards.
+options mean before choosing, for example cohort types or consequences of a conversion. There is
+no inline variant. The look is inspired by Bootstrap 6 field group cards.
 Descriptions are plain text on purpose: the clickable card cannot contain links or other interactive
 content, and screen readers read the description as text.
+
+Cards are shown in two columns when the element is at least 48rem wide, such as in full page forms
+and `xl` dialogs on large screens, `lg` and smaller dialogs keep one column. The layout follows the
+width of the element, not the screen (CSS container query). Use `->set_max_columns(1)` when long
+descriptions do not read well side by side.
 
 ### Yes or No
 

@@ -39,7 +39,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[CoversClass(\tool_mulib\muform\element\checkboxcards::class)]
-#[CoversClass(\tool_mulib\muform\util\cards::class)]
+#[CoversClass(\tool_mulib\muform\util\cards_trait::class)]
 #[Group('MuTMS')]
 final class checkboxcards_test extends muform_testcase {
     /**
@@ -131,5 +131,32 @@ final class checkboxcards_test extends muform_testcase {
             $html
         );
         $this->assertSame(3, substr_count($html, '<div class="form-check muform-card">'));
+    }
+
+    public function test_max_columns(): void {
+        $element = new checkboxcards('options', 'X', ['addonly' => 'Add only', 'forced' => 'Seed forced']);
+        $this->assertSame($element, $element->set_max_columns(2));
+        foreach ([0, 3] as $columns) {
+            try {
+                $element->set_max_columns($columns);
+                $this->fail('Exception expected');
+            } catch (coding_exception $ex) {
+                $this->assertStringContainsString('Card columns must be 1 or 2', $ex->getMessage());
+            }
+        }
+
+        $this->add_element();
+        $form = new simple_form($this->get_url(), []);
+        $html = $this->render($form);
+        $this->assertStringContainsString('<div class="muform-cards-container w-100">', $html);
+        $this->assertStringContainsString(' class="w-100 muform-cards">', $html);
+
+        $hook = function (muform_definition $hook): void {
+            $element = new checkboxcards('options', 'X', ['addonly' => 'Add only', 'forced' => 'Seed forced']);
+            $hook->form->add($element->set_max_columns(1));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-single">', $html);
     }
 }

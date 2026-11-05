@@ -15,6 +15,22 @@
     flex-direction: column;
     gap: 0.5rem;
 }
+/* Two columns when the element is wide, such as in full page forms and xl dialogs, but not in lg dialogs. */
+.muform .muform-cards-container {
+    /* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator */
+    container-type: inline-size;
+}
+
+/* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator */
+@container (min-width: 48rem) {
+    .muform .muform-cards:not(.muform-cards-single) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .muform .muform-cards:not(.muform-cards-single) > .muform-cards-group {
+        grid-column: 1 / -1;
+    }
+}
 .muform .muform-card {
     position: relative;
     margin: 0;
