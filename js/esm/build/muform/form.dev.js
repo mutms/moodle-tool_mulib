@@ -71,6 +71,8 @@ class MuForm {
   submitting = false;
   /** Change checker from core, when available. */
   changechecker;
+  /** The user changed a value since the page was loaded. */
+  changed = false;
   /**
    * Use initForm() instead.
    *
@@ -107,8 +109,12 @@ class MuForm {
     try {
       this.changechecker = await requireAsync("core_form/changechecker");
       this.changechecker.watchForm(this.form);
+      if (this.form.dataset.muformDirty === "1") {
+        this.changechecker.markFormAsDirty(this.form);
+      }
     } catch {
     }
+    this.watchWizardNav();
     this.emit("ready", { form: this });
   }
   /**
@@ -200,6 +206,30 @@ class MuForm {
     }
   }
   /**
+   * Mark the form as having unsaved work, leaving the page asks for confirmation
+   * even when nothing was changed. Submitting, reloading and cancelling never ask.
+   */
+  markDirty() {
+    this.form.dataset.muformDirty = "1";
+    this.changechecker?.markFormAsDirty(this.form);
+  }
+  /**
+   * Moving between wizard stages keeps the completed ones, so it asks only when
+   * the user changed the current stage, which would be lost.
+   */
+  watchWizardNav() {
+    const nav = this.form.closest(".muform-wizard")?.querySelector("[data-muform-wizard-nav]");
+    nav?.addEventListener("click", (event) => {
+      const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      if (!this.changed) {
+        this.changechecker?.resetFormDirtyState(this.form);
+      }
+    });
+  }
+  /**
    * Click the first button with the given role.
    *
    * @param role submit, reload or cancel
@@ -217,6 +247,7 @@ class MuForm {
    * @param detail change detail
    */
   onChange(detail) {
+    this.changed = true;
     this.emit("change", detail);
     if (this.display?.dependsOn(detail.name)) {
       const changed = this.display.apply();

@@ -251,6 +251,8 @@ final class wizard {
      * Every stage the user may go to is a link, those are the valid stages and the first
      * invalid one, which is exactly what resolve_stages() accepts as a requested stage;
      * completed and current stages are active, the current stage is highlighted, later stages are disabled.
+     * When some stages are completed the form is marked dirty, so leaving the page asks for confirmation,
+     * moving between stages via the stepper does not ask unless the user changed the current stage.
      *
      * @param core_renderer $output
      * @param array $stages result of resolve_stages(), a list of array{name:string,label:string,valid:bool,current:bool}
@@ -272,6 +274,10 @@ final class wizard {
                 'is_link' => $reachable && !$stage['current'],
                 'url' => $this->get_url($pageurl, $stage['name'])->out(false),
             ];
+        }
+        // Leaving the page would abandon completed stages, there is no way back to this wizard.
+        if (array_filter($stages, fn(array $stage): bool => $stage['valid'])) {
+            $form->set_dirty(true);
         }
         return $output->render_from_template('tool_mulib/muform/wizard', [
             'title' => clean_string(get_string('muform_steps', 'tool_mulib')),

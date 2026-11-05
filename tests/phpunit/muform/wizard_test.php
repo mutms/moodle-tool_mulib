@@ -263,10 +263,17 @@ final class wizard_test extends \advanced_testcase {
         $this->assertSame(2, substr_count($html, $link));
         $this->assertSame(2, substr_count($html, 'muform-stepper-item active'));
         $this->assertStringNotContainsString('disabled', $html);
+        $this->assertStringContainsString('data-muform-wizard-nav', $html);
+        // Completed stages would be lost when leaving the page.
+        $this->assertTrue($form->is_dirty());
+        $this->assertStringContainsString('data-muform-dirty="1"', $html);
 
-        // Later invalid stages are disabled text.
+        // Later invalid stages are disabled text, nothing is lost on the first stage.
+        $form = new \tool_mulib\phpunit\muform\fixtures\simple_form($wizard->get_url($pageurl, 'columns'), []);
         $stages = wizard::resolve_stages(['source', 'columns', 'options'], fn() => false, null);
         $html = $wizard->render($PAGE->get_renderer('core'), $stages, $pageurl, $form);
+        $this->assertFalse($form->is_dirty());
+        $this->assertStringNotContainsString('data-muform-dirty', $html);
         $this->assertSame(0, substr_count($html, $link));
         $this->assertSame(2, substr_count($html, '<li class="muform-stepper-item disabled">'));
         $this->assertSame(1, substr_count($html, 'aria-current="step"'));

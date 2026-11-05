@@ -557,6 +557,11 @@ or `form.cancel()`.
 
 The browser validates on submit and when the user leaves a changed field, but the server always has
 the final word. A form is only submitted once, the buttons are disabled until a new form arrives.
+
+Forms are watched by the core change checker, so leaving a page with changed values asks for
+confirmation. `$form->set_dirty(true)` in the handler, or `form.markDirty()` in JavaScript, marks a form
+as having unsaved work even without changes, for example data prefilled from an import that is not
+saved yet. Submit, reload and cancel never ask.
 Jest tests are in `js/esm/tests/`.
 
 ## Dialogs
@@ -632,6 +637,10 @@ current steps highlighted, reachable steps as links. It is vertical in narrow co
 from 30rem width when there are at most 6 steps. Wizards at least 64rem wide, such as full page
 forms on desktop, show the vertical stepper in a sticky column left of the form. All of this uses
 CSS container queries, so it follows the width of the wizard, not the screen.
+
+Once a stage is completed `render()` marks the stage form dirty, because leaving the page would
+abandon the wizard, there is no way back to it. Stepper links do not ask, earlier stages are kept,
+unless the user changed the current stage.
 
 ## Custom fields
 

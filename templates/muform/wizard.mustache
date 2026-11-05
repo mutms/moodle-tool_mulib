@@ -40,7 +40,7 @@
 }}
 <div class="muform-wizard-container">
 <div class="muform-wizard">
-    <nav aria-label="{{title}}" class="muform-wizard-stages">
+    <nav aria-label="{{title}}" class="muform-wizard-stages" data-muform-wizard-nav>
         <ol class="muform-stepper">
             {{#stages}}
             <li class="muform-stepper-item{{#is_active}} active{{/is_active}}{{#is_current}} current{{/is_current}}{{^is_current}}{{^is_link}} disabled{{/is_link}}{{/is_current}}"{{#is_current}} aria-current="step"{{/is_current}}>

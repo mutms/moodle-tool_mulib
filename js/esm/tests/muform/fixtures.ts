@@ -128,6 +128,7 @@ export function fakeForm(formel: HTMLFormElement): FormApi & {touchedNames: stri
         touched: (name: string) => {
             touchedNames.push(name);
         },
+        markDirty: () => undefined,
         on: () => () => undefined,
     };
 }

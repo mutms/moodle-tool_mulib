@@ -57,6 +57,7 @@ export interface FormApi {
     reload(): void;
     cancel(): void;
     touched(name: string): void;
+    markDirty(): void;
     on(event: FormEvent, handler: (detail: unknown) => void): () => void;
 }
 

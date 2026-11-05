@@ -310,6 +310,18 @@ final class form_test extends muform_testcase {
         $this->assertStringContainsString('data-muform-role="submit"', $html);
         $this->assertStringContainsString('data-muform-role="cancel"', $html);
         $this->assertStringContainsString('>' . get_string('required') . '<', $html);
+        $this->assertStringNotContainsString('data-muform-dirty', $html);
+    }
+
+    public function test_dirty(): void {
+        $form = new simple_form($this->get_url(), []);
+        $this->assertFalse($form->is_dirty());
+        $form->set_dirty(true);
+        $this->assertTrue($form->is_dirty());
+        $this->assertStringContainsString(' data-muform-dirty="1">', $this->render($form));
+        $form->set_dirty(false);
+        $this->assertFalse($form->is_dirty());
+        $this->assertStringNotContainsString('data-muform-dirty', $this->render($form));
     }
 
     public function test_render_variant(): void {

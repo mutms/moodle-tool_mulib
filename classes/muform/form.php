@@ -70,6 +70,8 @@ abstract class form {
     private string $idsuffix;
     /** @var bool true when form constructor finished data processing and form value changes not allowed */
     private bool $finalised = false;
+    /** @var bool leaving the page asks for confirmation even without changes */
+    private bool $dirty = false;
     /** @var display_manager resolves initial hidden and locked state of elements */
     private display_manager $display;
     /** @var element[] all elements indexed by name in order they were added */
@@ -378,6 +380,30 @@ abstract class form {
     }
 
     /**
+     * Mark the form as having unsaved work, leaving the page asks for confirmation
+     * even when the user did not change anything, like after a change in the form.
+     *
+     * For example a wizard stage after earlier stages were completed, or a form
+     * prefilled from data that is not saved yet. Submitting, reloading and cancelling
+     * the form never asks.
+     *
+     * @param bool $state
+     * @return void
+     */
+    final public function set_dirty(bool $state): void {
+        $this->dirty = $state;
+    }
+
+    /**
+     * Is the form marked as having unsaved work?
+     *
+     * @return bool
+     */
+    final public function is_dirty(): bool {
+        return $this->dirty;
+    }
+
+    /**
      * Override form template.
      *
      * @param string $template
@@ -409,6 +435,7 @@ abstract class form {
         $context['elements_byname'] = [];
         $context['elements'] = [];
         $context['has_errors'] = !empty($this->allerrors);
+        $context['is_dirty'] = $this->dirty;
         $context['errors'] = [];
 
         foreach ($this->allerrors as $elname => $errors) {

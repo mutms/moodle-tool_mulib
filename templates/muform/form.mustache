@@ -26,6 +26,7 @@
     * sesskey - session key, submitted as __sesskey
     * rulesjson - JSON encoded display rules
     * has_errors - true if any validation errors
+    * is_dirty - true when leaving the page asks for confirmation even without changes
     * errors - list of form level errors, already cleaned with clean_string()
     * elements_byname - rendered elements with name and html indexed by element name, for custom templates
     * elements - list of top level elements with name and html
@@ -38,13 +39,14 @@
         "sesskey": "abc",
         "rulesjson": "[]",
         "has_errors": false,
+        "is_dirty": false,
         "errors": [],
         "elements_byname": {"name": {"name": "name", "html": "<div>...</div>"} },
         "elements": [{"name": "name", "html": "<div>...</div>"}]
     }
 }}
 <form id="{{formid}}{{idsuffix}}" method="post" action="{{targeturl}}" class="muform mform" novalidate
-      data-muform="{{formid}}" data-muform-rules="{{rulesjson}}"{{#has_errors}} data-muform-has-errors="1"{{/has_errors}}>
+      data-muform="{{formid}}" data-muform-rules="{{rulesjson}}"{{#has_errors}} data-muform-has-errors="1"{{/has_errors}}{{#is_dirty}} data-muform-dirty="1"{{/is_dirty}}>
     <input type="hidden" name="__sesskey" value="{{sesskey}}">
     <input type="hidden" name="__formid" value="{{formid}}">
     {{#errors.0}}

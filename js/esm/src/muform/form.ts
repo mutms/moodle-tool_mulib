@@ -53,6 +53,8 @@ export function setModuleLoader(loader: (specifier: string) => Promise<unknown>)
 interface ChangeChecker {
     watchForm(form: HTMLFormElement): void;
     markFormSubmitted(form: HTMLFormElement): void;
+    markFormAsDirty(form: HTMLFormElement): void;
+    resetFormDirtyState(form: HTMLFormElement): void;
 }
 
 /**
@@ -109,6 +111,9 @@ export class MuForm implements FormApi {
     /** Change checker from core, when available. */
     private changechecker?: ChangeChecker;
 
+    /** The user changed a value since the page was loaded. */
+    private changed = false;
+
     /**
      * Use initForm() instead.
      *
@@ -150,9 +155,13 @@ export class MuForm implements FormApi {
         try {
             this.changechecker = await requireAsync<ChangeChecker>('core_form/changechecker');
             this.changechecker.watchForm(this.form);
+            if (this.form.dataset.muformDirty === '1') {
+                this.changechecker.markFormAsDirty(this.form);
+            }
         } catch {
             // Change checker is optional.
         }
+        this.watchWizardNav();
 
         this.emit('ready', {form: this});
     }
@@ -254,6 +263,33 @@ export class MuForm implements FormApi {
     }
 
     /**
+     * Mark the form as having unsaved work, leaving the page asks for confirmation
+     * even when nothing was changed. Submitting, reloading and cancelling never ask.
+     */
+    markDirty(): void {
+        this.form.dataset.muformDirty = '1';
+        this.changechecker?.markFormAsDirty(this.form);
+    }
+
+    /**
+     * Moving between wizard stages keeps the completed ones, so it asks only when
+     * the user changed the current stage, which would be lost.
+     */
+    private watchWizardNav(): void {
+        const nav = this.form.closest('.muform-wizard')?.querySelector<HTMLElement>('[data-muform-wizard-nav]');
+        nav?.addEventListener('click', (event: MouseEvent) => {
+            const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+            if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+                // Links opened in another tab leave this page as it is.
+                return;
+            }
+            if (!this.changed) {
+                this.changechecker?.resetFormDirtyState(this.form);
+            }
+        });
+    }
+
+    /**
      * Click the first button with the given role.
      *
      * @param role submit, reload or cancel
@@ -272,6 +308,7 @@ export class MuForm implements FormApi {
      * @param detail change detail
      */
     private onChange(detail: ChangeDetail): void {
+        this.changed = true;
         this.emit('change', detail);
         if (this.display?.dependsOn(detail.name)) {
             const changed = this.display.apply();
