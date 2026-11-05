@@ -83,12 +83,12 @@ Feature: muform datetimerange element
       | workshop | not a range |
     Then I should see "Invalid date and time range" in the "[data-muform-name='workshop'] .invalid-feedback" "css_element"
     When I set the following muform fields:
-      | workshop | ##tomorrow 09:00##-##tomorrow 12:00## |
+      | workshop | 2026-11-10 09:00 - 12:00 |
     And I press "Save changes"
     Then I should see "Form submitted" in the "#muform_state" "css_element"
     And the following muform fields match:
-      | session  | 2026-11-06 10:00 - 11:00              |
-      | workshop | ##tomorrow 09:00##-##tomorrow 12:00## |
+      | session  | 2026-11-06 10:00 - 11:00 |
+      | workshop | 2026-11-10 09:00 - 12:00 |
 
   @javascript
   Scenario: The picker keeps the duration and sets the end time

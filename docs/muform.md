@@ -531,8 +531,7 @@ Then the following muform fields match:
 
 The first column is the element name, or its exact label when no element has that name. The second
 column is what a user would enter: option keys (or labels), comma separated for multiple values,
-`2026-09-26 10:00` for dates, `2026-11-06 23:30 - 01:30` or two hyphenated timestamps such as
-`##tomorrow 10:00##-##tomorrow 11:00##` for date ranges, seconds for durations, ISO strings for intervals, `[clear]` to clear a
+`2026-09-26 10:00` for dates, `2026-11-06 23:30 - 01:30` for date ranges, seconds for durations, ISO strings for intervals, `[clear]` to clear a
 secret. Checkboxes are checked by anything except empty or `0`. Files are uploaded with
 `I upload "lib/tests/fixtures/empty.txt" file to "attachments" muform filemanager`.
 

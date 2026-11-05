@@ -38,7 +38,7 @@ import {
     useInteractions,
     useRole,
 } from '@floating-ui/react';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useId, useRef, useState} from 'react';
 import {formatComponents, readComponents, type Components} from './datetimeapi';
 import {readEndComponents} from './datetimerangeapi';
 
@@ -242,6 +242,7 @@ export default function DateTimePicker(
     const [duration, setDuration] = useState<number>(() => (range ? rangeMinutes(input, parts, range) : 0));
     const [focusDay, setFocusDay] = useState(false);
     const gridRef = useRef<HTMLTableElement>(null);
+    const durationId = useId();
 
     const onOpenChange = (state: boolean): void => {
         if (state) {
@@ -261,7 +262,8 @@ export default function DateTimePicker(
         placement: 'bottom-end',
         // Fixed positioning escapes scrolling ancestors such as dialog bodies, which would clip the panel.
         strategy: 'fixed',
-        middleware: [offset(4), flip(), shift({padding: 8})],
+        // Tall panels may overlap the input rather than leave the viewport.
+        middleware: [offset(4), flip(), shift({padding: 8, crossAxis: true})],
         whileElementsMounted: autoUpdate,
     });
     const {getReferenceProps, getFloatingProps} = useInteractions([
@@ -513,8 +515,8 @@ export default function DateTimePicker(
                         )}
                         {range && (
                             <div className="d-flex align-items-center gap-1 mb-2">
-                                <select className="form-select form-select-sm w-auto" aria-label={range.strings.duration}
-                                    title={range.strings.duration} value={duration}
+                                <label className="muform-datetime-rangelabel" htmlFor={durationId}>{range.strings.duration}</label>
+                                <select className="form-select form-select-sm w-auto" id={durationId} value={duration}
                                     data-muform-datetimerange-duration
                                     onChange={(event) => setDuration(Number(event.target.value))}>
                                     {durations.map((item) => (

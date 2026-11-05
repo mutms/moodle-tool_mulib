@@ -24,8 +24,8 @@ use tool_mulib\muform\util\calendar;
 /**
  * Behat helper for datetimerange element.
  *
- * Table values are two timestamps separated with a hyphen ("##tomorrow 10:00##-##tomorrow 11:00##"),
- * empty string for no value, or any range text the server can parse, such as "2026-11-06 23:30 - 01:30".
+ * Table values are range texts the server can parse, such as "2026-11-06 23:30 - 01:30",
+ * two timestamps separated with a hyphen, or empty string for no value.
  * Timestamps are formatted with the timezone and language the page was rendered with before typing them.
  *
  * @package     tool_mulib

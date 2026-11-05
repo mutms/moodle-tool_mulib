@@ -217,7 +217,7 @@ describe('tool_mulib/muform/element/datetimerange', () => {
         const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
         const startgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="Start"]')!;
         const endgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
-        const duration = panel.querySelector<HTMLSelectElement>('select[aria-label="Duration"]')!;
+        const duration = panel.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
         expect(startgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('23');
         expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('1');
         expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('30');
@@ -258,7 +258,7 @@ describe('tool_mulib/muform/element/datetimerange', () => {
         const {wrapper} = await make(fixture('', '', '', '', '', '5400'));
         await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
         const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-        const duration = panel.querySelector<HTMLSelectElement>('select[aria-label="Duration"]')!;
+        const duration = panel.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
         expect(duration.value).toBe('90');
         const endgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
         expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('1');

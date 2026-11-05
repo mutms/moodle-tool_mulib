@@ -25,7 +25,7 @@ import {
   useInteractions,
   useRole
 } from "@floating-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { formatComponents, readComponents } from "./datetimeapi";
 import { readEndComponents } from "./datetimerangeapi";
 function firstDayOfWeek(moodle, lang) {
@@ -116,6 +116,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
   const [duration, setDuration] = useState(() => range ? rangeMinutes(input, parts, range) : 0);
   const [focusDay, setFocusDay] = useState(false);
   const gridRef = useRef(null);
+  const durationId = useId();
   const onOpenChange = /* @__PURE__ */ __name((state) => {
     if (state) {
       const current = readComponents(input) ?? emptyParts(input);
@@ -133,7 +134,8 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
     placement: "bottom-end",
     // Fixed positioning escapes scrolling ancestors such as dialog bodies, which would clip the panel.
     strategy: "fixed",
-    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    // Tall panels may overlap the input rather than leave the viewport.
+    middleware: [offset(4), flip(), shift({ padding: 8, crossAxis: true })],
     whileElementsMounted: autoUpdate
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([
@@ -253,7 +255,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
         ...getReferenceProps(),
         children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-calendar", "aria-hidden": "true" }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-          lineNumber: 400,
+          lineNumber: 402,
           columnNumber: 17
         }, this)
       },
@@ -261,7 +263,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-        lineNumber: 392,
+        lineNumber: 394,
         columnNumber: 13
       },
       this
@@ -286,7 +288,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   onClick: () => moveMonth(-12),
                   children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-angles-left", "aria-hidden": "true" }, void 0, false, {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 415,
+                    lineNumber: 417,
                     columnNumber: 37
                   }, this)
                 },
@@ -294,7 +296,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 413,
+                  lineNumber: 415,
                   columnNumber: 33
                 },
                 this
@@ -308,7 +310,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   onClick: () => moveMonth(-1),
                   children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-chevron-left", "aria-hidden": "true" }, void 0, false, {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 419,
+                    lineNumber: 421,
                     columnNumber: 37
                   }, this)
                 },
@@ -316,19 +318,19 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 417,
+                  lineNumber: 419,
                   columnNumber: 33
                 },
                 this
               )
             ] }, void 0, true, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 412,
+              lineNumber: 414,
               columnNumber: 29
             }, this),
             /* @__PURE__ */ jsxDEV("span", { className: "fw-bold", "aria-live": "polite", children: monthName }, void 0, false, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 422,
+              lineNumber: 424,
               columnNumber: 29
             }, this),
             /* @__PURE__ */ jsxDEV("span", { className: "d-flex gap-1", children: [
@@ -341,7 +343,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   onClick: () => moveMonth(1),
                   children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-chevron-right", "aria-hidden": "true" }, void 0, false, {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 426,
+                    lineNumber: 428,
                     columnNumber: 37
                   }, this)
                 },
@@ -349,7 +351,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 424,
+                  lineNumber: 426,
                   columnNumber: 33
                 },
                 this
@@ -363,7 +365,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   onClick: () => moveMonth(12),
                   children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-angles-right", "aria-hidden": "true" }, void 0, false, {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 430,
+                    lineNumber: 432,
                     columnNumber: 37
                   }, this)
                 },
@@ -371,19 +373,19 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 428,
+                  lineNumber: 430,
                   columnNumber: 33
                 },
                 this
               )
             ] }, void 0, true, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 423,
+              lineNumber: 425,
               columnNumber: 29
             }, this)
           ] }, void 0, true, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-            lineNumber: 411,
+            lineNumber: 413,
             columnNumber: 25
           }, this),
           /* @__PURE__ */ jsxDEV(
@@ -396,22 +398,22 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
               children: [
                 /* @__PURE__ */ jsxDEV("thead", { children: /* @__PURE__ */ jsxDEV("tr", { children: weekdays.map((name) => /* @__PURE__ */ jsxDEV("th", { scope: "col", className: "small fw-normal", children: name }, name, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 438,
+                  lineNumber: 440,
                   columnNumber: 61
                 }, this)) }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 437,
+                  lineNumber: 439,
                   columnNumber: 33
                 }, this) }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 436,
+                  lineNumber: 438,
                   columnNumber: 29
                 }, this),
                 /* @__PURE__ */ jsxDEV("tbody", { children: rows.map((row, r) => /* @__PURE__ */ jsxDEV("tr", { children: row.map((day, c) => {
                   if (day === null) {
                     return /* @__PURE__ */ jsxDEV("td", {}, c, false, {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 446,
+                      lineNumber: 448,
                       columnNumber: 56
                     }, this);
                   }
@@ -441,22 +443,22 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                     false,
                     {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 458,
+                      lineNumber: 460,
                       columnNumber: 53
                     },
                     this
                   ) }, c, false, {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 457,
+                    lineNumber: 459,
                     columnNumber: 49
                   }, this);
                 }) }, r, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 443,
+                  lineNumber: 445,
                   columnNumber: 37
                 }, this)) }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 441,
+                  lineNumber: 443,
                   columnNumber: 29
                 }, this)
               ]
@@ -465,7 +467,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 434,
+              lineNumber: 436,
               columnNumber: 25
             },
             this
@@ -479,7 +481,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
               children: [
                 range && /* @__PURE__ */ jsxDEV("span", { className: "muform-datetime-rangelabel", "aria-hidden": "true", children: range.strings.start }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 481,
+                  lineNumber: 483,
                   columnNumber: 39
                 }, this),
                 /* @__PURE__ */ jsxDEV(
@@ -491,7 +493,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                     onChange: (event) => setParts({ ...parts, hour: Number(event.target.value) }),
                     children: hours.map((hour) => /* @__PURE__ */ jsxDEV("option", { value: hour, children: hourLabel(hour) }, hour, false, {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 484,
+                      lineNumber: 486,
                       columnNumber: 54
                     }, this))
                   },
@@ -499,14 +501,14 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 482,
+                    lineNumber: 484,
                     columnNumber: 29
                   },
                   this
                 ),
                 /* @__PURE__ */ jsxDEV("span", { "aria-hidden": "true", children: ":" }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 486,
+                  lineNumber: 488,
                   columnNumber: 29
                 }, this),
                 /* @__PURE__ */ jsxDEV(
@@ -518,7 +520,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                     onChange: (event) => setParts({ ...parts, minute: Number(event.target.value) }),
                     children: minutes.map((minute) => /* @__PURE__ */ jsxDEV("option", { value: minute, children: String(minute).padStart(2, "0") }, minute, false, {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 490,
+                      lineNumber: 492,
                       columnNumber: 37
                     }, this))
                   },
@@ -526,7 +528,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 487,
+                    lineNumber: 489,
                     columnNumber: 29
                   },
                   this
@@ -537,7 +539,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 479,
+              lineNumber: 481,
               columnNumber: 25
             },
             this
@@ -552,7 +554,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
               children: [
                 /* @__PURE__ */ jsxDEV("span", { className: "muform-datetime-rangelabel", "aria-hidden": "true", children: range.strings.end }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 497,
+                  lineNumber: 499,
                   columnNumber: 33
                 }, this),
                 /* @__PURE__ */ jsxDEV(
@@ -564,7 +566,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                     onChange: (event) => setEndTime(Number(event.target.value), endParts.minute),
                     children: hours.map((hour) => /* @__PURE__ */ jsxDEV("option", { value: hour, children: hourLabel(hour) }, hour, false, {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 501,
+                      lineNumber: 503,
                       columnNumber: 58
                     }, this))
                   },
@@ -572,14 +574,14 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 498,
+                    lineNumber: 500,
                     columnNumber: 33
                   },
                   this
                 ),
                 /* @__PURE__ */ jsxDEV("span", { "aria-hidden": "true", children: ":" }, void 0, false, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 503,
+                  lineNumber: 505,
                   columnNumber: 33
                 }, this),
                 /* @__PURE__ */ jsxDEV(
@@ -591,7 +593,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                     onChange: (event) => setEndTime(endParts.hour, Number(event.target.value)),
                     children: minuteOptions(endParts.minute).map((minute) => /* @__PURE__ */ jsxDEV("option", { value: minute, children: String(minute).padStart(2, "0") }, minute, false, {
                       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                      lineNumber: 508,
+                      lineNumber: 510,
                       columnNumber: 41
                     }, this))
                   },
@@ -599,7 +601,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   false,
                   {
                     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                    lineNumber: 504,
+                    lineNumber: 506,
                     columnNumber: 33
                   },
                   this
@@ -609,7 +611,7 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
                   endOffset
                 ] }, void 0, true, {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                  lineNumber: 511,
+                  lineNumber: 513,
                   columnNumber: 51
                 }, this)
               ]
@@ -618,37 +620,43 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 495,
+              lineNumber: 497,
               columnNumber: 29
             },
             this
           ),
-          range && /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-1 mb-2", children: /* @__PURE__ */ jsxDEV(
-            "select",
-            {
-              className: "form-select form-select-sm w-auto",
-              "aria-label": range.strings.duration,
-              title: range.strings.duration,
-              value: duration,
-              "data-muform-datetimerange-duration": true,
-              onChange: (event) => setDuration(Number(event.target.value)),
-              children: durations.map((item) => /* @__PURE__ */ jsxDEV("option", { value: item.minutes, children: item.label }, item.minutes, false, {
-                fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                lineNumber: 521,
-                columnNumber: 41
-              }, this))
-            },
-            void 0,
-            false,
-            {
+          range && /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-1 mb-2", children: [
+            /* @__PURE__ */ jsxDEV("label", { className: "muform-datetime-rangelabel", htmlFor: durationId, children: range.strings.duration }, void 0, false, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 516,
+              lineNumber: 518,
               columnNumber: 33
-            },
-            this
-          ) }, void 0, false, {
+            }, this),
+            /* @__PURE__ */ jsxDEV(
+              "select",
+              {
+                className: "form-select form-select-sm w-auto",
+                id: durationId,
+                value: duration,
+                "data-muform-datetimerange-duration": true,
+                onChange: (event) => setDuration(Number(event.target.value)),
+                children: durations.map((item) => /* @__PURE__ */ jsxDEV("option", { value: item.minutes, children: item.label }, item.minutes, false, {
+                  fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
+                  lineNumber: 523,
+                  columnNumber: 41
+                }, this))
+              },
+              void 0,
+              false,
+              {
+                fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
+                lineNumber: 519,
+                columnNumber: 33
+              },
+              this
+            )
+          ] }, void 0, true, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-            lineNumber: 515,
+            lineNumber: 517,
             columnNumber: 29
           }, this),
           /* @__PURE__ */ jsxDEV("div", { className: "d-flex gap-1", children: [
@@ -664,14 +672,14 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
               false,
               {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                lineNumber: 527,
+                lineNumber: 529,
                 columnNumber: 29
               },
               this
             ),
             /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-sm btn-light", onClick: () => applyAndClose(""), children: strings.clear }, void 0, false, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-              lineNumber: 531,
+              lineNumber: 533,
               columnNumber: 29
             }, this),
             /* @__PURE__ */ jsxDEV(
@@ -686,14 +694,14 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
               false,
               {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-                lineNumber: 534,
+                lineNumber: 536,
                 columnNumber: 29
               },
               this
             )
           ] }, void 0, true, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-            lineNumber: 526,
+            lineNumber: 528,
             columnNumber: 25
           }, this)
         ]
@@ -702,18 +710,18 @@ function DateTimePicker({ input, step, firstDay: moodleFirstDay, hour12 = false,
       true,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-        lineNumber: 404,
+        lineNumber: 406,
         columnNumber: 21
       },
       this
     ) }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-      lineNumber: 403,
+      lineNumber: 405,
       columnNumber: 17
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimepicker.tsx",
-    lineNumber: 391,
+    lineNumber: 393,
     columnNumber: 9
   }, this);
 }
