@@ -52,7 +52,7 @@ final class wizard_test extends \advanced_testcase {
         $this->assertSame([], $wizard->get_data());
         $record = $DB->get_record('tool_mulib_muform_wizard', ['id' => $wizard->get_id()], '*', MUST_EXIST);
         $this->assertSame((string)$user1->id, $record->userid);
-        $this->assertSame('{}', $record->jsondata);
+        $this->assertSame('{"data":{},"completed":[]}', $record->jsondata);
         $expected = sha1('tool_mulib_test/' . $user1->id . '/' . sesskey() . '/' . $record->timecreated);
         $this->assertSame($expected, $record->sessionhash);
         $this->assertEqualsWithDelta(time(), (int)$record->timecreated, 5);
@@ -130,7 +130,7 @@ final class wizard_test extends \advanced_testcase {
         $wizard = wizard::start('tool_mulib_test');
         $wizard->set_data(['rows' => [['a', 'ž']], 'options' => ['skip' => 1], 'url' => 'https://x/y']);
         $this->assertSame(
-            '{"rows":[["a","ž"]],"options":{"skip":1},"url":"https://x/y"}',
+            '{"data":{"rows":[["a","ž"]],"options":{"skip":1},"url":"https://x/y"},"completed":[]}',
             $DB->get_field('tool_mulib_muform_wizard', 'jsondata', ['id' => $wizard->get_id()])
         );
         $this->assertSame(['rows' => [['a', 'ž']], 'options' => ['skip' => 1], 'url' => 'https://x/y'], $wizard->get_data());
@@ -138,10 +138,17 @@ final class wizard_test extends \advanced_testcase {
 
         $wizard->set_data([]);
         $this->assertSame([], $wizard->get_data());
+        $this->assertSame(
+            '{"data":{},"completed":[]}',
+            $DB->get_field('tool_mulib_muform_wizard', 'jsondata', ['id' => $wizard->get_id()])
+        );
 
         $DB->set_field('tool_mulib_muform_wizard', 'jsondata', '[1, 2', ['id' => $wizard->get_id()]);
         $this->assertSame([], wizard::load('tool_mulib_test', $wizard->get_id())->get_data());
         $DB->set_field('tool_mulib_muform_wizard', 'jsondata', '"text"', ['id' => $wizard->get_id()]);
+        $this->assertSame([], wizard::load('tool_mulib_test', $wizard->get_id())->get_data());
+        // Rows stored before stages were tracked start again.
+        $DB->set_field('tool_mulib_muform_wizard', 'jsondata', '{"rows":[]}', ['id' => $wizard->get_id()]);
         $this->assertSame([], wizard::load('tool_mulib_test', $wizard->get_id())->get_data());
 
         $wizard->delete();
@@ -166,71 +173,130 @@ final class wizard_test extends \advanced_testcase {
     }
 
     public function test_resolve_stages(): void {
-        $names = ['source', 'columns', 'options'];
+        global $DB;
+
+        $this->setAdminUser();
+        $wizard = wizard::start('tool_mulib_test');
+        $names = ['source' => 'source', 'columns' => 'columns', 'options' => 'options'];
         $valid = ['source' => true, 'columns' => true, 'options' => true];
+        $calls = [];
         $isvalid = function (string $name) use (&$valid, &$calls): bool {
             $calls[] = $name;
             return $valid[$name];
         };
 
-        // Everything valid, the last stage is current.
-        $calls = [];
-        $stages = wizard::resolve_stages($names, $isvalid, null);
+        // Valid data does not complete stages, the user must submit each of them.
+        $stages = $wizard->resolve_stages($names, $isvalid, null);
         $this->assertSame([
-            ['name' => 'source', 'label' => 'source', 'valid' => true, 'current' => false],
-            ['name' => 'columns', 'label' => 'columns', 'valid' => true, 'current' => false],
-            ['name' => 'options', 'label' => 'options', 'valid' => true, 'current' => true],
+            ['name' => 'source', 'label' => 'source', 'completed' => false, 'current' => true],
+            ['name' => 'columns', 'label' => 'columns', 'completed' => false, 'current' => false],
+            ['name' => 'options', 'label' => 'options', 'completed' => false, 'current' => false],
         ], $stages);
-        $this->assertSame('options', wizard::current_stage($stages));
-        $this->assertSame($names, $calls);
+        $this->assertFalse(wizard::is_finished($stages));
+        $this->assertSame([], $calls);
+        $this->assertSame('source', wizard::current_stage($wizard->resolve_stages($names, $isvalid, 'columns')));
 
-        // Requested earlier stage wins when valid.
-        $stages = wizard::resolve_stages($names, $isvalid, 'source');
-        $this->assertSame('source', wizard::current_stage($stages));
-        $this->assertTrue($stages[2]['valid']);
-        $this->assertFalse($stages[2]['current']);
-
-        // Unknown stage is ignored.
-        $stages = wizard::resolve_stages($names, $isvalid, 'xyz');
-        $this->assertSame('options', wizard::current_stage($stages));
-
-        // First invalid stage is current and later stages are not validated.
-        $valid['columns'] = false;
+        $wizard->complete_stage('source', ['x' => 1]);
+        $this->assertSame(['x' => 1], $wizard->get_data());
+        $this->assertSame(
+            '{"data":{"x":1},"completed":["source"]}',
+            $DB->get_field('tool_mulib_muform_wizard', 'jsondata', ['id' => $wizard->get_id()])
+        );
         $calls = [];
-        $stages = wizard::resolve_stages($names, $isvalid, null);
-        $this->assertSame([
-            ['name' => 'source', 'label' => 'source', 'valid' => true, 'current' => false],
-            ['name' => 'columns', 'label' => 'columns', 'valid' => false, 'current' => true],
-            ['name' => 'options', 'label' => 'options', 'valid' => false, 'current' => false],
-        ], $stages);
-        $this->assertSame(['source', 'columns'], $calls);
+        $stages = $wizard->resolve_stages($names, $isvalid, null);
+        $this->assertSame('columns', wizard::current_stage($stages));
+        $this->assertSame([true, false, false], array_column($stages, 'completed'));
+        $this->assertSame(['source'], $calls);
 
         // Requested later stage is clamped, requested current is fine, requested earlier moves back.
-        $this->assertSame('columns', wizard::current_stage(wizard::resolve_stages($names, $isvalid, 'options')));
-        $this->assertSame('columns', wizard::current_stage(wizard::resolve_stages($names, $isvalid, 'columns')));
-        $this->assertSame('source', wizard::current_stage(wizard::resolve_stages($names, $isvalid, 'source')));
+        $this->assertSame('columns', wizard::current_stage($wizard->resolve_stages($names, $isvalid, 'options')));
+        $this->assertSame('columns', wizard::current_stage($wizard->resolve_stages($names, $isvalid, 'columns')));
+        $this->assertSame('source', wizard::current_stage($wizard->resolve_stages($names, $isvalid, 'source')));
+        $this->assertSame('columns', wizard::current_stage($wizard->resolve_stages($names, $isvalid, 'xyz')));
 
-        // Nothing valid.
-        $valid['source'] = false;
-        $stages = wizard::resolve_stages($names, $isvalid, 'options');
+        $wizard->complete_stage('columns', ['x' => 2]);
+        $wizard->complete_stage('options', ['x' => 3]);
+        $stages = $wizard->resolve_stages($names, $isvalid, null);
+        $this->assertSame('options', wizard::current_stage($stages));
+        $this->assertTrue(wizard::is_finished($stages));
+        $stages = $wizard->resolve_stages($names, $isvalid, 'source');
         $this->assertSame('source', wizard::current_stage($stages));
-        $this->assertSame([false, false, false], array_column($stages, 'valid'));
+        $this->assertTrue($stages[2]['completed']);
 
-        // Labels come from string keys.
-        $stages = wizard::resolve_stages(['source' => 'Source data', 'columns' => 'Columns'], fn() => true, null);
+        // Completed stage with invalid data is current again, later stages are not validated.
+        $valid['columns'] = false;
+        $calls = [];
+        $stages = $wizard->resolve_stages($names, $isvalid, null);
+        $this->assertSame([true, false, false], array_column($stages, 'completed'));
+        $this->assertSame('columns', wizard::current_stage($stages));
+        $this->assertSame(['source', 'columns'], $calls);
+        $valid['columns'] = true;
+
+        // Submitting an earlier stage again means later stages must be confirmed again.
+        $wizard->resolve_stages($names, $isvalid, 'source');
+        $wizard->complete_stage('source', ['x' => 4]);
+        $stages = $wizard->resolve_stages($names, $isvalid, null);
+        $this->assertSame('columns', wizard::current_stage($stages));
+        $this->assertSame([true, false, false], array_column($stages, 'completed'));
+
+        // Stages that do not apply are simply left out.
+        $short = ['source' => 'source', 'options' => 'options'];
+        $stages = $wizard->resolve_stages($short, $isvalid, null);
+        $this->assertSame('options', wizard::current_stage($stages));
+        $wizard->complete_stage('options', []);
+        $this->assertTrue(wizard::is_finished($wizard->resolve_stages($short, $isvalid, null)));
+
+        // Only true means valid, sloppy callbacks returning other values do not complete stages.
+        foreach ([1, 'yes', [1], null] as $result) {
+            $stages = $wizard->resolve_stages($short, fn() => $result, null);
+            $this->assertSame('source', wizard::current_stage($stages));
+        }
+
+        // Labels are indexed by stage names.
+        $stages = $wizard->resolve_stages(['source' => 'Source data', 'columns' => 'Columns'], fn() => true, null);
+        $this->assertSame('source', $stages[0]['name']);
         $this->assertSame('Source data', $stages[0]['label']);
         $this->assertSame('columns', $stages[1]['name']);
         $this->assertSame('columns', wizard::current_stage($stages));
+        foreach ([['source', 'columns'], ['source' => 1]] as $labels) {
+            try {
+                $wizard->resolve_stages($labels, fn() => true, null);
+                $this->fail('Exception expected');
+            } catch (coding_exception $e) {
+                $this->assertStringContainsString('Wizard stages must be labels indexed by stage names', $e->getMessage());
+            }
+        }
+
+        // Defaults stored when starting do not complete anything.
+        $wizard = wizard::start('tool_mulib_test');
+        $wizard->set_data(['default' => 'x']);
+        $this->assertSame('source', wizard::current_stage($wizard->resolve_stages($names, fn() => true, null)));
     }
 
     public function test_resolve_stages_requires_names(): void {
+        $this->setAdminUser();
         $this->expectException(coding_exception::class);
-        wizard::resolve_stages([], fn() => true, null);
+        wizard::start('tool_mulib_test')->resolve_stages([], fn() => true, null);
+    }
+
+    public function test_complete_stage_requires_resolved_stages(): void {
+        $this->setAdminUser();
+        $wizard = wizard::start('tool_mulib_test');
+        try {
+            $wizard->complete_stage('source', []);
+            $this->fail('Exception expected');
+        } catch (coding_exception $e) {
+            $this->assertStringContainsString('Stages must be resolved before completing a stage', $e->getMessage());
+        }
+        $wizard->resolve_stages(['source' => 'Source'], fn() => true, null);
+        $this->expectException(coding_exception::class);
+        $this->expectExceptionMessage('Unknown wizard stage: xyz');
+        $wizard->complete_stage('xyz', []);
     }
 
     public function test_current_stage_requires_current(): void {
         $this->expectException(coding_exception::class);
-        wizard::current_stage([['name' => 'x', 'label' => 'x', 'valid' => true, 'current' => false]]);
+        wizard::current_stage([['name' => 'x', 'label' => 'x', 'completed' => true, 'current' => false]]);
     }
 
     public function test_render(): void {
@@ -244,7 +310,9 @@ final class wizard_test extends \advanced_testcase {
         $pageurl = new url('/auth/musaml/management/user_upload.php', ['id' => 5]);
         $form = new \tool_mulib\phpunit\muform\fixtures\simple_form($wizard->get_url($pageurl, 'columns'), []);
         $valid = ['source' => true, 'columns' => true, 'options' => false];
-        $stages = wizard::resolve_stages(
+        $wizard->resolve_stages(['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'], fn() => true, null);
+        $wizard->complete_stage('columns', []);
+        $stages = $wizard->resolve_stages(
             ['source' => 'Source <b>data</b>', 'columns' => 'Columns', 'options' => 'Options'],
             fn(string $name) => $valid[$name],
             'columns'
@@ -270,7 +338,8 @@ final class wizard_test extends \advanced_testcase {
 
         // Later invalid stages are disabled text, nothing is lost on the first stage.
         $form = new \tool_mulib\phpunit\muform\fixtures\simple_form($wizard->get_url($pageurl, 'columns'), []);
-        $stages = wizard::resolve_stages(['source', 'columns', 'options'], fn() => false, null);
+        $labels = ['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'];
+        $stages = $wizard->resolve_stages($labels, fn() => false, null);
         $html = $wizard->render($PAGE->get_renderer('core'), $stages, $pageurl, $form);
         $this->assertFalse($form->is_dirty());
         $this->assertStringNotContainsString('data-muform-dirty', $html);

@@ -7,7 +7,7 @@ Feature: muform wizard helper
   Background:
     Given I log in as "admin"
 
-  Scenario: Stages are resolved from the stored data and the wizard finishes
+  Scenario: Every stage is confirmed and the wizard finishes
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
     Then I should see "Stage details" in the "#muform_state" "css_element"
     And I should see "{}" in the "#wizard_data" "css_element"
@@ -35,7 +35,7 @@ Feature: muform wizard helper
     Then I should see "Stage details" in the "#muform_state" "css_element"
     And I should see "{}" in the "#wizard_data" "css_element"
 
-  Scenario: Back and the stage parameter move to valid stages only
+  Scenario: Back and the stage parameter move to completed stages only
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
     When I set the following muform fields:
       | fullname | Jane Doe |
@@ -61,10 +61,16 @@ Feature: muform wizard helper
     And I set the following muform fields:
       | fullname | Renamed |
     And I press "Continue"
+    # Valid later stages are not skipped, the user confirms them again.
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And the following muform fields match:
+      | colour | red |
+    And "//nav[contains(@class, 'muform-wizard-stages')]//a[normalize-space()='Summary']" "xpath_element" should not exist
+    When I press "Continue"
     Then I should see "Stage summary" in the "#muform_state" "css_element"
     And I should see "Renamed likes red" in the "[data-muform-name='summary']" "css_element"
 
-  Scenario: A requested stage never moves forward past the first invalid stage
+  Scenario: A requested stage never moves forward past the first stage that is not completed
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
     When I set the following muform fields:
       | fullname | Jane Doe |

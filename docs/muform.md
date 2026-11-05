@@ -585,23 +585,14 @@ JavaScript they open the normal page. `create_report_action()` makes a report bu
 
 ## Wizards
 
-Use a wizard when creating something takes several steps. The state is stored in
-`tool_mulib_muform_wizard`, one row per running wizard, and the forms know nothing about it.
+Multi-step full page forms, open them with plain links, never in dialogs. State is one row in
+`tool_mulib_muform_wizard`, bound to the user, login session and wizard name; put the page parameters
+into the name. Rows older than a day are deleted.
 
-Wizards and their stepper are intended for full page forms, open them with plain links, not dialogs.
-Going back to earlier steps, reloads and long stage forms get awkward in a dialog. For a short flow in a
-dialog, such as choosing a type before the real form, render the next form when
-`$handler->is_dialog()` is true instead.
-
-The row id travels in the URL, but the row can only be loaded by the same user in the same login
-session and by the same wizard, because it is protected by a hash of all of these. Include the page
-parameters in the wizard name, like `'auth_musaml_user_upload:' . $idp->id`, and the data cannot be
-replayed against another record either. Old rows are deleted after a day.
-
-The stored data is the only truth. On every request the script checks it stage by stage with
-`wizard::resolve_stages()`, and the first stage that is not valid yet is the current one. Users may
-go back to any finished stage, but never skip ahead. Each stage is its own form class and gets the
-stored data as current data, so uploaded files survive moving between stages.
+Each stage is its own form class with the stored data as current data. A stage is completed only
+after `complete_stage()`, valid data never skips a stage. Completing a stage again resets the later
+ones. Leave out stages that do not apply. `is_finished()` says all stages are completed,
+`set_data()` stores defaults without completing anything.
 
 ```php
 $name = 'auth_musaml_user_upload:' . $idp->id;
@@ -611,7 +602,7 @@ if (!$wizard) {
     redirect($wizard->get_url($pageurl));
 }
 $data = $wizard->get_data();
-$stages = wizard::resolve_stages(['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'],
+$stages = $wizard->resolve_stages(['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'],
     fn(string $stage) => mapping_import::is_stage_valid($stage, $data), optional_param(wizard::STAGE_PARAM, null, PARAM_ALPHA));
 $stage = wizard::current_stage($stages);
 $form = new user_upload_source($wizard->get_url($pageurl, $stage), $data, ['idp' => $idp]);
@@ -623,24 +614,17 @@ if ($form->is_reloaded() && $form->get_element('back')->get_value()) {
     redirect($wizard->get_url($pageurl, 'source'));
 }
 if ($submitted = $form->get_data()) {
-    $wizard->set_data(mapping_import::save_source($data, $submitted, $form));
+    $wizard->complete_stage($stage, mapping_import::save_source($data, $submitted, $form));
     redirect($wizard->get_url($pageurl));
 }
 echo $OUTPUT->header();
 echo $wizard->render($OUTPUT, $stages, $pageurl, $form);
 ```
 
-Wizards are full pages, so they use `redirect()` and `$OUTPUT` directly. The Back button is a
-`reload` element, not `cancel`, because dialogs close on cancel. Cancel and the final submit delete
-the row. `render()` shows a stepper above the form: numbered steps joined by a line, completed and
-current steps highlighted, reachable steps as links. It is vertical in narrow containers and horizontal
-from 30rem width when there are at most 6 steps. Wizards at least 64rem wide, such as full page
-forms on desktop, show the vertical stepper in a sticky column left of the form. All of this uses
-CSS container queries, so it follows the width of the wizard, not the screen.
-
-Once a stage is completed `render()` marks the stage form dirty, because leaving the page would
-abandon the wizard, there is no way back to it. Stepper links do not ask, earlier stages are kept,
-unless the user changed the current stage.
+The Back button is a `reload` element. Cancel and the final submit delete the row. The stepper is
+horizontal for up to 6 steps when there is room, and a sticky column left of the form in wide pages.
+With completed stages the form is marked dirty, so leaving the page asks for confirmation; stepper
+links do not ask unless the current stage was changed.
 
 ## Custom fields
 

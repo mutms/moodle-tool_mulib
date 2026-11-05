@@ -72,7 +72,7 @@ if ($state === null) {
         };
     };
     $requested = optional_param(wizard::STAGE_PARAM, null, PARAM_ALPHA);
-    $stages = wizard::resolve_stages(['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'], $isvalid, $requested);
+    $stages = $wizard->resolve_stages(['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'], $isvalid, $requested);
     $stage = wizard::current_stage($stages);
     $formurl = $wizard->get_url($pageurl, $stage);
     $previous = ['choice' => 'details', 'summary' => 'choice'];
@@ -108,7 +108,7 @@ if ($state === null) {
         foreach ((array)$submitted as $name => $value) {
             $data[$name] = $value;
         }
-        $wizard->set_data($data);
+        $wizard->complete_stage($stage, $data);
         redirect($wizard->get_url($pageurl));
     }
 }
