@@ -49,7 +49,7 @@ final class wizard {
      * Constructor.
      *
      * @param stdClass $record row from tool_mulib_muform_wizard
-     * @param array<string,string> $stages labels indexed by stage names
+     * @param array $stages labels indexed by stage names
      */
     private function __construct(
         /** @var stdClass row from tool_mulib_muform_wizard */
@@ -63,7 +63,7 @@ final class wizard {
      * Start a new wizard, old rows are deleted.
      *
      * @param string $name wizard name including page parameters
-     * @param array<string,string> $stages labels indexed by stage names, names are lowercase letters
+     * @param array $stages labels indexed by stage names, names are lowercase letters
      * @return self
      */
     public static function start(string $name, array $stages): self {
@@ -94,7 +94,7 @@ final class wizard {
      * Load the running wizard from the page URL.
      *
      * @param string $name name used in start()
-     * @param array<string,string> $stages the same stages as in start()
+     * @param array $stages the same stages as in start()
      * @return self|null null when the wizard does not exist or belongs to another user, session, name or stages
      */
     public static function load(string $name, array $stages): ?self {
@@ -137,7 +137,7 @@ final class wizard {
     /**
      * Replace the stored data without completing a stage, for example defaults.
      *
-     * @param array<string,mixed> $data
+     * @param array $data
      */
     public function set_data(array $data): void {
         $this->store($data, $this->decode()['completed']);
@@ -147,7 +147,7 @@ final class wizard {
      * Replace the stored data and complete the stage, later stages must be completed again.
      *
      * @param string $stage
-     * @param array<string,mixed> $data
+     * @param array $data
      */
     public function complete_stage(string $stage, array $data): void {
         $states = $this->get_states();
