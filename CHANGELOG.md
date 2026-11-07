@@ -21,6 +21,8 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 ### Changed
 
 - remove mulib::clean_string(), standard clean_string() is used instead
+- remove duplicate mulib::upsert_record(), use mudb::upsert_record() instead
+- mudb::upsert_record_pgsql() is protected, use mudb::upsert_record()
 - new forms library
 - new integration of vendor/ plugin dependencies
 - cohort pickers offer advanced cohorts with any access record of the current user

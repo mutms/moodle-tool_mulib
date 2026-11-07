@@ -97,7 +97,7 @@ final class mudb {
      * @param string[] $uniqueindexcolumns list of all columns in unique index
      * @param array $insertonlyfields additional fields with values to be used only for inserts
      */
-    public static function upsert_record_pgsql(string $table, stdClass $dataobject, array $uniqueindexcolumns, array $insertonlyfields): void {
+    protected static function upsert_record_pgsql(string $table, stdClass $dataobject, array $uniqueindexcolumns, array $insertonlyfields): void {
         global $DB;
 
         $values = [];

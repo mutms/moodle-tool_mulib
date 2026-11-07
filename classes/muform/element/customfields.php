@@ -22,7 +22,7 @@ use core\exception\coding_exception;
 use core_customfield\api;
 use core_customfield\handler;
 use stdClass;
-use tool_mulib\local\mulib;
+use tool_mulib\local\mudb;
 use tool_mulib\muform\customfield;
 use tool_mulib\muform\element;
 use tool_mulib\muform\util\file_area;
@@ -256,7 +256,7 @@ final class customfields extends element {
                 if (!array_key_exists('valuetrust', $record)) {
                     $insertonly['valuetrust'] = 0;
                 }
-                mulib::upsert_record('customfield_data', $record, array_keys($unique), $insertonly);
+                mudb::upsert_record('customfield_data', $record, array_keys($unique), $insertonly);
 
                 if ($element instanceof editor) {
                     $data = $DB->get_record('customfield_data', $unique, 'id, contextid', MUST_EXIST);
