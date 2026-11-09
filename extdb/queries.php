@@ -55,6 +55,7 @@ $report = \core_reportbuilder\system_report_factory::create(
     \tool_mulib\reportbuilder\local\systemreports\queries::class,
     context_system::instance()
 );
+echo $OUTPUT->render(new \tool_mulib\output\report_filter_bar($report));
 echo $report->output();
 
 echo $OUTPUT->footer();

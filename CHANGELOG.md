@@ -17,6 +17,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - mulib::json_encode() for consistent encoding of stored JSON data
 - course_trait with course search helpers for autocomplete sources
 - mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings and docs/translations.md
+- report_filter_bar, always visible filter bar of system reports with text, select, boolean and date filters
 
 ### Changed
 

@@ -19,17 +19,20 @@
 namespace tool_mulib\output;
 
 use core_reportbuilder\local\filters\boolean_select;
+use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
+use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
+use tool_mulib\muform\util\calendar;
 
 /**
  * Always visible filter bar for system reports, replaces the core filters dropdown.
  *
  * Filter values are stored in the standard report builder user filters,
- * the bar only provides different UI. Supported filter types are text, select and boolean select; values with
+ * the bar only provides different UI. Supported filter types are text, select, boolean select and date; values with
  * operators the bar does not offer (for example "starts with" saved in the core form) are kept and described
- * with the core operator name until the user changes them. Other filter types (dates, course role, etc.)
+ * with the core operator name until the user changes them. Other filter types (course role, number, etc.)
  * are shown by name only when used, they can be removed in the bar and changed in the core form only.
  *
  * The core filters dropdown is moved into the bar as "Advanced filters" button, it is highlighted
@@ -57,6 +60,30 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
         text::IS_NOT_EMPTY => 'filterisnotempty',
     ];
 
+    /** @var array date filter operators in the order of the core filter form, the bar offers all of them */
+    private const DATE_OPERATORS = [
+        date::DATE_RANGE => 'filterrange',
+        date::DATE_LAST => 'filterdatelast',
+        date::DATE_CURRENT => 'filterdatecurrent',
+        date::DATE_NEXT => 'filterdatenext',
+        date::DATE_BEFORE => 'filterdatebefore',
+        date::DATE_AFTER => 'filterdateafter',
+        date::DATE_PAST => 'filterdatepast',
+        date::DATE_FUTURE => 'filterdatefuture',
+        date::DATE_NOT_EMPTY => 'filterisnotempty',
+        date::DATE_EMPTY => 'filterisempty',
+    ];
+
+    /** @var array date filter units */
+    private const DATE_UNITS = [
+        date::DATE_UNIT_MINUTE => 'filterdateminutes',
+        date::DATE_UNIT_HOUR => 'filterdatehours',
+        date::DATE_UNIT_DAY => 'filterdatedays',
+        date::DATE_UNIT_WEEK => 'filterdateweeks',
+        date::DATE_UNIT_MONTH => 'filterdatemonths',
+        date::DATE_UNIT_YEAR => 'filterdateyears',
+    ];
+
     /** @var int report persistent id */
     private int $reportid;
 
@@ -68,6 +95,9 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
 
     /** @var array filters data */
     private array $filters = [];
+
+    /** @var array|null date and time settings of the user, null if there are no date filters */
+    private ?array $datetime = null;
 
     /**
      * Constructor.
@@ -113,6 +143,8 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
                         $data['options'][] = ['value' => (string)$optionvalue, 'label' => (string)$optionlabel];
                     }
                 }
+            } else if (is_a($class, date::class, true)) {
+                $data = $this->export_date($filter, $data, $values);
             } else if (is_a($class, text::class, true)) {
                 $data['type'] = 'text';
                 if (isset(self::TEXT_OPERATORS[$operator])) {
@@ -136,6 +168,68 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
         }
     }
 
+    /**
+     * Export date filter.
+     *
+     * The value is the number of units of relative operators, ranges are timestamps
+     * with texts in the user timezone, the browser does not interpret dates itself.
+     *
+     * @param filter $filter
+     * @param array $data common filter data
+     * @param array $values stored filter values
+     * @return array
+     */
+    private function export_date(filter $filter, array $data, array $values): array {
+        $key = $data['key'];
+        $data['type'] = 'date';
+        $data['value'] = (string)(int)($values[$key . '_value'] ?? 1);
+        $data['unit'] = (int)($values[$key . '_unit'] ?? date::DATE_UNIT_DAY);
+        $data['from'] = (int)($values[$key . '_from'] ?? 0);
+        $data['to'] = (int)($values[$key . '_to'] ?? 0);
+
+        $this->datetime ??= $this->get_datetime_settings();
+        $tz = new \DateTimeZone($this->datetime['timezone']);
+        $data['fromtext'] = $data['from'] ? calendar::describe($data['from'], $tz, $this->datetime['lang'])['text'] : '';
+        $data['totext'] = $data['to'] ? calendar::describe($data['to'], $tz, $this->datetime['lang'])['text'] : '';
+
+        $operators = [];
+        foreach (self::DATE_OPERATORS as $operator => $string) {
+            $operators[$operator] = get_string($string, 'core_reportbuilder');
+        }
+        foreach ($filter->restrict_limited_operators($operators) as $operator => $label) {
+            $data['options'][] = ['value' => (string)$operator, 'label' => $label];
+        }
+        return $data;
+    }
+
+    /**
+     * Date and time settings of the current user for date filters.
+     *
+     * @return array
+     */
+    private function get_datetime_settings(): array {
+        $timezone = \core_date::get_user_timezone();
+        $lang = current_language();
+        $units = [];
+        foreach (self::DATE_UNITS as $unit => $string) {
+            $units[] = ['value' => (string)$unit, 'label' => get_string($string, 'core_reportbuilder')];
+        }
+        if ($timezone === \core_date::get_server_timezone()) {
+            // Users in site timezone do not need to be reminded.
+            $timezonelabel = '';
+        } else {
+            $timezonelabel = get_string('muform_timezone', 'tool_mulib', calendar::get_timezone_name($timezone));
+        }
+        return [
+            'timezone' => $timezone,
+            'timezonelabel' => $timezonelabel,
+            'lang' => $lang,
+            'firstday' => \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday(),
+            'hour12' => calendar::uses_12_hour_clock($lang),
+            'units' => $units,
+        ];
+    }
+
     #[\Override]
     public function export_for_template(\core\output\renderer_base $output): array {
         return [
@@ -143,6 +237,7 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
             'reportid' => $this->reportid,
             'parameters' => $this->parameters,
             'filters' => json_encode($this->filters),
+            'datetime' => json_encode($this->datetime),
             'uniqid' => \html_writer::random_id('tool_mulib_report_filter_bar'),
         ];
     }

@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
     Always visible filter bar of a system report, the content is rendered by JavaScript.
     Must be rendered right before the report, the core filters button is moved into the bar.
+    Filters and date and time settings of date filters are JSON encoded.
 
     Example context (json):
     {
@@ -30,12 +31,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         "reportid": 5,
         "parameters": "[]",
         "filters": "[{\"key\":\"user:fullname\",\"type\":\"text\",\"label\":\"Full name\",\"operator\":0,\"value\":\"\",\"options\":[]}]",
+        "datetime": "null",
         "uniqid": "tool_mulib_report_filter_bar123"
     }
 }}
 {{#hasfilters}}
 <div id="{{uniqid}}" class="tool_mulib-report-filter-bar d-flex flex-wrap align-items-center gap-2 mb-3"
-    data-report-id="{{reportid}}" data-report-parameters="{{parameters}}" data-filters="{{filters}}"></div>
+    data-report-id="{{reportid}}" data-report-parameters="{{parameters}}" data-filters="{{filters}}" data-datetime="{{datetime}}"></div>
 <script type="module">
 import {initFilterBar} from '@moodle/lms/tool_mulib/reportbuilder/filterbar';
 initFilterBar(document.getElementById('{{uniqid}}'));

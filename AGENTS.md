@@ -106,6 +106,13 @@ if ($actions->has_items()) {
 ```
 
 - `output\entity_details`, `output\url_clipboard` - detail lists and copy-to-clipboard URLs.
+- `output\report_filter_bar` - always visible filter bar of system reports, every MuTMS report uses it.
+  Render it right before the report: `echo $OUTPUT->render(new report_filter_bar($report)); echo $report->output();`.
+  Text, select, boolean and date filters are edited in the bar, other types (course role, number, ...)
+  only in the core form, which moves into the bar as "Advanced filtering". New types: a branch in the PHP
+  constructor plus `isActive()`, `describe()`, `buildValues()` and the editor in `js/esm/src/reportbuilder/filterbar.ts`.
+  Core `set_filters` replaces all stored values, so every save sends all filters. Behat: `I press "+ Add filter"`,
+  click the filter name and value in `.tool_mulib-report-filter-bar-popover`, `Remove filter: <name>` button.
 
 ### Entity tabs (secondary navigation)
 

@@ -99,19 +99,36 @@ final class report_filter_bar_test extends \advanced_testcase {
         $this->assertSame('select', $data['filters']['user:country']['type']);
         $this->assertContains(['value' => 'CZ', 'label' => 'Czechia'], $data['filters']['user:country']['options']);
 
-        // Date and course role filters can be edited in the core form only.
+        $lastaccess = $data['filters']['user:lastaccess'];
+        $this->assertSame('date', $lastaccess['type']);
+        $this->assertSame(0, $lastaccess['operator']);
+        $this->assertSame('1', $lastaccess['value']);
+        $this->assertSame(date::DATE_UNIT_DAY, $lastaccess['unit']);
+        $this->assertSame(0, $lastaccess['from']);
+        $this->assertSame(0, $lastaccess['to']);
+        $this->assertSame('', $lastaccess['fromtext']);
+        $this->assertSame('', $lastaccess['totext']);
+        $this->assertSame(['value' => (string)date::DATE_RANGE, 'label' => 'Range'], $lastaccess['options'][0]);
+        $this->assertCount(10, $lastaccess['options']);
+
+        // Course role filter can be edited in the core form only.
         $this->assertSame([
-            'key' => 'user:lastaccess',
-            'label' => 'Last access',
+            'key' => 'user:courserole',
+            'label' => 'Course role',
             'operator' => 0,
             'value' => '',
             'options' => [],
             'type' => 'other',
             'values' => [],
             'active' => false,
-        ], $data['filters']['user:lastaccess']);
-        $this->assertSame('other', $data['filters']['user:courserole']['type']);
-        $this->assertFalse($data['filters']['user:courserole']['active']);
+        ], $data['filters']['user:courserole']);
+
+        $datetime = json_decode($data['datetime'], true);
+        $this->assertSame('Australia/Perth', $datetime['timezone']);
+        $this->assertSame('', $datetime['timezonelabel']);
+        $this->assertSame('en', $datetime['lang']);
+        $this->assertFalse($datetime['hour12']);
+        $this->assertContains(['value' => (string)date::DATE_UNIT_WEEK, 'label' => 'week(s)'], $datetime['units']);
 
         $bar = new report_filter_bar($report);
         $this->assertSame('tool_mulib/report_filter_bar', $bar->get_template_name($PAGE->get_renderer('core')));
@@ -160,16 +177,12 @@ final class report_filter_bar_test extends \advanced_testcase {
 
         // Values of filters that are not in the bar are exported unchanged.
         $values = [
-            'user:lastaccess_operator' => date::DATE_EMPTY,
-            'user:lastaccess_value' => 1,
             'user:courserole_role' => '0',
             'user:courserole_category' => '0',
             'user:courserole_course' => 'C1',
         ];
         user_filter_manager::set($reportid, $values);
         $data = $this->export($this->create_report());
-        $this->assertTrue($data['filters']['user:lastaccess']['active']);
-        $this->assertSame(['user:lastaccess_operator' => date::DATE_EMPTY, 'user:lastaccess_value' => 1], $data['filters']['user:lastaccess']['values']);
         $this->assertTrue($data['filters']['user:courserole']['active']);
         $this->assertSame(['user:courserole_role' => '0', 'user:courserole_category' => '0', 'user:courserole_course' => 'C1'], $data['filters']['user:courserole']['values']);
         $this->assertSame(0, $data['filters']['user:username']['operator']);
@@ -181,7 +194,57 @@ final class report_filter_bar_test extends \advanced_testcase {
 
         user_filter_manager::reset($reportid);
         $data = $this->export($this->create_report());
-        $this->assertFalse($data['filters']['user:lastaccess']['active']);
-        $this->assertSame([], $data['filters']['user:lastaccess']['values']);
+        $this->assertFalse($data['filters']['user:courserole']['active']);
+        $this->assertSame([], $data['filters']['user:courserole']['values']);
+    }
+
+    public function test_export_for_template_dates(): void {
+        global $USER;
+        // Server timezone is Australia/Perth in tests.
+        $USER->timezone = 'Europe/Prague';
+        $report = $this->create_report();
+        $reportid = (int)$report->get_report_persistent()->get('id');
+
+        $from = (new \DateTimeImmutable('2026-01-01 00:00', new \DateTimeZone('Europe/Prague')))->getTimestamp();
+        $to = (new \DateTimeImmutable('2026-01-31 23:59', new \DateTimeZone('Europe/Prague')))->getTimestamp();
+        user_filter_manager::set($reportid, [
+            'user:lastaccess_operator' => date::DATE_RANGE,
+            'user:lastaccess_value' => 1,
+            'user:lastaccess_unit' => date::DATE_UNIT_DAY,
+            'user:lastaccess_from' => $from,
+            'user:lastaccess_to' => $to,
+            'user:timecreated_operator' => date::DATE_LAST,
+            'user:timecreated_value' => 2,
+            'user:timecreated_unit' => date::DATE_UNIT_WEEK,
+            'user:timecreated_from' => 0,
+            'user:timecreated_to' => 0,
+        ]);
+        $data = $this->export($this->create_report());
+        $lastaccess = $data['filters']['user:lastaccess'];
+        $this->assertSame(date::DATE_RANGE, $lastaccess['operator']);
+        $this->assertSame($from, $lastaccess['from']);
+        $this->assertSame($to, $lastaccess['to']);
+        $this->assertSame('2026-01-01 00:00', $lastaccess['fromtext']);
+        $this->assertSame('2026-01-31 23:59', $lastaccess['totext']);
+        $this->assertArrayNotHasKey('operatorlabel', $lastaccess);
+        $timecreated = $data['filters']['user:timecreated'];
+        $this->assertSame(date::DATE_LAST, $timecreated['operator']);
+        $this->assertSame('2', $timecreated['value']);
+        $this->assertSame(date::DATE_UNIT_WEEK, $timecreated['unit']);
+        $this->assertSame('', $timecreated['fromtext']);
+
+        $datetime = json_decode($data['datetime'], true);
+        $this->assertSame('Europe/Prague', $datetime['timezone']);
+        $this->assertSame('Time zone: Europe/Prague', $datetime['timezonelabel']);
+    }
+
+    public function test_export_for_template_limited_date_operators(): void {
+        $report = $this->create_report();
+        $report->get_filter('user:lastaccess')->set_limited_operators([date::DATE_ANY, date::DATE_EMPTY, date::DATE_LAST]);
+        $data = $this->export($report);
+        $this->assertSame([
+            ['value' => (string)date::DATE_LAST, 'label' => 'Last'],
+            ['value' => (string)date::DATE_EMPTY, 'label' => 'Is empty'],
+        ], $data['filters']['user:lastaccess']['options']);
     }
 }
