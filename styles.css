@@ -427,3 +427,29 @@ dialog.muform-dialog .modal-body {
     cursor: text;
     min-height: calc(1.5em + 0.75rem + 2px);
 }
+
+/* Report filter bar: core filters button is moved into the bar by JavaScript, hide it until then. */
+.tool_mulib-report-filter-bar ~ .reportbuilder-report #dropdownFiltersButton {
+    visibility: hidden;
+}
+
+/* Report filter bar: core filters dropdown is outside of .reportbuilder-wrapper after moving into the bar. */
+.tool_mulib-report-filter-bar .filters-dropdown {
+    width: 32rem;
+    max-width: calc(100vw - 2rem);
+    padding: 0;
+}
+
+/* Form buttons stay visible at the bottom of the scrolled list without covering the last filter. */
+.tool_mulib-report-filter-bar .reportbuilder-filters-sidebar .fitem[data-groupname="buttonar"] {
+    position: sticky;
+    bottom: 0;
+    height: auto;
+    margin: 0;
+    padding: 0.75rem 0;
+    background-color: var(--bs-dropdown-bg, #fff);
+}
+
+.tool_mulib-report-filter-bar .reportbuilder-filters-sidebar {
+    max-height: 60vh;
+}

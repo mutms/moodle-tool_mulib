@@ -1,0 +1,43 @@
+{{!
+This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+@copyright   2026 Petr Skoda
+@license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+}}
+{{!
+    @template tool_mulib/report_filter_bar
+
+    Always visible filter bar of a system report, the content is rendered by JavaScript.
+    Must be rendered right before the report, the core filters button is moved into the bar.
+
+    Example context (json):
+    {
+        "hasfilters": true,
+        "reportid": 5,
+        "parameters": "[]",
+        "filters": "[{\"key\":\"user:fullname\",\"type\":\"text\",\"label\":\"Full name\",\"operator\":0,\"value\":\"\",\"options\":[]}]",
+        "uniqid": "tool_mulib_report_filter_bar123"
+    }
+}}
+{{#hasfilters}}
+<div id="{{uniqid}}" class="tool_mulib-report-filter-bar d-flex flex-wrap align-items-center gap-2 mb-3"
+    data-report-id="{{reportid}}" data-report-parameters="{{parameters}}" data-filters="{{filters}}"></div>
+<script type="module">
+import {initFilterBar} from '@moodle/lms/tool_mulib/reportbuilder/filterbar';
+initFilterBar(document.getElementById('{{uniqid}}'));
+</script>
+{{/hasfilters}}
