@@ -145,8 +145,11 @@ Capability: `tool/mulib:useextdb`.
 - Language packs of all MuTMS plugins follow `docs/translations.md`. `mulib::TRANSLATIONS` lists the
   languages every plugin must ship, `tests/phpunit/lang_test.php` fails on missing strings. In mpd,
   `mdl-lang-check <plugin dir>` also checks placeholders, HTML tags and order.
-- Behat: one run at a time (single test site); `php admin/cli/purge_caches.php` after adding classes,
-  `behat-init` after adding steps; fail dumps in the behat dataroot `behat_faildump`; summaries say
-  "1 scenario" in singular.
+- Behat: mpd has four independent sites (`behat`, `behat1` to `behat3`), one run per site, so a large
+  run such as `--tags=@MuTMS` can be split by component tags (`--tags="@MuTMS&&@tool_muprog,@tool_musudo"`)
+  across sites; failures under parallel load are often flaky, re-run them alone before debugging.
+  `php admin/cli/purge_caches.php` after adding classes, `behat-init` after adding steps, `behat-util --enable`
+  after adding a feature file (each site has its own `-init` and `-util`); fail dumps in the behat dataroot
+  `behat_faildump`; scenario line paths need absolute file paths; summaries say "1 scenario" in singular.
 - Never change license headers or `@copyright` tags of existing files. New files get
   `@copyright 2026 Petr Skoda`. Petr bumps versions and commits.
