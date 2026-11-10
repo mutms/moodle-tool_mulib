@@ -6,7 +6,11 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ## [Unreleased](https://github.com/mutms/moodle-tool_mulib/compare/v4.5.15.01...MOODLE_405_STABLE)
 
-- No changes
+### Added
+
+- German translation preview produced by AI
+- mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings
+- Setting to purge MuTMS strings from downloaded language packs, enabled by default
 
 ## [v4.5.15.01](https://github.com/mutms/moodle-tool_mulib/compare/v4.5.14.03...v4.5.15.01) - 2026-09-19
 
