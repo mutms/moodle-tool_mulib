@@ -64,6 +64,10 @@ final class mulib {
     public const array TRANSLATIONS = [
         'cs',
         'de',
+        'es',
+        'fr',
+        'it',
+        'pt',
     ];
 
     /**

@@ -8,6 +8,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Added
 
+- Czech translation and AI-produced previews of German, French, Italian, Portuguese and Spanish translations
 - sql::rename_params() for APIs that accept only their own parameter names, for example report builder base conditions
 - mulib::is_mutms_plugin() and mulib::MUTMS_PLUGINS list of all MuTMS plugin components
 - reportbuilder_util::is_downloading() and reportbuilder_util::format_badge() helpers for report builder reports
@@ -32,4 +33,3 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 - entity_details replaces empty values with a non-breaking space to keep the row height
 - notifications table uses the same striped, hover and bordered styling as other management tables
-

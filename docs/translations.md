@@ -31,10 +31,31 @@ Read this before adding, changing or translating any string.
 mdl-lang-check public/admin/tool/muprog
 ```
 
-- `mdl-lang-normalise public/admin/tool/muprog` sorts the strings and writes them in the standard
-  form, `--check` only reports files that are not normalised.
-- Then have a native speaker who knows the feature review the result plugin by plugin. Packs produced
-  by AI keep a note in the file header until that review.
+- `mdl-lang-normalise --header public/admin/tool/muprog` sorts the strings and writes them and the
+  file header in the standard form, `--check` only reports files that are not normalised.
+- Then have a native speaker who knows the feature review the result plugin by plugin.
+
+## File header
+
+Translation files start with the licence lines of the plugin's `lang/en` file, followed by this
+block. Only the component, language code, language name, year and copyright holder change. The
+`NOTE` paragraph marks an AI preview, remove it once a native speaker has reviewed the file.
+`mdl-lang-normalise --header` rebuilds the header in this form, it keeps the `@copyright` lines and
+the note.
+
+```
+/**
+ * Strings for component 'tool_muprog', language 'de'.
+ *
+ * NOTE: This German translation was produced automatically by an AI language
+ * model and has not yet been reviewed by a human translator. Corrections are
+ * welcome.
+ *
+ * @package    tool_muprog
+ * @copyright  2026 Petr Skoda
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+```
 
 ## Downloaded language packs
 

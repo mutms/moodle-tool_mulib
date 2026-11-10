@@ -38,7 +38,7 @@ final class fake_langpack_test extends \advanced_testcase {
     }
 
     public function test_install(): void {
-        $this->assertSame(['cs', 'de', 'en_us'], fake_langpack::available());
+        $this->assertSame(['cs', 'de', 'en_us', 'es', 'fr', 'it', 'pt'], fake_langpack::available());
         $this->assertArrayNotHasKey('en_us', get_string_manager()->get_list_of_translations());
 
         fake_langpack::install('en_us');
