@@ -40,7 +40,7 @@ together with the code, so by default `mulib::purge_downloaded_translations()` d
 files of all MuTMS plugins for languages in `mulib::TRANSLATIONS`. Other languages stay.
 
 - It runs when a language pack is installed or updated (`tool_langimport` events), on install and
-  upgrade of `tool_mulib` and hourly in the `tool_mulib\task\lang_cleanup` scheduled task.
+  upgrade of `tool_mulib` and once a day in the `tool_mulib\task\lang_cleanup` scheduled task.
 - It is disabled by unchecking `tool_mulib/purgedownloadedlang`, in Site administration > Language >
   MuTMS translations.
 - Language customisation (`<lang>_local` packs) is never touched, it is the supported way to change

@@ -39,7 +39,7 @@ $tasks = [
     [
         'classname' => tool_mulib\task\lang_cleanup::class,
         'minute' => 'R',
-        'hour' => '*',
+        'hour' => 'R',
         'day' => '*',
         'month' => '*',
         'dayofweek' => '*',
