@@ -31,6 +31,75 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class mulib {
+    /** @var string[] components of all MuTMS plugins, tool_certificate is not a MuTMS plugin */
+    public const MUTMS_PLUGINS = [
+        'block_mucertify_my',
+        'block_muprog_my',
+        'block_muprogmyoverview',
+        'certificateelement_mucertify',
+        'certificateelement_muprog',
+        'customfield_mutrain',
+        'enrol_muprog',
+        'mod_mubook',
+        'tool_mucatalog',
+        'tool_mucertify',
+        'tool_muhome',
+        'tool_mulib',
+        'tool_muloginas',
+        'tool_muprog',
+        'tool_mupwned',
+        'tool_murelation',
+        'tool_musudo',
+        'tool_mutenancy',
+        'tool_mutrain',
+    ];
+
+    /** @var string[] full translations shipped in lang/ of all MuTMS plugins, tested by tool_mulib */
+    public const TRANSLATIONS = [
+        'cs',
+        'de',
+    ];
+
+    /**
+     * Is the component a MuTMS plugin?
+     *
+     * NOTE: the plugin does not need to be installed.
+     *
+     * @param string $component frankenstyle component name
+     * @return bool
+     */
+    public static function is_mutms_plugin(string $component): bool {
+        return in_array($component, self::MUTMS_PLUGINS, true);
+    }
+
+    /**
+     * Delete translations of MuTMS plugins from downloaded language packs,
+     * translations shipped with the plugins must be used instead.
+     *
+     * NOTE: this can be disabled via tool_mulib/purgedownloadedlang setting.
+     *
+     * @return int number of deleted files
+     */
+    public static function purge_downloaded_translations(): int {
+        if (!get_config('tool_mulib', 'purgedownloadedlang')) {
+            return 0;
+        }
+        $deleted = 0;
+        foreach (self::MUTMS_PLUGINS as $component) {
+            $deleted += lang_util::purge_downloaded_translations($component, self::TRANSLATIONS);
+        }
+        return $deleted;
+    }
+
+    /**
+     * Language pack installed or updated observer.
+     *
+     * @param \core\event\base $event
+     */
+    public static function callback_langpack_installed(\core\event\base $event): void {
+        self::purge_downloaded_translations();
+    }
+
     /**
      * Is catalogue plugin available?
      *
