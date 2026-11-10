@@ -206,7 +206,7 @@ final class mulib_test extends \advanced_testcase {
     public function test_purge_downloaded_translations(): void {
         $cs = $this->create_downloaded_file('cs');
         $de = $this->create_downloaded_file('de');
-        $fr = $this->create_downloaded_file('fr');
+        $is = $this->create_downloaded_file('is');
 
         set_config('purgedownloadedlang', 0, 'tool_mulib');
         $this->assertSame(0, mulib::purge_downloaded_translations());
@@ -216,7 +216,7 @@ final class mulib_test extends \advanced_testcase {
         $this->assertSame(2, mulib::purge_downloaded_translations());
         $this->assertFileDoesNotExist($cs);
         $this->assertFileDoesNotExist($de);
-        $this->assertFileExists($fr);
+        $this->assertFileExists($is);
     }
 
     public function test_callback_langpack_installed(): void {

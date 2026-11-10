@@ -59,7 +59,7 @@ final class lang_util_test extends \advanced_testcase {
         $this->assertTrue(lang_util::is_known_language('cs'));
         $this->assertTrue(lang_util::is_known_language('de_du'));
         // Not installed packs are fine.
-        $this->assertTrue(lang_util::is_known_language('fr'));
+        $this->assertTrue(lang_util::is_known_language('is'));
 
         $this->assertFalse(lang_util::is_known_language(''));
         $this->assertFalse(lang_util::is_known_language('xx'));
@@ -73,7 +73,7 @@ final class lang_util_test extends \advanced_testcase {
     public function test_purge_downloaded_translations(): void {
         $cs = $this->create_downloaded_file('cs', 'tool_mulib.php');
         $de = $this->create_downloaded_file('de', 'tool_mulib.php');
-        $fr = $this->create_downloaded_file('fr', 'tool_mulib.php');
+        $is = $this->create_downloaded_file('is', 'tool_mulib.php');
         $en = $this->create_downloaded_file('en', 'tool_mulib.php');
         $other = $this->create_downloaded_file('cs', 'tool_dataprivacy.php');
 
@@ -82,9 +82,9 @@ final class lang_util_test extends \advanced_testcase {
         $this->assertFileExists($cs);
 
         // Explicit languages do not need to be shipped with the plugin.
-        $this->assertSame(1, lang_util::purge_downloaded_translations('tool_mulib', ['fr']));
-        $this->assertFileDoesNotExist($fr);
-        $fr = $this->create_downloaded_file('fr', 'tool_mulib.php');
+        $this->assertSame(1, lang_util::purge_downloaded_translations('tool_mulib', ['is']));
+        $this->assertFileDoesNotExist($is);
+        $is = $this->create_downloaded_file('is', 'tool_mulib.php');
 
         $this->assertSame(1, lang_util::purge_downloaded_translations('tool_mulib', ['cs']));
         $this->assertFileDoesNotExist($cs);
@@ -95,7 +95,7 @@ final class lang_util_test extends \advanced_testcase {
         $this->assertFileDoesNotExist($cs);
         $this->assertFileDoesNotExist($de);
         $this->assertFileExists($en);
-        $this->assertFileExists($fr);
+        $this->assertFileExists($is);
         $this->assertFileExists($other);
 
         $this->assertSame(0, lang_util::purge_downloaded_translations('tool_mulib'));

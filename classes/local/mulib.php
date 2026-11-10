@@ -41,7 +41,6 @@ final class mulib {
         'customfield_mutrain',
         'enrol_muprog',
         'mod_mubook',
-        'tool_mucatalog',
         'tool_mucertify',
         'tool_muhome',
         'tool_mulib',
@@ -58,6 +57,10 @@ final class mulib {
     public const TRANSLATIONS = [
         'cs',
         'de',
+        'es',
+        'fr',
+        'it',
+        'pt',
     ];
 
     /**
