@@ -8,7 +8,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Added
 
-- German translation preview produced by AI
+- Czech translation and AI-produced previews of German, French, Italian, Portuguese and Spanish translations
 - mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings
 - Setting to purge MuTMS strings from downloaded language packs, enabled by default
 
