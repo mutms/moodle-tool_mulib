@@ -244,6 +244,9 @@ Language codes are the pack names: `cs`, `de`, and the European `fr`, `it`, `pt`
 - **Counts:** never `{$a} users`, the noun form is wrong for some numbers. Use a label:
   `Počet uživatelů: {$a}`, `Anzahl der Nutzer/innen: {$a}`, `Nombre d’utilisateurs : {$a}`.
 - **Status words** follow the gender of the noun they describe, so check where the string is shown.
+- **Unknown item or user:** labels shown for things of any type, such as the catalogue badge
+  "Enrolled" on courses, programs and certifications, take an impersonal or noun form that agrees
+  with nothing: `Zapsáno`, `Inscription active`.
 - **Period and window:** short labels may use the bare word for period (`období`, `Zeitraum`), the
   window never takes that word.
 - **Frameworks** follow the core competency framework: `kreditní rámec`, `Punkterahmen`,
