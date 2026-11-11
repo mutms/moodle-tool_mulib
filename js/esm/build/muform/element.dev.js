@@ -15,9 +15,9 @@ const FOCUSABLE = 'input:not([type="hidden"]), select, textarea, button, a[href]
 let pressedButton = null;
 document.addEventListener("mousedown", (event) => {
   pressedButton = event.target instanceof window.Element ? event.target.closest("button") : null;
-  window.setTimeout(() => {
-    pressedButton = null;
-  }, 0);
+}, true);
+document.addEventListener("mouseup", () => {
+  pressedButton = null;
 }, true);
 class Element {
   static {
@@ -52,7 +52,7 @@ class Element {
       if (!this.state.touched) {
         this.state.touched = true;
       }
-      const next = event.relatedTarget ?? pressedButton;
+      const next = pressedButton ?? event.relatedTarget;
       if (next instanceof HTMLButtonElement && next.form === wrapper.closest("form")) {
         return;
       }

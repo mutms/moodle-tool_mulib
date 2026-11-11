@@ -83,7 +83,6 @@ describe('tool_mulib/muform/element', () => {
     });
 
     it('does not report focusout caused by pressing a form button', () => {
-        jest.useFakeTimers();
         const formel = form(wrap('a', 'custom', '<input id="id_a" name="a">') + '<button type="submit"><i>b</i></button>');
         const api = fakeForm(formel);
         const wrapper = formel.querySelector<HTMLElement>('[data-muform-name="a"]')!;
@@ -98,12 +97,11 @@ describe('tool_mulib/muform/element', () => {
 
         // Safari keeps buttons unfocused, the press is the only hint.
         button.querySelector('i')!.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true}));
+        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true, relatedTarget: formel}));
         expect(api.touchedNames).toEqual([]);
 
-        jest.runAllTimers();
+        document.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
         input.dispatchEvent(new FocusEvent('focusout', {bubbles: true}));
         expect(api.touchedNames).toEqual(['a']);
-        jest.useRealTimers();
     });
 });

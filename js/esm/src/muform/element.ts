@@ -30,15 +30,14 @@ import type {ChangeDetail, ElementState, FormApi, Value} from './types';
 /** Selector of things that can receive focus. */
 const FOCUSABLE = 'input:not([type="hidden"]), select, textarea, button, a[href], [tabindex]:not([tabindex="-1"])';
 
-/** Button under the pointer while the browser moves focus away because of a mouse press. */
+/** Button being pressed with the mouse, from mousedown until mouseup. */
 let pressedButton: HTMLButtonElement | null = null;
 
 document.addEventListener('mousedown', (event) => {
     pressedButton = event.target instanceof window.Element ? event.target.closest('button') : null;
-    // Focus moves in the same task as the default action of the press, later blurs are unrelated.
-    window.setTimeout(() => {
-        pressedButton = null;
-    }, 0);
+}, true);
+document.addEventListener('mouseup', () => {
+    pressedButton = null;
 }, true);
 
 export default class Element {
@@ -77,8 +76,9 @@ export default class Element {
             }
             // Showing an error now would move a button under the pointer and swallow the click,
             // the submit handler validates anyway.
-            // Safari and Firefox on macOS do not focus clicked buttons, so there is no related target.
-            const next = event.relatedTarget ?? pressedButton;
+            // Safari and Firefox on macOS do not focus clicked buttons, focus moves to nothing
+            // or to a focusable ancestor such as the dialog, so the pressed button wins.
+            const next = pressedButton ?? event.relatedTarget;
             if (next instanceof HTMLButtonElement && next.form === wrapper.closest('form')) {
                 return;
             }
