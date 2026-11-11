@@ -12,6 +12,13 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 const FOCUSABLE = 'input:not([type="hidden"]), select, textarea, button, a[href], [tabindex]:not([tabindex="-1"])';
+let pressedButton = null;
+document.addEventListener("mousedown", (event) => {
+  pressedButton = event.target instanceof window.Element ? event.target.closest("button") : null;
+  window.setTimeout(() => {
+    pressedButton = null;
+  }, 0);
+}, true);
 class Element {
   static {
     __name(this, "Element");
@@ -45,7 +52,7 @@ class Element {
       if (!this.state.touched) {
         this.state.touched = true;
       }
-      const next = event.relatedTarget;
+      const next = event.relatedTarget ?? pressedButton;
       if (next instanceof HTMLButtonElement && next.form === wrapper.closest("form")) {
         return;
       }
