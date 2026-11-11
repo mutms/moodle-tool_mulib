@@ -89,19 +89,78 @@ describe('tool_mulib/muform/element', () => {
         const element = new Element(wrapper, api);
         const input = wrapper.querySelector('input')!;
         const button = formel.querySelector('button')!;
+        const icon = button.querySelector('i')!;
+        const blur = (relatedTarget: EventTarget | null = null) =>
+            input.dispatchEvent(new FocusEvent('focusout', {bubbles: true, relatedTarget}));
 
         // Chrome focuses the pressed button.
-        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true, relatedTarget: button}));
+        blur(button);
         expect(element.state.touched).toBe(true);
         expect(api.touchedNames).toEqual([]);
 
         // Safari keeps buttons unfocused, the press is the only hint.
-        button.querySelector('i')!.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true, relatedTarget: formel}));
+        icon.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+        blur(formel);
         expect(api.touchedNames).toEqual([]);
 
-        document.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true}));
+        // Mobile Safari moves focus after the touch ended, before the click.
+        icon.dispatchEvent(new MouseEvent('pointerup', {bubbles: true}));
+        blur();
+        expect(api.touchedNames).toEqual([]);
+
+        // The press is forgotten after the click.
+        formel.addEventListener('submit', (event) => event.preventDefault());
+        jest.useFakeTimers();
+        icon.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+        jest.runAllTimers();
+        jest.useRealTimers();
+        blur();
         expect(api.touchedNames).toEqual(['a']);
     });
+
+    it('forgets presses that do not end with a click', () => {
+        const formel = form(wrap('a', 'custom', '<input id="id_a" name="a">') + '<button type="submit">b</button>');
+        const api = fakeForm(formel);
+        const wrapper = formel.querySelector<HTMLElement>('[data-muform-name="a"]')!;
+        new Element(wrapper, api);
+        const input = wrapper.querySelector('input')!;
+        const button = formel.querySelector('button')!;
+        const blur = () => input.dispatchEvent(new FocusEvent('focusout', {bubbles: true}));
+
+        // Dragged off the button.
+        button.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+        document.body.dispatchEvent(new MouseEvent('pointerup', {bubbles: true}));
+        blur();
+        expect(api.touchedNames).toEqual(['a']);
+
+        // Cancelled gesture, keyboard navigation and leaving the window.
+        for (const end of [
+            () => document.dispatchEvent(new Event('pointercancel', {bubbles: true})),
+            () => document.dispatchEvent(new KeyboardEvent('keydown', {bubbles: true, key: 'Tab'})),
+            () => window.dispatchEvent(new Event('blur')),
+        ]) {
+            button.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+            end();
+            blur();
+        }
+        expect(api.touchedNames).toEqual(['a', 'a', 'a', 'a']);
+    });
+
+    it('ignores a pressed button of another form when focus moves to a button of this form', () => {
+        const formel = form(wrap('a', 'custom', '<input id="id_a" name="a">') + '<button type="submit">b</button>');
+        const other = document.createElement('form');
+        other.innerHTML = '<button type="button">x</button>';
+        document.body.appendChild(other);
+        const api = fakeForm(formel);
+        const wrapper = formel.querySelector<HTMLElement>('[data-muform-name="a"]')!;
+        new Element(wrapper, api);
+        const input = wrapper.querySelector('input')!;
+
+        other.querySelector('button')!.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}));
+        input.dispatchEvent(new FocusEvent('focusout', {bubbles: true, relatedTarget: formel.querySelector('button')}));
+        expect(api.touchedNames).toEqual([]);
+        document.dispatchEvent(new Event('pointercancel', {bubbles: true}));
+        other.remove();
+    });
+
 });

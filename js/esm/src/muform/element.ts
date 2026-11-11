@@ -30,15 +30,41 @@ import type {ChangeDetail, ElementState, FormApi, Value} from './types';
 /** Selector of things that can receive focus. */
 const FOCUSABLE = 'input:not([type="hidden"]), select, textarea, button, a[href], [tabindex]:not([tabindex="-1"])';
 
-/** Button being pressed with the mouse, from mousedown until mouseup. */
+/** Button pressed with a mouse, pen or finger, from the press until the click of the same gesture. */
 let pressedButton: HTMLButtonElement | null = null;
 
-document.addEventListener('mousedown', (event) => {
-    pressedButton = event.target instanceof window.Element ? event.target.closest('button') : null;
-}, true);
-document.addEventListener('mouseup', () => {
+/**
+ * Button containing the event target.
+ *
+ * @param event pointer or mouse event
+ * @returns the button or null
+ */
+const buttonOf = (event: Event): HTMLButtonElement | null =>
+    event.target instanceof window.Element ? event.target.closest('button') : null;
+
+/** Forget the press. */
+const release = (): void => {
     pressedButton = null;
+};
+
+document.addEventListener('pointerdown', (event) => {
+    pressedButton = buttonOf(event);
 }, true);
+document.addEventListener('pointerup', (event) => {
+    // Released outside the button, there will be no click.
+    if (pressedButton && buttonOf(event) !== pressedButton) {
+        release();
+    }
+}, true);
+// Mobile Safari moves focus only after the touch ends, so the press is kept until the click,
+// and a little longer so that blurs caused by the click itself are still recognised.
+document.addEventListener('click', () => {
+    window.setTimeout(release, 0);
+}, true);
+// Gestures that never produce a click must not leave a stale press behind.
+document.addEventListener('pointercancel', release, true);
+document.addEventListener('keydown', release, true);
+window.addEventListener('blur', release);
 
 export default class Element {
     /** Element name, the same as in the PHP definition. */
@@ -76,9 +102,10 @@ export default class Element {
             }
             // Showing an error now would move a button under the pointer and swallow the click,
             // the submit handler validates anyway.
-            // Safari and Firefox on macOS do not focus clicked buttons, focus moves to nothing
-            // or to a focusable ancestor such as the dialog, so the pressed button wins.
-            const next = pressedButton ?? event.relatedTarget;
+            // Chrome focuses the pressed button. Safari and Firefox on macOS do not, focus moves
+            // to nothing or to a focusable ancestor such as the dialog, then the press is the only hint.
+            const related = event.relatedTarget;
+            const next = related instanceof HTMLButtonElement ? related : (pressedButton ?? related);
             if (next instanceof HTMLButtonElement && next.form === wrapper.closest('form')) {
                 return;
             }
