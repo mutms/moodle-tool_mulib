@@ -252,6 +252,9 @@ Language codes are the pack names: `cs`, `de`, and the European `fr`, `it`, `pt`
   for "Update program"), the update word is only for refreshing, recalculating and events.
 - **Word sense:** check the feature, not the dictionary. Status `Open` is not the verb, start and
   end are easy to swap in column labels.
+- **Keys are not the meaning.** String keys follow CRUD names (`*_create`, `*_update`, `*_delete`),
+  the English text says what happens. Where only a link or membership changes, the text is Add and
+  Remove: `deletecourse` is "Remove course", `item_create_course` is "Add courses". Translate the text.
 
 ## Czech
 
