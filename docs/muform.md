@@ -180,6 +180,7 @@ download, also in a dialog.
 | `info`             | `(name, label, default = null, format = info::STRING)`                       | not returned                                               |                  |
 | `inforawhtml`      | `(name, label, html)`                                                        | not returned                                               |                  |
 | `section`          | `(name, label)`                                                              | not returned                                               |                  |
+| `collapsible`      | `(name, label, statekey = null)`                                             | not returned                                               |                  |
 | `customfields`     | `(name, handler, instanceid)`                                                | not returned, see [Custom fields](#custom-fields)          |                  |
 | `buttons`          | `(name)`                                                                     | not returned                                               |                  |
 | `submit`, `cancel` | `(name = 'submit'/'cancel', label = null)`                                   | not returned                                               |                  |
@@ -432,6 +433,8 @@ takes `1`, `yes` or `Yes` and `0`, `no` or `No`, and an empty cell leaves the an
 Attributes are the usual HTML attributes of each element, like `maxlength`, `min`, `rows` or
 `placeholder`. Unknown ones are ignored with a debugging message. Text-like inputs also accept
 `width` with `small`, `medium` or `full`.
+Buttons accept `primary`, and `link` with `small` for minor actions inside the form such as adding or
+removing a row.
 
 `set_required(true)` makes a value required. `set_required_marker(true)` only shows the marker and
 is meant for your own validator, usually `required_if_visible` for fields that appear through display
@@ -488,10 +491,26 @@ template can be replaced with `set_template()`, also from the hook, and
 
 ## Layout elements
 
-`section` and `buttons` hold other elements, added with `$this->add($element, 'parentname')`. They
+`section`, `collapsible` and `buttons` hold other elements, added with `$this->add($element, 'parentname')`. They
 return no data. Their templates get the children in order as `elements` and by name as
 `elements_byname`, so a custom template can place each child where it wants. It must render every
 child though, otherwise that child is not submitted.
+
+`collapsible` is a section that the user can collapse, a Bootstrap accordion item made of a native
+`details` element with the label in its header and an optional `set_summary()` text next to it. Collapsing is not
+hiding: collapsed elements are submitted and validated, display rules are still the only way to hide
+something.
+- It is always expanded by default. A section the user collapses stays collapsed while the page passes
+  the same state key (third constructor argument), kept in the browser session storage. Use a key that
+  ends with the work, such as the wizard instance id plus the record, so the state never leaks into the
+  next run. Without a key the state is not remembered.
+- A section with an error inside is expanded and its header shows an error icon, both when the server
+  renders errors and after a failed submission in the browser.
+- With two or more collapsible sections the form adds "Expand all" and "Collapse all" above the first one.
+- Behat: the label is the text of the `summary`, click it to toggle the section.
+
+Buttons have `set_confirm($question)`: the browser asks before the button submits, typically a reload
+button that throws away entered data such as "Remove row". There is no confirmation without JavaScript.
 
 For a really custom part of a page, such as an editor with a preview pane, write your own layout
 element in your plugin with its own template and ES module. The module should find its children by
@@ -554,8 +573,10 @@ never touches the markup inside an element; it reads `getValue()`, updates `stat
 Elements report changes with a `muform:change` event and can call `form.submit()`, `form.reload()`
 or `form.cancel()`.
 
-The browser validates on submit and when the user leaves a changed field, but the server always has
-the final word. A form is only submitted once, the buttons are disabled until a new form arrives.
+The browser validates on submit and when the user leaves a field, but the server always has the
+final word. Errors must never move what the user is clicking: a field left with a mouse or finger is
+validated only after the press ended and the click landed; leaving with the keyboard validates at once. Pressing a button of the form never validates the field
+left, the submit does. A form is only submitted once, the buttons are disabled until a new form arrives.
 
 Forms are watched by the core change checker, so leaving a page with changed values asks for
 confirmation. `$form->set_dirty(true)` in the handler, or `form.markDirty()` in JavaScript, marks a form

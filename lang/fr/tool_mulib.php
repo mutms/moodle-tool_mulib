@@ -84,6 +84,7 @@ $string['muform_clear'] = 'Effacer';
 $string['muform_clearselection'] = 'Effacer la sélection';
 $string['muform_clearvalue'] = 'Effacer la valeur actuelle';
 $string['muform_close'] = 'Fermer la fenêtre';
+$string['muform_collapsibleerrors'] = 'Contient des erreurs';
 $string['muform_datetimeformat'] = 'd/m/Y H:i';
 $string['muform_datetimeinvalid'] = 'Date et heure non valides';
 $string['muform_datetimerangeends'] = '{$a->duration}, fin : {$a->end}';

@@ -460,3 +460,29 @@ dialog.muform-dialog .modal-body {
 .tool_mulib-report-pager-download .dataformatselector {
     display: none;
 }
+
+/* Collapsible form sections, see tool_mulib\muform\element\collapsible - Bootstrap accordion on details/summary. */
+.muform .muform-collapsible > summary {
+    list-style: none;
+    cursor: pointer;
+}
+.muform .muform-collapsible > summary::-webkit-details-marker {
+    display: none;
+}
+.muform .muform-collapsible:not([open]) > summary.accordion-button {
+    color: var(--bs-accordion-btn-color);
+    background-color: var(--bs-accordion-btn-bg);
+    box-shadow: none;
+}
+.muform .muform-collapsible:not([open]) > summary.accordion-button::after {
+    background-image: var(--bs-accordion-btn-icon);
+    transform: none;
+}
+.muform .muform-collapsible:not([open]):last-of-type > summary.accordion-button {
+    border-bottom-right-radius: var(--bs-accordion-inner-border-radius);
+    border-bottom-left-radius: var(--bs-accordion-inner-border-radius);
+}
+.muform .muform-collapsible:first-of-type > summary.accordion-button {
+    border-top-left-radius: var(--bs-accordion-inner-border-radius);
+    border-top-right-radius: var(--bs-accordion-inner-border-radius);
+}

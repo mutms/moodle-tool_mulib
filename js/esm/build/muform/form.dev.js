@@ -12,6 +12,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 import Pending from "@moodle/lms/core/pending";
 import { requireAsync } from "@moodle/lms/core/amd";
+import { getString } from "@moodle/lms/core/stringUtils";
 import DisplayManager from "./display";
 const forms = /* @__PURE__ */ new WeakMap();
 const IMPLICIT_SUBMIT_TYPES = /* @__PURE__ */ new Set([
@@ -33,6 +34,7 @@ function setModuleLoader(loader) {
   loadModule = loader;
 }
 __name(setModuleLoader, "setModuleLoader");
+const COLLAPSIBLE_SELECTOR = "details.muform-collapsible";
 async function initForm(form) {
   const existing = forms.get(form);
   if (existing) {
@@ -100,6 +102,7 @@ class MuForm {
     const rules = JSON.parse(this.form.dataset.muformRules || "[]");
     this.display = new DisplayManager(this.elements, rules);
     this.display.apply();
+    this.initSections();
     this.form.addEventListener("muform:change", (event) => this.onChange(event.detail));
     this.form.addEventListener("submit", (event) => this.onSubmit(event));
     this.form.addEventListener("keydown", (event) => this.onKeyDown(event));
@@ -158,6 +161,7 @@ class MuForm {
     if (errors.join("\n") !== element.state.errors.join("\n")) {
       element.state.errors = errors;
       element.syncUI();
+      this.syncSections(false);
     }
   }
   /**
@@ -191,6 +195,7 @@ class MuForm {
         element.syncUI();
       }
     }
+    this.syncSections(!valid);
     return valid;
   }
   /**
@@ -200,6 +205,9 @@ class MuForm {
     for (const element of this.elements.values()) {
       const area = element.wrapper.querySelector(".invalid-feedback, .alert-danger");
       if (element.state.errors.length || area && area.textContent?.trim()) {
+        for (let section = element.wrapper.closest(COLLAPSIBLE_SELECTOR); section; section = section.parentElement?.closest(COLLAPSIBLE_SELECTOR) ?? null) {
+          section.open = true;
+        }
         element.focus();
         return;
       }
@@ -290,6 +298,15 @@ class MuForm {
       return;
     }
     const submitter = event.submitter;
+    if (submitter?.dataset.muformConfirm) {
+      if (submitter.dataset.muformConfirmed === "1") {
+        delete submitter.dataset.muformConfirmed;
+      } else {
+        event.preventDefault();
+        this.confirmSubmit(submitter, submitter.dataset.muformConfirm);
+        return;
+      }
+    }
     const role = submitter?.dataset.muformRole ?? "submit";
     if (role === "submit") {
       this.submitAttempted = true;
@@ -311,6 +328,81 @@ class MuForm {
         button.disabled = true;
       }
     }, 0);
+  }
+  /**
+   * Ask for confirmation, then submit with the same button.
+   *
+   * @param submitter the pressed button
+   * @param question confirmation question
+   */
+  async confirmSubmit(submitter, question) {
+    const pending = new Pending("tool_mulib/muform:confirm");
+    try {
+      const notification = await requireAsync("core/notification");
+      const [title, label] = await Promise.all([getString("confirm", "core"), getString("yes", "core")]);
+      pending.resolve();
+      await notification.saveCancelPromise(title, question, label);
+    } catch {
+      pending.resolve();
+      return;
+    }
+    submitter.dataset.muformConfirmed = "1";
+    this.form.requestSubmit(submitter);
+  }
+  /**
+   * Add expand and collapse all links above the first collapsible section when there are more of them.
+   */
+  initSections() {
+    const sections = Array.from(this.form.querySelectorAll(COLLAPSIBLE_SELECTOR));
+    if (sections.length < 2) {
+      return;
+    }
+    const toolbar = document.createElement("div");
+    toolbar.className = "muform-collapsible-toolbar d-flex justify-content-end gap-3 mb-2";
+    const addButton = /* @__PURE__ */ __name((identifier, open) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn btn-link p-0";
+      getString(identifier, "core").then((text) => {
+        button.textContent = text;
+        return text;
+      }).catch(() => void 0);
+      button.addEventListener("click", () => {
+        for (const section of sections) {
+          section.dispatchEvent(new CustomEvent("muform:collapsible", { detail: { open } }));
+        }
+      });
+      toolbar.append(button);
+    }, "addButton");
+    addButton("expandall", true);
+    addButton("collapseall", false);
+    sections[0].before(toolbar);
+  }
+  /**
+   * Show error indicators in headers of collapsible sections that contain errors.
+   *
+   * @param open also expand them, after a failed submission
+   */
+  syncSections(open) {
+    const witherrors = /* @__PURE__ */ new Set();
+    for (const element of this.elements.values()) {
+      const area = element.wrapper.querySelector(".invalid-feedback, .alert-danger");
+      if (!element.state.errors.length && !(area && area.textContent?.trim())) {
+        continue;
+      }
+      for (let section = element.wrapper.parentElement?.closest(COLLAPSIBLE_SELECTOR) ?? null; section; section = section.parentElement?.closest(COLLAPSIBLE_SELECTOR) ?? null) {
+        witherrors.add(section);
+      }
+    }
+    for (const section of this.form.querySelectorAll(COLLAPSIBLE_SELECTOR)) {
+      const indicator = section.querySelector(":scope > summary .muform-collapsible-errors");
+      if (indicator) {
+        indicator.hidden = !witherrors.has(section);
+      }
+      if (open && witherrors.has(section)) {
+        section.open = true;
+      }
+    }
   }
   /**
    * Notify handlers.

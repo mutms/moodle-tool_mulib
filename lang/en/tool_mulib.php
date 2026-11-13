@@ -80,6 +80,7 @@ $string['muform_clear'] = 'Clear';
 $string['muform_clearselection'] = 'Clear selection';
 $string['muform_clearvalue'] = 'Clear current value';
 $string['muform_close'] = 'Close dialog';
+$string['muform_collapsibleerrors'] = 'Contains errors';
 $string['muform_datetimeformat'] = 'Y-m-d H:i';
 $string['muform_datetimeinvalid'] = 'Invalid date and time';
 $string['muform_datetimerangeends'] = '{$a->duration}, ends {$a->end}';

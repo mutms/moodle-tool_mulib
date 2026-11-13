@@ -35,6 +35,9 @@ abstract class button extends element {
     /** @var array list of allowed attributes */
     protected const array ALLOWED_ATTRIBUTES = [
         'primary' => param::BOOL,
+        // Link style for minor actions inside the form such as adding or removing a row.
+        'link' => param::BOOL,
+        'small' => param::BOOL,
     ];
 
     /**
@@ -48,6 +51,23 @@ abstract class button extends element {
         $this->label = $label;
         // All buttons share one template.
         $this->set_template('tool_mulib/muform/element/button');
+    }
+
+    /** @var string|null confirmation question asked in the browser before the button submits */
+    private ?string $confirm = null;
+
+    /**
+     * Ask for confirmation before the button submits the form, only in browsers with JavaScript.
+     *
+     * Use for reload buttons that throw away entered data, such as removing a filled row;
+     * there is no confirmation without JavaScript, the server must not rely on it.
+     *
+     * @param string|null $message question shown in the confirmation dialog, null means no confirmation
+     * @return static
+     */
+    public function set_confirm(?string $message): static {
+        $this->confirm = $message;
+        return $this;
     }
 
     /**
@@ -73,7 +93,10 @@ abstract class button extends element {
         $context = parent::get_template_data($output, $allerrors);
         $context['role'] = $this->get_role();
         $context['is_primary'] = !empty($this->get_attribute('primary'));
+        $context['is_link'] = !$context['is_primary'] && !empty($this->get_attribute('link'));
+        $context['is_small'] = !empty($this->get_attribute('small'));
         $context['is_novalidate'] = ($this->get_role() !== 'submit');
+        $context['confirm'] = $this->confirm === null ? '' : clean_string($this->confirm);
         return $context;
     }
 }

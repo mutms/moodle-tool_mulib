@@ -1,0 +1,55 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/collapsible
+
+    Collapsible form section rendered as details styled as Bootstrap accordion item, expanded by default,
+    child elements are rendered inside.
+
+    Context variables required for this template:
+    * name - element name
+    * type - element type, short class name
+    * component - component defining the element
+    * id - html id
+    * label - summary text
+    * is_disabled - true if initially disabled
+    * is_hidden - true if initially hidden
+    * elements_byname - rendered elements with name and html indexed by element name, for custom templates
+    * elements - list of child elements with name and html
+    * statekey - key of the collapsed state remembered in the browser session, empty means not remembered
+    * summary - plain text shown after the label
+    * has_child_errors - an element inside has errors, the section is shown expanded with an indicator
+
+    Example context (json):
+    {
+        "name": "general", "type": "collapsible", "component": "tool_mulib", "id": "id_general",
+        "label": "General", "is_hidden": false, "is_disabled": false,
+        "elements_byname": {"name": {"name": "name", "html": "<div>...</div>"} },
+        "elements": [{"name": "name", "html": "<div>...</div>"}],
+        "statekey": "", "summary": "Two items", "has_child_errors": false
+    }
+}}
+<details id="fitem_{{id}}" class="accordion accordion-item muform-collapsible" open data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#statekey}} data-muform-statekey="{{statekey}}"{{/statekey}}{{#has_child_errors}} data-muform-collapsible-errors="1"{{/has_child_errors}}{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
+    <summary class="accordion-button">
+        <span id="{{id}}" class="fw-bold">{{label}}</span>
+        <span class="muform-collapsible-summary text-muted ms-2">{{summary}}</span>
+        <span class="muform-collapsible-errors text-danger ms-2"{{^has_child_errors}} hidden{{/has_child_errors}}>{{#pix}}i/warning, core{{/pix}}<span class="visually-hidden">{{#str}}muform_collapsibleerrors, tool_mulib{{/str}}</span></span>
+    </summary>
+    <div class="accordion-body">
+        {{#elements}}{{{html}}}{{/elements}}
+    </div>
+</details>
