@@ -121,7 +121,7 @@ export interface Filter {
     operator: number;
     /** Text, selected option or number of units of relative date operators. */
     value: string;
-    /** Select options or operators offered in date filters. */
+    /** Select options, operators offered in date filters, or values of boolean filters that do not offer both. */
     options: FilterOption[];
     /** Unit of relative date operators. */
     unit?: number;
@@ -732,7 +732,11 @@ class FilterBar {
         } else if (filter.type === 'boolean') {
             const group = document.createElement('div');
             group.className = 'd-flex gap-2';
-            for (const [operator, text] of [[BOOLEAN_YES, this.strings.yes], [BOOLEAN_NO, this.strings.no]] as const) {
+            // Filters limited to some of the values export them as options.
+            const choices: [number, string][] = filter.options.length
+                ? filter.options.map((option) => [Number(option.value), option.label])
+                : [[BOOLEAN_YES, this.strings.yes], [BOOLEAN_NO, this.strings.no]];
+            for (const [operator, text] of choices) {
                 const selected = filter.operator === operator;
                 const button = this.button(text, selected ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary');
                 button.addEventListener('click', () => {

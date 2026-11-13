@@ -25,9 +25,11 @@ use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\helpers\user_filter_manager;
+use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
 use core_reportbuilder\system_report_factory;
 use tool_mulib\output\report_filter_bar;
+use tool_mulib\reportbuilder\local\filters\boolean_yes;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -41,6 +43,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[CoversClass(\tool_mulib\output\report_filter_bar::class)]
+#[CoversClass(\tool_mulib\reportbuilder\local\filters\boolean_yes::class)]
 #[Group('MuTMS')]
 final class report_filter_bar_test extends \advanced_testcase {
     protected function setUp(): void {
@@ -301,6 +304,33 @@ final class report_filter_bar_test extends \advanced_testcase {
         $this->assertSame('&#60;i&#62;All&#60;/i&#62; &#38; any', $data['filters']['user:username']['anylabel']);
         $this->assertSame('Any', $data['filters']['user:country']['anylabel']);
         $this->assertContains(['value' => 'CI', 'label' => 'Côte d&#39;Ivoire'], $data['filters']['user:country']['options']);
+    }
+
+    public function test_export_for_template_boolean_yes(): void {
+        $report = $this->create_report();
+        $reportid = (int)$report->get_report_persistent()->get('id');
+
+        // Core boolean filters offer both values.
+        $this->assertSame([], $this->export($report)['filters']['user:suspended']['options']);
+
+        $report = $this->create_report();
+        $report->get_filter('user:suspended')->set_limited_operators([boolean_select::ANY_VALUE, boolean_select::NOT_CHECKED]);
+        user_filter_manager::set($reportid, ['user:suspended_operator' => boolean_select::CHECKED]);
+        $suspended = $this->export($report)['filters']['user:suspended'];
+        $this->assertSame([['value' => (string)boolean_select::NOT_CHECKED, 'label' => 'No']], $suspended['options']);
+        $this->assertSame(0, $suspended['operator']);
+
+        // Filter that does nothing when set to "No".
+        $filter = new filter(boolean_yes::class, 'onlyyes', new \lang_string('yes'), 'user', '1');
+        $instance = boolean_yes::create($filter);
+        $this->assertSame(['', []], $instance->get_sql_filter([]));
+        $this->assertSame(['', []], $instance->get_sql_filter(['user:onlyyes_operator' => boolean_select::ANY_VALUE]));
+        $this->assertSame(['', []], $instance->get_sql_filter(['user:onlyyes_operator' => boolean_select::NOT_CHECKED]));
+        $this->assertFalse($instance->applies_to_values(['user:onlyyes_operator' => boolean_select::NOT_CHECKED]));
+        [$sql, $params] = $instance->get_sql_filter(['user:onlyyes_operator' => boolean_select::CHECKED]);
+        $this->assertStringStartsWith('1 = :', $sql);
+        $this->assertSame([1], array_values($params));
+        $this->assertTrue($instance->applies_to_values(['user:onlyyes_operator' => boolean_select::CHECKED]));
     }
 
     public function test_export_for_template_dates(): void {

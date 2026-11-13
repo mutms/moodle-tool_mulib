@@ -22,6 +22,10 @@ a page may leave either out.
 - `local\reportbuilder_util::is_downloading()` - true in `/reportbuilder/download.php`. Do not add actions when
   downloading (see the method for why), column callbacks return plain text instead of HTML.
 - `local\reportbuilder_util::format_badge($text, $class)` - badge pill in the page, plain text in downloads.
+- `reportbuilder\local\filters\boolean_yes` - yes/no filter that filters only when set to "Yes", for options
+  that restrict a report when switched on, such as "Exclude sub-categories". "No" of the core `boolean_select`
+  selects the opposite records (sub-categories only), here it does nothing. Add
+  `->set_limited_operators(boolean_yes::OPERATORS)` to hide "No" in the core form; the filter bar offers "Yes" only.
 - `local\sql::rename_params()` - converts a `sql` fragment for report builder APIs that accept only their
   own parameter names (`database::generate_param_name()`), for example base conditions.
 
@@ -29,6 +33,8 @@ a page may leave either out.
 
 - Text, select, boolean and date filters are edited in the bar, other types (course role, number, ...) only in
   the core form, which moves into the bar as "Advanced filtering".
+- Filter names, select option labels and "any" texts are exported with `clean_string()` and decoded to plain
+  text in the browser, so `format_string()` results are fine and tags are shown as text.
 - New filter types: a branch in the PHP constructor plus `isActive()`, `describe()`, `buildValues()` and the
   editor in `js/esm/src/reportbuilder/filterbar.ts`.
 - Core `set_filters` replaces all stored values, so every save sends all filters.
@@ -74,6 +80,10 @@ new report_filter_bar($report, pinned: [...], defaults: [
   defaults. A record with all filters empty means the user removed them, so defaults do not come back.
 - × sets a filter to "any" also when it has a default; the editor of a filter that differs from its default
   has "Reset to default".
+- "Reset filters" in the bar is shown when any filter differs from the initial state, it sets the defaults
+  and removes all other filters.
+- Core stores filters per report record, which includes the context: a report in two categories has two sets
+  of stored values and each is seeded on its own.
 - A default is a filter: the pager says "matching filters" and the download is "Download filtered".
 - Users who already have stored filters of a report get new defaults only after "Reset all"; changing a
   default in code does not change stored values.

@@ -26,6 +26,7 @@ use core_reportbuilder\local\models\user_filter;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
 use tool_mulib\muform\util\calendar;
+use tool_mulib\reportbuilder\local\filters\boolean_yes;
 
 /**
  * Always visible filter bar for system reports, replaces the core filters dropdown.
@@ -195,6 +196,22 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
         ];
         if (is_a($class, boolean_select::class, true)) {
             $data['type'] = 'boolean';
+            $allowed = $filter->restrict_limited_operators([
+                boolean_select::CHECKED => get_string('yes'),
+                boolean_select::NOT_CHECKED => get_string('no'),
+            ]);
+            if (is_a($class, boolean_yes::class, true)) {
+                unset($allowed[boolean_select::NOT_CHECKED]);
+            }
+            if (count($allowed) < 2) {
+                // Only some of the values are offered, a stored value that is not allowed is ignored.
+                foreach ($allowed as $allowedoperator => $label) {
+                    $data['options'][] = ['value' => (string)$allowedoperator, 'label' => $label];
+                }
+                if (!isset($allowed[$operator])) {
+                    $data['operator'] = 0;
+                }
+            }
         } else if (is_a($class, select::class, true)) {
             $data['type'] = 'select';
             if ($value === self::SELECT_ANY_VALUE) {

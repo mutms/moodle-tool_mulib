@@ -457,7 +457,8 @@ class FilterBar {
     } else if (filter.type === "boolean") {
       const group = document.createElement("div");
       group.className = "d-flex gap-2";
-      for (const [operator, text] of [[BOOLEAN_YES, this.strings.yes], [BOOLEAN_NO, this.strings.no]]) {
+      const choices = filter.options.length ? filter.options.map((option) => [Number(option.value), option.label]) : [[BOOLEAN_YES, this.strings.yes], [BOOLEAN_NO, this.strings.no]];
+      for (const [operator, text] of choices) {
         const selected = filter.operator === operator;
         const button = this.button(text, selected ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-primary");
         button.addEventListener("click", () => {
