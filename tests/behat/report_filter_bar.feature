@@ -236,3 +236,99 @@ Feature: Report filter bar
     And I wait until the page is ready
     Then I should not see "Course role" in the ".tool_mulib-report-filter-bar" "css_element"
     And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+
+  Scenario: Pinned filters are always visible in the bar
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/report_filter_bar.php" with parameters "pinned=1"
+    Then I should see "Country: All countries" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Suspended: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Course role: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And "Remove filter: Country" "button" should not exist
+    And I should see "Cyril Gamma" in the "reportbuilder-table" "table"
+
+    When I press "+ Add filter"
+    Then "Username" "button" should exist in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    And "Country" "button" should not exist in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    And "Suspended" "button" should not exist in the ".tool_mulib-report-filter-bar-popover" "css_element"
+
+    When I click on "Country: All countries" "button"
+    And I set the field "Search" in the ".tool_mulib-report-filter-bar-popover" "css_element" to "czech"
+    And I click on "Czechia" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    Then I should see "Country: Czechia" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Suspended: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+    And I should not see "Cyril Gamma" in the "reportbuilder-table" "table"
+
+    When I click on "Suspended: Any" "button"
+    And I click on "Yes" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    Then I should see "Suspended: Yes" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Bob Beta" in the "reportbuilder-table" "table"
+    And I should not see "Anna Alpha" in the "reportbuilder-table" "table"
+
+    When I reload the page
+    Then I should see "Country: Czechia" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Suspended: Yes" in the ".tool_mulib-report-filter-bar" "css_element"
+
+    When I click on "Remove filter: Country" "button"
+    And I click on "Remove filter: Suspended" "button"
+    Then I should see "Country: All countries" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Suspended: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Cyril Gamma" in the "reportbuilder-table" "table"
+    And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+
+    When I click on "Course role: Any" "button"
+    Then "Reset all" "button" in the "[data-region='report-filters']" "css_element" should be visible
+
+  Scenario: Default filter values are used until changed and after reset
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/report_filter_bar.php" with parameters "pinned=1&defaults=1"
+    Then I should see "Suspended: No" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+    And I should not see "Bob Beta" in the "reportbuilder-table" "table"
+
+    When I click on "Suspended: No" "button"
+    Then "Reset to default" "button" should not exist
+    And I click on "Yes" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    And I should see "Suspended: Yes" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Bob Beta" in the "reportbuilder-table" "table"
+
+    # Removed default is not coming back.
+    When I click on "Remove filter: Suspended" "button"
+    Then I should see "Suspended: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+    And I should see "Bob Beta" in the "reportbuilder-table" "table"
+    And I reload the page
+    And I should see "Suspended: Any" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Bob Beta" in the "reportbuilder-table" "table"
+
+    When I click on "Suspended: Any" "button"
+    And I click on "Reset to default" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    Then I should see "Suspended: No" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should not see "Bob Beta" in the "reportbuilder-table" "table"
+
+    When I click on "Suspended: No" "button"
+    And I click on "Yes" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    And I press "Advanced filtering"
+    And I click on "Reset all" "button" in the "[data-region='report-filters']" "css_element"
+    And I wait until the page is ready
+    Then I should see "Suspended: No" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Anna Alpha" in the "reportbuilder-table" "table"
+    And I should not see "Bob Beta" in the "reportbuilder-table" "table"
+
+    And "Reset filters" "button" should not exist
+
+    # One click back to the defaults and nothing else.
+    When I click on "Country: All countries" "button"
+    And I set the field "Search" in the ".tool_mulib-report-filter-bar-popover" "css_element" to "czech"
+    And I click on "Czechia" "button" in the ".tool_mulib-report-filter-bar-popover" "css_element"
+    And I click on "Remove filter: Suspended" "button"
+    Then I should see "Bob Beta" in the "reportbuilder-table" "table"
+    And I should not see "Cyril Gamma" in the "reportbuilder-table" "table"
+    When I press "Reset filters"
+    Then I should see "Suspended: No" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Country: All countries" in the ".tool_mulib-report-filter-bar" "css_element"
+    And I should see "Cyril Gamma" in the "reportbuilder-table" "table"
+    And I should not see "Bob Beta" in the "reportbuilder-table" "table"
+    And "Reset filters" "button" should not exist
+
+    # Other pages with the same report do not have to use defaults.
+    When I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/report_filter_bar.php"
+    Then I should see "Suspended: No" in the ".tool_mulib-report-filter-bar" "css_element"

@@ -453,3 +453,10 @@ dialog.muform-dialog .modal-body {
 .tool_mulib-report-filter-bar .reportbuilder-filters-sidebar {
     max-height: 60vh;
 }
+
+/* Report pager: it replaces the core paging bar, the "Show all" link and the download form of the report table. */
+.tool_mulib-report-pager-active nav.pagination,
+.tool_mulib-report-pager-active [data-action="showcount"],
+.tool_mulib-report-pager-download .dataformatselector {
+    display: none;
+}

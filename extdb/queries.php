@@ -55,7 +55,11 @@ $report = \core_reportbuilder\system_report_factory::create(
     \tool_mulib\reportbuilder\local\systemreports\queries::class,
     context_system::instance()
 );
-echo $OUTPUT->render(new \tool_mulib\output\report_filter_bar($report));
+echo $OUTPUT->render(new \tool_mulib\output\report_filter_bar($report, pinned: [
+    'query:name' => null,
+    'query:type' => null,
+]));
 echo $report->output();
+echo $OUTPUT->render(new \tool_mulib\output\report_pager($report));
 
 echo $OUTPUT->footer();

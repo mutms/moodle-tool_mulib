@@ -1,0 +1,43 @@
+{{!
+This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+@copyright   2026 Petr Skoda
+@license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+}}
+{{!
+    @template tool_mulib/report_pager
+
+    Pager of a system report with the number of records, the content is rendered by JavaScript.
+    Must be rendered right after the report, the core paging bar and optionally the download form are hidden.
+    Page sizes are JSON encoded.
+
+    Example context (json):
+    {
+        "reportid": 5,
+        "sizes": "[10,25,30,50,100]",
+        "filtered": false,
+        "download": true,
+        "uniqid": "tool_mulib_report_pager123"
+    }
+}}
+<div id="{{uniqid}}" class="tool_mulib-report-pager d-none flex-wrap align-items-center gap-3 mt-3"
+    data-report-id="{{reportid}}" data-sizes="{{sizes}}" data-filtered="{{#filtered}}1{{/filtered}}{{^filtered}}0{{/filtered}}"
+    data-download="{{#download}}1{{/download}}{{^download}}0{{/download}}"></div>
+<script type="module">
+import {initPager} from '@moodle/lms/tool_mulib/reportbuilder/pager';
+initPager(document.getElementById('{{uniqid}}'));
+</script>

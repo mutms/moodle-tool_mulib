@@ -19,6 +19,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - course_trait with course search helpers for autocomplete sources
 - mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings and docs/translations.md
 - report_filter_bar, always visible filter bar of system reports with text, select, boolean and date filters
+- pinned filters of report_filter_bar that stay visible with "Any" when they do not filter
+- default filter values of report_filter_bar, stored for users without stored filters and after "Reset all"
+- report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 
 ### Changed
 

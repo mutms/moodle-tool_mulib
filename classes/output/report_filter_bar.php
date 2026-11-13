@@ -22,12 +22,16 @@ use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
+use core_reportbuilder\local\models\user_filter;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
 use tool_mulib\muform\util\calendar;
 
 /**
  * Always visible filter bar for system reports, replaces the core filters dropdown.
+ *
+ * Filter names, option labels and "any" texts are HTML: they are exported with clean_string(), which neutralises
+ * tags and keeps entities of format_string() results, the browser decodes them to plain text.
  *
  * Filter values are stored in the standard report builder user filters,
  * the bar only provides different UI. Supported filter types are text, select, boolean select and date; values with
@@ -43,6 +47,14 @@ use tool_mulib\muform\util\calendar;
  *     $report = system_report_factory::create(...);
  *     echo $OUTPUT->render(new report_filter_bar($report));
  *     echo $report->output();
+ *
+ * Pinned filters are always shown in the bar in the given order, with the "any" text when they do not filter:
+ *
+ *     new report_filter_bar($report, pinned: ['program:status' => null, 'category:name' => 'All categories']);
+ *
+ * Default filter values are stored for users who have no stored filters of the report:
+ *
+ *     new report_filter_bar($report, defaults: ['program:archived' => ['operator' => boolean_select::NOT_CHECKED]]);
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -103,69 +115,127 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
      * Constructor.
      *
      * @param system_report $report
+     * @param array $pinned filters that are always visible, unique identifiers in display order as keys,
+     *      values are texts of the "any value" state or null for the generic "Any";
+     *      filters that are not in the report are ignored
+     * @param array $defaults default values of filters, unique identifiers as keys, values are arrays of stored
+     *      filter values without the identifier prefix, such as ['operator' => boolean_select::NOT_CHECKED];
+     *      they are stored for users without stored filters of the report, which is also the state
+     *      after "Reset all"; filters that are not in the report are ignored
      */
-    public function __construct(system_report $report) {
+    public function __construct(system_report $report, array $pinned = [], array $defaults = []) {
+        global $USER;
+
         $this->reportid = (int)$report->get_report_persistent()->get('id');
         $this->parameters = json_encode($report->get_parameters());
 
+        $reportfilters = $report->get_filters();
+        $defaultvalues = [];
+        foreach ($defaults as $key => $parts) {
+            if (!isset($reportfilters[$key])) {
+                unset($defaults[$key]);
+                continue;
+            }
+            foreach ($parts as $name => $value) {
+                $defaultvalues[$key . '_' . $name] = $value;
+            }
+        }
+        if ($defaultvalues && !user_filter::get_record(['reportid' => $this->reportid, 'usercreated' => $USER->id])) {
+            // Defaults become ordinary stored values, so that table reloads, downloads and the core form use them.
+            $report->set_filter_values($defaultvalues);
+        }
+
         $values = $report->get_filter_values();
-        foreach ($report->get_filters() as $filter) {
-            $class = $filter->get_filter_class();
-            $key = $filter->get_unique_identifier();
-            $operator = (int)($values[$key . '_operator'] ?? 0);
-            $value = $values[$key . '_value'] ?? '';
-            $value = is_scalar($value) ? (string)$value : '';
-            $data = [
-                'key' => $key,
-                'label' => $filter->get_header(),
-                'operator' => $operator,
-                'value' => $value,
-                'options' => [],
-            ];
-            if (is_a($class, boolean_select::class, true)) {
-                $data['type'] = 'boolean';
-            } else if (is_a($class, select::class, true)) {
-                $data['type'] = 'select';
-                if ($value === self::SELECT_ANY_VALUE) {
-                    // Core form uses this instead of operator in selects with up to two options.
-                    $data['operator'] = 0;
-                    $data['value'] = '';
-                } else if ($operator === select::NOT_EQUAL_TO) {
-                    $data['operatorlabel'] = get_string('filterisnotequalto', 'core_reportbuilder');
-                }
-                foreach ((array)$filter->get_options() as $optionvalue => $optionlabel) {
-                    if (is_array($optionlabel)) {
-                        // Option groups.
-                        foreach ($optionlabel as $groupvalue => $grouplabel) {
-                            $data['options'][] = ['value' => (string)$groupvalue, 'label' => (string)$grouplabel];
-                        }
-                    } else {
-                        $data['options'][] = ['value' => (string)$optionvalue, 'label' => (string)$optionlabel];
-                    }
-                }
-            } else if (is_a($class, date::class, true)) {
-                $data = $this->export_date($filter, $data, $values);
-            } else if (is_a($class, text::class, true)) {
-                $data['type'] = 'text';
-                if (isset(self::TEXT_OPERATORS[$operator])) {
-                    $data['operatorlabel'] = get_string(self::TEXT_OPERATORS[$operator], 'core_reportbuilder');
-                }
-            } else {
-                // Only the core form can edit this filter, the bar shows it when used and keeps its values.
-                $data['type'] = 'other';
+        $filters = [];
+        foreach ($reportfilters as $key => $filter) {
+            $data = $this->export_filter($filter, $values);
+            if (isset($defaults[$key]) && $data['type'] !== 'other') {
+                // The bar offers "Reset to default" when the value differs.
+                $data['default'] = array_intersect_key(
+                    $this->export_filter($filter, $defaultvalues),
+                    array_flip(['operator', 'value', 'unit', 'from', 'to', 'fromtext', 'totext', 'operatorlabel'])
+                );
+            }
+            if (array_key_exists($key, $pinned)) {
+                $data['pinned'] = true;
+                $data['anylabel'] = clean_string((string)($pinned[$key] ?? get_string('filterbar_any', 'tool_mulib')));
+            }
+            $filters[$key] = $data;
+        }
+
+        // Pinned filters come first, the bar shows filters in this order.
+        foreach ($pinned as $key => $unused) {
+            if (isset($filters[$key])) {
+                $this->filters[] = $filters[$key];
+                unset($filters[$key]);
+            }
+        }
+        array_push($this->filters, ...array_values($filters));
+    }
+
+    /**
+     * Export filter with given values.
+     *
+     * @param filter $filter
+     * @param array $values stored filter values
+     * @return array
+     */
+    private function export_filter(filter $filter, array $values): array {
+        $class = $filter->get_filter_class();
+        $key = $filter->get_unique_identifier();
+        $operator = (int)($values[$key . '_operator'] ?? 0);
+        $value = $values[$key . '_value'] ?? '';
+        $value = is_scalar($value) ? (string)$value : '';
+        $data = [
+            'key' => $key,
+            'label' => clean_string($filter->get_header()),
+            'operator' => $operator,
+            'value' => $value,
+            'options' => [],
+        ];
+        if (is_a($class, boolean_select::class, true)) {
+            $data['type'] = 'boolean';
+        } else if (is_a($class, select::class, true)) {
+            $data['type'] = 'select';
+            if ($value === self::SELECT_ANY_VALUE) {
+                // Core form uses this instead of operator in selects with up to two options.
                 $data['operator'] = 0;
                 $data['value'] = '';
-                $data['values'] = [];
-                foreach ($values as $name => $filtervalue) {
-                    if (str_starts_with($name, $key . '_')) {
-                        $data['values'][$name] = $filtervalue;
-                    }
-                }
-                [$sql] = $class::create($filter)->get_sql_filter($data['values']);
-                $data['active'] = ($sql !== '');
+            } else if ($operator === select::NOT_EQUAL_TO) {
+                $data['operatorlabel'] = get_string('filterisnotequalto', 'core_reportbuilder');
             }
-            $this->filters[] = $data;
+            foreach ((array)$filter->get_options() as $optionvalue => $optionlabel) {
+                if (is_array($optionlabel)) {
+                    // Option groups.
+                    foreach ($optionlabel as $groupvalue => $grouplabel) {
+                        $data['options'][] = ['value' => (string)$groupvalue, 'label' => clean_string((string)$grouplabel)];
+                    }
+                } else {
+                    $data['options'][] = ['value' => (string)$optionvalue, 'label' => clean_string((string)$optionlabel)];
+                }
+            }
+        } else if (is_a($class, date::class, true)) {
+            $data = $this->export_date($filter, $data, $values);
+        } else if (is_a($class, text::class, true)) {
+            $data['type'] = 'text';
+            if (isset(self::TEXT_OPERATORS[$operator])) {
+                $data['operatorlabel'] = get_string(self::TEXT_OPERATORS[$operator], 'core_reportbuilder');
+            }
+        } else {
+            // Only the core form can edit this filter, the bar shows it when used and keeps its values.
+            $data['type'] = 'other';
+            $data['operator'] = 0;
+            $data['value'] = '';
+            $data['values'] = [];
+            foreach ($values as $name => $filtervalue) {
+                if (str_starts_with($name, $key . '_')) {
+                    $data['values'][$name] = $filtervalue;
+                }
+            }
+            [$sql] = $class::create($filter)->get_sql_filter($data['values']);
+            $data['active'] = ($sql !== '');
         }
+        return $data;
     }
 
     /**

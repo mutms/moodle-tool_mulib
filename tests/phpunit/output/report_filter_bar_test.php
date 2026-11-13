@@ -62,11 +62,13 @@ final class report_filter_bar_test extends \advanced_testcase {
      * Export filter bar data with decoded filters keyed by filter identifier.
      *
      * @param system_report $report
+     * @param array $pinned
+     * @param array $defaults
      * @return array
      */
-    private function export(system_report $report): array {
+    private function export(system_report $report, array $pinned = [], array $defaults = []): array {
         global $PAGE;
-        $bar = new report_filter_bar($report);
+        $bar = new report_filter_bar($report, $pinned, $defaults);
         $data = $bar->export_for_template($PAGE->get_renderer('core'));
         $filters = [];
         foreach (json_decode($data['filters'], true) as $filter) {
@@ -196,6 +198,109 @@ final class report_filter_bar_test extends \advanced_testcase {
         $data = $this->export($this->create_report());
         $this->assertFalse($data['filters']['user:courserole']['active']);
         $this->assertSame([], $data['filters']['user:courserole']['values']);
+    }
+
+    public function test_export_for_template_pinned(): void {
+        $report = $this->create_report();
+        $reportid = (int)$report->get_report_persistent()->get('id');
+
+        $unpinned = array_keys($this->export($report)['filters']);
+        $this->assertNotSame('user:suspended', $unpinned[0]);
+        $this->assertArrayNotHasKey('pinned', $this->export($report)['filters']['user:country']);
+        $this->assertArrayNotHasKey('anylabel', $this->export($report)['filters']['user:country']);
+
+        // Pinned filters come first in the given order, filters that are not in the report are ignored.
+        $pinned = ['user:suspended' => null, 'user:unknown' => 'Nothing', 'user:country' => 'All countries', 'user:courserole' => null];
+        $data = $this->export($report, $pinned);
+        $this->assertSame(
+            ['user:suspended', 'user:country', 'user:courserole', ...array_values(array_diff($unpinned, array_keys($pinned)))],
+            array_keys($data['filters'])
+        );
+        $this->assertTrue($data['filters']['user:suspended']['pinned']);
+        $this->assertSame('Any', $data['filters']['user:suspended']['anylabel']);
+        $this->assertTrue($data['filters']['user:country']['pinned']);
+        $this->assertSame('All countries', $data['filters']['user:country']['anylabel']);
+        $this->assertSame(0, $data['filters']['user:country']['operator']);
+        $this->assertTrue($data['filters']['user:courserole']['pinned']);
+        $this->assertSame('other', $data['filters']['user:courserole']['type']);
+        $this->assertArrayNotHasKey('pinned', $data['filters']['user:username']);
+        $this->assertArrayNotHasKey('anylabel', $data['filters']['user:username']);
+
+        // Values of pinned filters are exported as usual.
+        user_filter_manager::set($reportid, [
+            'user:country_operator' => select::EQUAL_TO,
+            'user:country_value' => 'CZ',
+        ]);
+        $data = $this->export($this->create_report(), $pinned);
+        $this->assertSame(select::EQUAL_TO, $data['filters']['user:country']['operator']);
+        $this->assertSame('CZ', $data['filters']['user:country']['value']);
+        $this->assertSame('All countries', $data['filters']['user:country']['anylabel']);
+    }
+
+    public function test_export_for_template_defaults(): void {
+        $report = $this->create_report();
+        $reportid = (int)$report->get_report_persistent()->get('id');
+        $defaults = [
+            'user:suspended' => ['operator' => boolean_select::NOT_CHECKED],
+            'user:country' => ['operator' => select::EQUAL_TO, 'value' => 'CZ'],
+            'user:timecreated' => ['operator' => date::DATE_CURRENT, 'unit' => date::DATE_UNIT_YEAR],
+            'user:unknown' => ['operator' => 1],
+        ];
+
+        // Nothing changes without defaults.
+        $data = $this->export($report);
+        $this->assertSame([], user_filter_manager::get($reportid));
+        $this->assertArrayNotHasKey('default', $data['filters']['user:suspended']);
+
+        // Defaults are stored for users without stored filters, filters that are not in the report are ignored.
+        $data = $this->export($this->create_report(), [], $defaults);
+        $this->assertEquals([
+            'user:suspended_operator' => boolean_select::NOT_CHECKED,
+            'user:country_operator' => select::EQUAL_TO,
+            'user:country_value' => 'CZ',
+            'user:timecreated_operator' => date::DATE_CURRENT,
+            'user:timecreated_unit' => date::DATE_UNIT_YEAR,
+        ], user_filter_manager::get($reportid));
+        $this->assertSame(boolean_select::NOT_CHECKED, $data['filters']['user:suspended']['operator']);
+        $this->assertSame(['operator' => boolean_select::NOT_CHECKED, 'value' => ''], $data['filters']['user:suspended']['default']);
+        $this->assertSame('CZ', $data['filters']['user:country']['value']);
+        $this->assertSame(['operator' => select::EQUAL_TO, 'value' => 'CZ'], $data['filters']['user:country']['default']);
+        $this->assertSame(date::DATE_CURRENT, $data['filters']['user:timecreated']['operator']);
+        $this->assertSame(
+            ['operator' => date::DATE_CURRENT, 'value' => '1', 'unit' => date::DATE_UNIT_YEAR, 'from' => 0, 'to' => 0, 'fromtext' => '', 'totext' => ''],
+            $data['filters']['user:timecreated']['default']
+        );
+        $this->assertArrayNotHasKey('default', $data['filters']['user:username']);
+        $this->assertSame(3, $this->create_report()->get_applied_filter_count());
+
+        // Stored values are kept, also when the user removed all filters.
+        user_filter_manager::set($reportid, ['user:suspended_operator' => boolean_select::ANY_VALUE]);
+        $data = $this->export($this->create_report(), [], $defaults);
+        $this->assertEquals(['user:suspended_operator' => boolean_select::ANY_VALUE], user_filter_manager::get($reportid));
+        $this->assertSame(boolean_select::ANY_VALUE, $data['filters']['user:suspended']['operator']);
+        $this->assertSame(['operator' => boolean_select::NOT_CHECKED, 'value' => ''], $data['filters']['user:suspended']['default']);
+        $this->assertSame(0, $data['filters']['user:country']['operator']);
+
+        // Core "Reset all" deletes stored values, defaults are back.
+        user_filter_manager::reset($reportid);
+        $data = $this->export($this->create_report(), [], $defaults);
+        $this->assertSame(boolean_select::NOT_CHECKED, $data['filters']['user:suspended']['operator']);
+        $this->assertSame('CZ', $data['filters']['user:country']['value']);
+
+        // Other users have their own values.
+        $this->setUser($this->getDataGenerator()->create_user());
+        $this->assertSame([], user_filter_manager::get($reportid));
+    }
+
+    public function test_export_for_template_html(): void {
+        $report = $this->create_report();
+        $report->get_filter('user:username')->set_header(new \lang_string('lang_string_a', 'tool_mulib', 'R&amp;D <b>x</b> "y"'));
+        $data = $this->export($report, ['user:username' => '<i>All</i> &amp; any', 'user:country' => null]);
+        // Tags are neutralised and entities are not encoded twice, the browser decodes the result to plain text.
+        $this->assertSame('R&#38;D &#60;b&#62;x&#60;/b&#62; &#34;y&#34;', $data['filters']['user:username']['label']);
+        $this->assertSame('&#60;i&#62;All&#60;/i&#62; &#38; any', $data['filters']['user:username']['anylabel']);
+        $this->assertSame('Any', $data['filters']['user:country']['anylabel']);
+        $this->assertContains(['value' => 'CI', 'label' => 'Côte d&#39;Ivoire'], $data['filters']['user:country']['options']);
     }
 
     public function test_export_for_template_dates(): void {

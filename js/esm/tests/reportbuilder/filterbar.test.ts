@@ -16,11 +16,12 @@
 import {
     ANY_VALUE, BOOLEAN_NO, BOOLEAN_YES, DATE_AFTER, DATE_BEFORE, DATE_CURRENT, DATE_EMPTY, DATE_LAST, DATE_NEXT, DATE_PAST,
     DATE_RANGE, DATE_UNIT_DAY, DateTimeSettings, Filter, SELECT_EQUAL_TO, Strings, TEXT_CONTAINS, TEXT_IS_EMPTY, buildValues,
-    describe, formatUnitName, formatUnits, isActive,
+    buttonLabel, decodeEntities, describe, formatUnitName, formatUnits, isActive, isDefault, isInitial,
 } from '../../src/reportbuilder/filterbar';
 
 const STRINGS: Strings = {
     add: 'Add', advanced: 'Advanced', remove: 'Remove', apply: 'Apply', useadvanced: 'Use advanced',
+    resetdefault: 'Reset', resetall: 'Reset all',
     search: 'Search', yes: 'Yes', no: 'No', rangefrom: 'from {$a}', rangeto: 'until {$a}', datefrom: 'Date from',
     dateto: 'Date to', fieldoperator: '{$a} operator', fieldvalue: '{$a} value', fieldunit: '{$a} unit',
     invalid: 'Invalid', invalidrange: 'Invalid range',
@@ -51,6 +52,17 @@ const select = (operator: number, value: string): Filter => ({key: 'u:rank', typ
     options: [{value: '1', label: 'Major'}, {value: '2', label: 'Colonel'}]});
 const bool = (operator: number): Filter => ({key: 'u:active', type: 'boolean', label: 'Active', operator, value: '', options: []});
 
+test('decodeEntities', () => {
+    expect(decodeEntities('Plain text')).toBe('Plain text');
+    expect(decodeEntities('R&amp;D')).toBe('R&D');
+    expect(decodeEntities('Team &#34;A&#34; &#38; B')).toBe('Team "A" & B');
+    // Tags are neutralised by clean_string() on the server and stay text.
+    expect(decodeEntities('&#60;b&#62;bold&#60;/b&#62;')).toBe('<b>bold</b>');
+    expect(decodeEntities('&#60;img src=x onerror=alert(1)&#62;')).toBe('<img src=x onerror=alert(1)>');
+    // Anything that is not neutralised is reduced to its text, nothing is executed.
+    expect(decodeEntities('a &amp; <b>b</b><script>alert(1)</script>')).toBe('a & balert(1)');
+});
+
 test('isActive', () => {
     expect(isActive(text(ANY_VALUE, 'x'))).toBe(false);
     expect(isActive(text(TEXT_CONTAINS, ' '))).toBe(false);
@@ -65,6 +77,42 @@ test('describe', () => {
     expect(describe(select(SELECT_EQUAL_TO, '2'), STRINGS)).toBe('Colonel');
     expect(describe(bool(BOOLEAN_YES), STRINGS)).toBe('Yes');
     expect(describe(bool(BOOLEAN_NO), STRINGS)).toBe('No');
+});
+
+test('buttonLabel', () => {
+    expect(buttonLabel(text(TEXT_CONTAINS, 'Liberec'), STRINGS)).toBe('Name: Liberec');
+    expect(buttonLabel(bool(BOOLEAN_NO), STRINGS)).toBe('Active: No');
+    expect(buttonLabel({...text(ANY_VALUE, ''), type: 'other', active: true}, STRINGS)).toBe('Name');
+
+    // Pinned filters are shown with the "any" text when they do not filter, their values are stored as usual.
+    const pinned = {pinned: true, anylabel: 'All ranks'};
+    expect(buttonLabel({...select(ANY_VALUE, ''), ...pinned}, STRINGS)).toBe('Rank: All ranks');
+    expect(buttonLabel({...select(SELECT_EQUAL_TO, '2'), ...pinned}, STRINGS)).toBe('Rank: Colonel');
+    expect(buttonLabel({...text(TEXT_CONTAINS, ' '), pinned: true, anylabel: 'Any'}, STRINGS)).toBe('Name: Any');
+    expect(isActive({...select(ANY_VALUE, '1'), ...pinned})).toBe(false);
+    expect(buildValues([{...select(ANY_VALUE, '1'), ...pinned}])).toEqual({'u:rank_operator': ANY_VALUE, 'u:rank_value': ''});
+});
+
+test('isDefault', () => {
+    expect(isDefault(bool(BOOLEAN_NO))).toBe(false);
+    const archived = {'default': {operator: BOOLEAN_NO, value: ''}};
+    expect(isDefault({...bool(BOOLEAN_NO), ...archived})).toBe(true);
+    expect(isDefault({...bool(BOOLEAN_YES), ...archived})).toBe(false);
+    expect(isDefault({...bool(ANY_VALUE), ...archived})).toBe(false);
+    const rank = {'default': {operator: SELECT_EQUAL_TO, value: '2'}};
+    expect(isDefault({...select(SELECT_EQUAL_TO, '2'), ...rank})).toBe(true);
+    expect(isDefault({...select(SELECT_EQUAL_TO, '1'), ...rank})).toBe(false);
+    const year = {'default': {operator: DATE_CURRENT, value: '1', unit: 4, from: 0, to: 0, fromtext: '', totext: ''}};
+    expect(isDefault({...date(DATE_CURRENT, {unit: 4}), ...year})).toBe(true);
+    expect(isDefault({...date(DATE_CURRENT, {unit: 3}), ...year})).toBe(false);
+    expect(isDefault({...date(DATE_PAST), ...year})).toBe(false);
+
+    // Initial state of the bar: defaults and nothing else.
+    expect(isInitial(bool(ANY_VALUE))).toBe(true);
+    expect(isInitial(bool(BOOLEAN_NO))).toBe(false);
+    expect(isInitial({...bool(BOOLEAN_NO), ...archived})).toBe(true);
+    expect(isInitial({...bool(ANY_VALUE), ...archived})).toBe(false);
+    expect(isInitial(text(TEXT_CONTAINS, ' '))).toBe(true);
 });
 
 test('buildValues', () => {

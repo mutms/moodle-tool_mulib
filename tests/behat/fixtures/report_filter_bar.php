@@ -19,6 +19,7 @@
  *
  * Core users system report is used because it has text, select, boolean
  * and other filter types that only the core filters form can edit.
+ * Parameter pinned=1 pins some of the filters, defaults=1 sets default values.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -26,6 +27,7 @@
  */
 
 use core_admin\reportbuilder\local\systemreports\users;
+use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\system_report_factory;
 use tool_mulib\output\report_filter_bar;
 
@@ -38,14 +40,32 @@ require_admin();
 $context = \core\context\system::instance();
 
 $PAGE->set_context($context);
-$PAGE->set_url(new \core\url('/admin/tool/mulib/tests/behat/fixtures/report_filter_bar.php'));
+$url = new \core\url('/admin/tool/mulib/tests/behat/fixtures/report_filter_bar.php');
+if (optional_param('pinned', 0, PARAM_BOOL)) {
+    $url->param('pinned', 1);
+}
+if (optional_param('defaults', 0, PARAM_BOOL)) {
+    $url->param('defaults', 1);
+}
+$PAGE->set_url($url);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Report filter bar fixture');
 $PAGE->set_heading('Report filter bar fixture');
 
 $report = system_report_factory::create(users::class, $context);
 
+$pinned = [];
+if (optional_param('pinned', 0, PARAM_BOOL)) {
+    // The last filter does not exist in the report.
+    $pinned = ['user:country' => 'All countries', 'user:suspended' => null, 'user:courserole' => null, 'user:unknown' => null];
+}
+
+$defaults = [];
+if (optional_param('defaults', 0, PARAM_BOOL)) {
+    $defaults = ['user:suspended' => ['operator' => boolean_select::NOT_CHECKED]];
+}
+
 echo $OUTPUT->header();
-echo $OUTPUT->render(new report_filter_bar($report));
+echo $OUTPUT->render(new report_filter_bar($report, $pinned, $defaults));
 echo $report->output();
 echo $OUTPUT->footer();

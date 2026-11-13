@@ -16,8 +16,8 @@
 /**
  * Always visible filter bar of a system report.
  *
- * Active filters are shown as buttons with their values, inactive filters are collapsed
- * in an "add filter" menu, the core filters form is available as "Advanced filters" button.
+ * Active filters are shown as buttons with their values, pinned filters are shown always,
+ * other inactive filters are collapsed in an "add filter" menu, the core filters form is available as "Advanced filters" button.
  * Values are stored through the standard report builder web services
  * and the report table is reloaded without page reload.
  *
@@ -54,6 +54,9 @@ export const BOOLEAN_NO = 2;
 
 /** Report table reload event, see core_reportbuilder/local/events. */
 const TABLE_RELOAD = 'core_reportbuilder_table_reload';
+
+/** Dispatched on the report element after filters are stored, the detail has the count of active filters. */
+export const FILTERS_CHANGED = 'tool_mulib/reportbuilder:filterschanged';
 
 /** Text filter operator "is empty". */
 export const TEXT_IS_EMPTY = 7;
@@ -136,6 +139,12 @@ export interface Filter {
     values?: Record<string, unknown>;
     /** Is "other" filter restricting the report? */
     active?: boolean;
+    /** Pinned filters are always shown in the bar. */
+    pinned?: boolean;
+    /** Text of a pinned filter that is not restricting the report, such as "Any". */
+    anylabel?: string;
+    /** Default value defined by the page, stored for users without stored filters. */
+    default?: Pick<Filter, 'operator' | 'value' | 'unit' | 'from' | 'to' | 'fromtext' | 'totext' | 'operatorlabel'>;
 }
 
 /** Date and time settings of the user, exported when the report has date filters. */
@@ -157,6 +166,8 @@ export interface Strings {
     remove: string;
     apply: string;
     useadvanced: string;
+    resetdefault: string;
+    resetall: string;
     search: string;
     yes: string;
     no: string;
@@ -182,6 +193,22 @@ export interface Strings {
  * @returns text
  */
 const fill = (template: string, value: string): string => template.replace('{$a}', () => value);
+
+/**
+ * Plain text of a string exported with clean_string(), which has HTML entities and no tags.
+ *
+ * All texts are added to the page as text nodes, entities would be shown as they are.
+ *
+ * @param html
+ * @returns text
+ */
+export const decodeEntities = (html: string): string => {
+    if (!html.includes('&')) {
+        return html;
+    }
+    // Parsed documents are inert, nothing is loaded or executed.
+    return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '';
+};
 
 /**
  * Number of date units in words, such as "2 weeks".
@@ -309,6 +336,22 @@ const describeDate = (filter: Filter, strings: Strings, settings: DateTimeSettin
 };
 
 /**
+ * Text of the filter button in the bar.
+ *
+ * @param filter active or pinned filter
+ * @param strings
+ * @param settings date and time settings, null if there are no date filters
+ * @returns button text
+ */
+export const buttonLabel = (filter: Filter, strings: Strings, settings: DateTimeSettings | null = null): string => {
+    if (!isActive(filter)) {
+        return filter.label + ': ' + (filter.anylabel ?? '');
+    }
+    const description = describe(filter, strings, settings);
+    return description === '' ? filter.label : filter.label + ': ' + description;
+};
+
+/**
  * Filter values in the format of report builder filter forms.
  *
  * @param filters
@@ -343,6 +386,27 @@ export const buildValues = (filters: Filter[]): Record<string, unknown> => {
     return values;
 };
 
+/**
+ * Has the filter its default value?
+ *
+ * @param filter
+ * @returns true if the stored values would be the same as the default, false for filters without default
+ */
+export const isDefault = (filter: Filter): boolean => {
+    if (!filter.default) {
+        return false;
+    }
+    return JSON.stringify(buildValues([filter])) === JSON.stringify(buildValues([{...filter, ...filter.default}]));
+};
+
+/**
+ * Is the filter in the state of a report that was never filtered?
+ *
+ * @param filter
+ * @returns true if the filter has its default value, or does not filter when it has no default
+ */
+export const isInitial = (filter: Filter): boolean => (filter.default ? isDefault(filter) : !isActive(filter));
+
 /** Subset of core/fragment. */
 interface FragmentApi {
     loadFragment(component: string, callback: string, contextid: number, params: Record<string, unknown>): {
@@ -376,6 +440,15 @@ class FilterBar {
         this.reportId = Number(root.dataset.reportId);
         this.parameters = root.dataset.reportParameters ?? '[]';
         this.filters = JSON.parse(root.dataset.filters ?? '[]') as Filter[];
+        for (const filter of this.filters) {
+            filter.label = decodeEntities(filter.label);
+            if (filter.anylabel !== undefined) {
+                filter.anylabel = decodeEntities(filter.anylabel);
+            }
+            for (const option of filter.options) {
+                option.label = decodeEntities(option.label);
+            }
+        }
         this.datetime = JSON.parse(root.dataset.datetime || 'null') as DateTimeSettings | null;
         this.strings = strings;
         this.root.style.position = 'relative';
@@ -474,7 +547,8 @@ class FilterBar {
 
         const inactive: Filter[] = [];
         for (const filter of this.filters) {
-            if (!isActive(filter)) {
+            const active = isActive(filter);
+            if (!active && !filter.pinned) {
                 if (filter.type !== 'other') {
                     inactive.push(filter);
                 }
@@ -484,19 +558,24 @@ class FilterBar {
             group.className = 'btn-group btn-group-sm';
             group.dataset.filterKey = filter.key;
 
-            const description = describe(filter, this.strings, this.datetime);
-            const edit = this.button(description === '' ? filter.label : filter.label + ': ' + description, 'btn btn-primary');
+            // Pinned filters stay in the bar with the "any" text when they do not filter.
+            const edit = this.button(
+                buttonLabel(filter, this.strings, this.datetime),
+                active ? 'btn btn-primary' : 'btn btn-outline-secondary',
+            );
             edit.addEventListener('click', () => this.openEditor(filter, group));
             group.append(edit);
 
-            const remove = this.button('×', 'btn btn-primary');
-            remove.setAttribute('aria-label', this.strings.remove + ': ' + filter.label);
-            remove.title = this.strings.remove;
-            remove.addEventListener('click', () => {
-                this.clear(filter);
-                void this.save();
-            });
-            group.append(remove);
+            if (active) {
+                const remove = this.button('×', 'btn btn-primary');
+                remove.setAttribute('aria-label', this.strings.remove + ': ' + filter.label);
+                remove.title = this.strings.remove;
+                remove.addEventListener('click', () => {
+                    this.clear(filter);
+                    void this.save();
+                });
+                group.append(remove);
+            }
 
             this.root.append(group);
         }
@@ -507,7 +586,20 @@ class FilterBar {
             this.root.append(more);
         }
 
-        // Core filters form for anything the bar cannot do, including reset of all filters.
+        // One click back to the initial state: default values, nothing else.
+        if (!this.filters.every(isInitial)) {
+            const reset = this.button('↺ ' + this.strings.resetall, 'btn btn-sm btn-link');
+            reset.addEventListener('click', () => {
+                for (const filter of this.filters) {
+                    this.clear(filter);
+                    Object.assign(filter, filter.default);
+                }
+                void this.save();
+            });
+            this.root.append(reset);
+        }
+
+        // Core filters form for anything the bar cannot do.
         if (this.coreFilters) {
             this.root.append(this.coreFilters);
         }
@@ -595,6 +687,13 @@ class FilterBar {
      * @param anchor
      */
     private openEditor(filter: Filter, anchor: HTMLElement): void {
+        const advanced = this.coreFilters?.querySelector<HTMLElement>('#dropdownFiltersButton');
+        if (filter.type === 'other' && filter.pinned && advanced) {
+            // Only the core form can edit the filter, wait until this click is over so that it does not close the dropdown.
+            this.closePopover();
+            setTimeout(() => advanced.click(), 0);
+            return;
+        }
         const content = document.createElement('div');
         const title = document.createElement(filter.type === 'text' ? 'label' : 'div');
         title.className = 'fw-bold mb-2';
@@ -677,6 +776,16 @@ class FilterBar {
             }
             renderOptions('');
             content.append(list);
+        }
+
+        if (filter.default && !isDefault(filter)) {
+            const reset = this.button(this.strings.resetdefault, 'btn btn-sm btn-link px-0 mt-2');
+            reset.addEventListener('click', () => {
+                delete filter.operatorlabel;
+                Object.assign(filter, filter.default);
+                void this.save();
+            });
+            content.append(reset);
         }
 
         this.openPopover(anchor, content);
@@ -967,6 +1076,10 @@ class FilterBar {
                 },
             });
             this.reload();
+            this.getReport()?.dispatchEvent(new CustomEvent(FILTERS_CHANGED, {
+                bubbles: true,
+                detail: {count: this.filters.filter(isActive).length},
+            }));
             await this.refreshCoreFilters();
         } finally {
             pending.resolve();
@@ -987,14 +1100,16 @@ export const initFilterBar = async(root: HTMLElement | null): Promise<void> => {
     const pending = new Pending('tool_mulib/reportbuilder:filterbar-init');
     try {
         const [
-            add, advanced, remove, apply, useadvanced, rangefrom, rangeto, search, yes, no, datefrom, dateto,
-            fieldoperator, fieldvalue, fieldunit, invalid, invalidrange,
+            add, advanced, remove, apply, useadvanced, resetdefault, resetall, rangefrom, rangeto, search, yes, no,
+            datefrom, dateto, fieldoperator, fieldvalue, fieldunit, invalid, invalidrange,
         ] = await getStrings([
             {key: 'filterbar_add', component: 'tool_mulib'},
             {key: 'filterbar_advanced', component: 'tool_mulib'},
             {key: 'filterbar_remove', component: 'tool_mulib'},
             {key: 'filterbar_apply', component: 'tool_mulib'},
             {key: 'filterbar_useadvanced', component: 'tool_mulib'},
+            {key: 'filterbar_resetdefault', component: 'tool_mulib'},
+            {key: 'filterbar_resetall', component: 'tool_mulib'},
             {key: 'filterbar_rangefrom', component: 'tool_mulib'},
             {key: 'filterbar_rangeto', component: 'tool_mulib'},
             {key: 'search', component: 'core'},
@@ -1009,8 +1124,8 @@ export const initFilterBar = async(root: HTMLElement | null): Promise<void> => {
             {key: 'muform_datetimerangeinvalid', component: 'tool_mulib'},
         ]);
         new FilterBar(root, {
-            add, advanced, remove, apply, useadvanced, search, yes, no, rangefrom, rangeto, datefrom, dateto,
-            fieldoperator, fieldvalue, fieldunit, invalid, invalidrange,
+            add, advanced, remove, apply, useadvanced, resetdefault, resetall, search, yes, no, rangefrom, rangeto,
+            datefrom, dateto, fieldoperator, fieldvalue, fieldunit, invalid, invalidrange,
         });
     } finally {
         pending.resolve();
