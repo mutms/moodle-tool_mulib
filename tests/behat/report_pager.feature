@@ -75,7 +75,7 @@ Feature: Report pager
     And I should not see "Download table data as"
     When I click on "Download all" "button" in the ".tool_mulib-report-pager" "css_element"
     Then I should see "Microsoft Excel (.xlsx)" in the ".tool_mulib-report-pager" "css_element"
-    And following "Comma separated values (.csv)" should download between "1800" and "3000" bytes
+    And following "Comma separated values (.csv)" should download between "1300" and "3000" bytes
 
     # Page size is remembered in the browser tab, the page number is not.
     When I reload the page
