@@ -45,10 +45,11 @@ final class select_test extends muform_testcase {
      *
      * @param bool $required
      * @param bool $frozen
+     * @param bool $choose add "Choose..." option
      */
-    private function add_element(bool $required = false, bool $frozen = false): void {
-        $hook = function (muform_definition $hook) use ($required, $frozen): void {
-            $options = (new options(['' => 'Choose...']))
+    private function add_element(bool $required = false, bool $frozen = false, bool $choose = true): void {
+        $hook = function (muform_definition $hook) use ($required, $frozen, $choose): void {
+            $options = (new options($choose ? ['' => 'Choose...'] : []))
                 ->add_optgroup('Teachers', ['teacher' => 'Teacher', 'editing' => 'Editing teacher'])
                 ->add_optgroup('Others', ['student' => 'Student']);
             $role = (new select('role', 'Role', $options, ['size' => 3]))
@@ -84,6 +85,63 @@ final class select_test extends muform_testcase {
         $this->simulate_get();
         $form = new simple_form($this->get_url(), ['role' => 'teacher']);
         $this->assertSame('teacher', $form->get_non_validated_data()->role);
+    }
+
+    public function test_without_choose_option(): void {
+        // The first option is used when there is no value, same as in browsers.
+        $this->add_element(false, false, false);
+        $this->simulate_get();
+        $form = new simple_form($this->get_url(), []);
+        $this->assertSame('teacher', $form->get_non_validated_data()->role);
+        $this->assertStringContainsString('<option value="teacher" selected>Teacher</option>', $this->render($form));
+        $form = new simple_form($this->get_url(), ['role' => null]);
+        $this->assertSame('teacher', $form->get_non_validated_data()->role);
+        $form = new simple_form($this->get_url(), ['role' => 'student']);
+        $this->assertSame('student', $form->get_non_validated_data()->role);
+
+        // Developers must not give values that are not among options.
+        $form = new simple_form($this->get_url(), ['role' => 'xyz']);
+        $this->assertDebuggingCalled('Value of select element "role" is not among its options, the first option is used');
+        $this->assertSame('teacher', $form->get_non_validated_data()->role);
+        $this->assertSame([], $this->get_rendered_errors($form, 'role'));
+
+        $this->assertSame('student', $this->submit('student')->get_data()->role);
+        $this->assertSame('teacher', $this->submit('')->get_data()->role);
+        $form = $this->submit('xyz');
+        $this->assertTrue($form->is_invalid());
+        $this->assertSame([get_string('error')], $this->get_rendered_errors($form, 'role'));
+        $this->assertSame('teacher', $form->get_non_validated_data()->role);
+        $this->assertDebuggingNotCalled();
+
+        // Required marker makes no sense when the value cannot be empty.
+        $this->add_element(true, false, false);
+        $this->simulate_get();
+        $form = new simple_form($this->get_url(), []);
+        $suffix = $form->get_idsuffix();
+        $this->assertStringContainsString(
+            '<select class="form-select" id="id_role' . $suffix . '" name="role" aria-describedby="id_error_role' . $suffix . '" size="3">',
+            $this->render($form)
+        );
+        $this->assertTrue($this->submit('teacher')->is_valid());
+    }
+
+    public function test_frozen_value(): void {
+        // Frozen value is never changed, not even when it is not among options.
+        $this->add_element(false, true, false);
+        $this->simulate_get();
+        $form = new simple_form($this->get_url(), ['role' => 'xyz']);
+        $this->assertSame('xyz', $form->get_non_validated_data()->role);
+        $suffix = $form->get_idsuffix();
+        $this->assertStringContainsString(
+            '<div class="form-control-plaintext" id="id_role' . $suffix . '">xyz</div>',
+            $this->render($form)
+        );
+        $form = new simple_form($this->get_url(), []);
+        $this->assertNull($form->get_non_validated_data()->role);
+        $this->simulate_post(simple_form::class, ['name' => 'x', 'role' => 'student', 'submit' => '1']);
+        $form = new simple_form($this->get_url(), ['role' => 'xyz']);
+        $this->assertSame('xyz', $form->get_data()->role);
+        $this->assertDebuggingNotCalled();
     }
 
     public function test_required(): void {

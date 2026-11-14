@@ -27,6 +27,10 @@ use tool_mulib\muform\util\options;
  * Single select dropdown, value is the key of selected option.
  *
  * Add an option with empty key for "Choose..." placeholder, it is returned as null.
+ * Without it the value is never null (unless frozen or without options): the first option is used
+ * when no value is given, same as shown by browsers, and required marker is not shown.
+ * Submitted value that is not among options is a validation error, such value in current data
+ * or default triggers developer debugging; frozen value is returned unchanged.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -70,16 +74,38 @@ final class select extends element {
     #[\Override]
     protected function parse_value(): void {
         parent::parse_value();
-        if ($this->value === null || $this->value === '' || is_array($this->value) || is_bool($this->value)) {
-            $this->value = null;
+
+        $empty = ($this->value === null || $this->value === '' || is_array($this->value) || is_bool($this->value));
+
+        if ($this->is_frozen()) {
+            // Frozen value comes from the developer and must not be changed, not even when it is not among options.
+            $this->value = $empty ? null : (string)$this->value;
             return;
         }
+
+        // Browsers always select the first option when nothing else is selected,
+        // the value must match what the user sees.
+        $keys = $this->options->get_keys();
+        $first = (!$keys || $keys[0] === '') ? null : $keys[0];
+
+        if ($empty) {
+            $this->value = $this->options->has_key('') ? null : $first;
+            return;
+        }
+
         $this->value = (string)$this->value;
-        if (!$this->options->has_key($this->value)) {
-            $this->value = null;
-            $this->errors[] = $this->get_invalid_hint();
+        if ($this->options->has_key($this->value)) {
             return;
         }
+
+        $postdata = $this->get_form()->get_post_data();
+        if ($postdata !== null && array_key_exists($this->get_name(), $postdata)) {
+            $this->errors[] = $this->get_invalid_hint();
+        } else {
+            $message = 'Value of select element "' . $this->get_name() . '" is not among its options, the first option is used';
+            debugging($message, DEBUG_DEVELOPER);
+        }
+        $this->value = $first;
     }
 
     #[\Override]
@@ -87,7 +113,13 @@ final class select extends element {
         $context = parent::get_template_data($output, $allerrors);
         $selected = ($this->value === null) ? [] : [$this->value];
         $context['groups'] = $this->options->get_template_data($context['id'], $selected);
-        $context['valuelabel'] = clean_string($this->options->get_labels()[$this->value] ?? '');
+        // Frozen value that is not among options is shown as is.
+        $context['valuelabel'] = clean_string($this->options->get_labels()[$this->value] ?? (string)$this->value);
+        if (!$this->options->has_key('')) {
+            // Without the "Choose..." option some value is always selected, required marker would be only noise.
+            $context['is_required'] = false;
+            $context['attr_required'] = false;
+        }
         return $context;
     }
 }

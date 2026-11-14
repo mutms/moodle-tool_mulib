@@ -404,7 +404,12 @@ if cleaning would change it, that is an error.
 `radios`, `checkboxes`, `select` and `multiselect` take an array of labels indexed by keys, or a
 `tool_mulib\muform\util\options` object when you need groups. Labels must be strings, so convert
 `lang_string` values with `array_map('strval', ...)`. An empty key in `select` is the "Choose..."
-option and returns `null`. For short lists like roles, `checkboxes` is nicer than `multiselect`.
+option and returns `null`. A `select` without it never returns `null`: the first option is used when
+no value is given (browsers show it selected anyway) and the required marker is not shown, because
+the user cannot leave it empty. A submitted value outside the options is a validation error, such a
+value in current data or default triggers developer debugging and the first option is used. A frozen
+`select` returns the given value unchanged, even when it is not among the options. For short lists
+like roles, `checkboxes` is nicer than `multiselect`.
 
 ### Cards
 
