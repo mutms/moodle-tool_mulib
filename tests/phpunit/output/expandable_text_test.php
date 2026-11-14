@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
 
 namespace tool_mulib\phpunit\output;
 
@@ -102,9 +103,10 @@ final class expandable_text_test extends \advanced_testcase {
         $this->assertFalse(expandable_text::is_empty('0'));
         $this->assertFalse(expandable_text::is_empty('<p>.</p>'));
         $this->assertFalse(expandable_text::is_empty('<p>&amp;</p>'));
-        foreach (['<p><img src="x.png" alt=""></p>', '<video src="x.mp4"></video>', '<audio src="x.mp3"></audio>',
-                '<iframe src="https://example.com/"></iframe>', '<object data="x.pdf"></object>', '<embed src="x.pdf">',
-                '<svg><circle r="1"/></svg>'] as $html) {
+        $media = ['<p><img src="x.png" alt=""></p>', '<video src="x.mp4"></video>', '<audio src="x.mp3"></audio>',
+            '<iframe src="https://example.com/"></iframe>', '<object data="x.pdf"></object>', '<embed src="x.pdf">',
+            '<svg><circle r="1"/></svg>'];
+        foreach ($media as $html) {
             $this->assertFalse(expandable_text::is_empty($html), $html);
             $this->assertSame($html, trim($OUTPUT->render((new expandable_text($html))->allow_unsafe_rawhtml())), $html);
         }
@@ -169,8 +171,9 @@ final class expandable_text_test extends \advanced_testcase {
                 . '<div class="tool_mulib-expandable-text-full">' . $html . '</div></details>',
             trim($OUTPUT->render(new expandable_text($html)))
         );
-        foreach (['<p>Hello <strong>world</strong></p>', 'Hello <a href="https://example.com/">world</a>', 'Hello<br>world',
-                '<p>Hello</p><p>world</p>', '<div>Hello world</div>'] as $html) {
+        $formatted = ['<p>Hello <strong>world</strong></p>', 'Hello <a href="https://example.com/">world</a>', 'Hello<br>world',
+            '<p>Hello</p><p>world</p>', '<div>Hello world</div>'];
+        foreach ($formatted as $html) {
             $this->assertStringContainsString('<span>Hello world</span>', $OUTPUT->render(new expandable_text($html)), $html);
         }
 
