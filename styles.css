@@ -486,3 +486,23 @@ dialog.muform-dialog .modal-body {
     border-top-left-radius: var(--bs-accordion-inner-border-radius);
     border-top-right-radius: var(--bs-accordion-inner-border-radius);
 }
+
+/* Text collapsed to one line, see tool_mulib\output\expandable_text. */
+.tool_mulib-expandable-text > summary {
+    cursor: pointer;
+}
+.tool_mulib-expandable-text[open] > summary {
+    margin-bottom: 0.5rem;
+}
+/* The short text guessed from the full text would only repeat its beginning. */
+.tool_mulib-expandable-text-guessed[open] > summary {
+    margin-bottom: 0;
+}
+.tool_mulib-expandable-text-guessed[open] > summary > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}

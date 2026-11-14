@@ -23,6 +23,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - default filter values of report_filter_bar, stored for users without stored filters and after "Reset all"
 - boolean_yes report builder filter that filters only when set to "Yes"
 - report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
+- expandable_text, descriptions collapsed to one line of text that expand to the full text
 
 ### Changed
 

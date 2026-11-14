@@ -106,6 +106,12 @@ if ($actions->has_items()) {
 ```
 
 - `output\entity_details`, `output\url_clipboard` - detail lists and copy-to-clipboard URLs.
+- `output\expandable_text` - long descriptions collapsed to one line (native `details`): `new expandable_text($fullhtml, $short)`,
+  `$fullhtml` is always cleaned with `clean_text()`, html of templates needs `->allow_unsafe_rawhtml()`;
+  `$short` is plain text always cut to one line by the browser; NULL or blank collapses full texts
+  with tags or 100 and more characters, using their beginning as the short text; shorter plain text, also as one
+  editor paragraph, is printed whole. `expandable_text::is_empty($html)` detects editor content without text and media
+  (empty paragraphs, `&nbsp;`) - use it when storing descriptions as NULL.
 - `output\report_filter_bar` + `output\report_pager` - filter bar with pinned filters above and pager with record
   count and download menu below system reports. Read `docs/reportbuilder.md` before adding a report, changing its
   filters or writing Behat for it.
