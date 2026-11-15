@@ -299,6 +299,20 @@ final class wizard {
     }
 
     /**
+     * Is the stage completed with valid data, or skipped?
+     *
+     * @param string $stage
+     * @return bool
+     */
+    public function is_completed(string $stage): bool {
+        $states = $this->get_states();
+        if (!isset($states[$stage])) {
+            throw new coding_exception('Unknown wizard stage: ' . $stage);
+        }
+        return $states[$stage]['completed'];
+    }
+
+    /**
      * Are all stages completed and no stage was requested?
      *
      * @return bool

@@ -644,7 +644,7 @@ $stage = $wizard->resolve_stages($isvalid);
 if ($wizard->is_finished()) {
     // All stages completed, do the job, delete the wizard and redirect.
 }
-$form = new user_upload_source($wizard->get_url($pageurl, $stage), $data, ['idp' => $idp]);
+$form = new source($wizard->get_url($pageurl, $stage), $data, ['idp' => $idp]);
 if ($form->is_cancelled()) {
     $wizard->delete();
     redirect($returnurl);
@@ -709,16 +709,27 @@ for `submit_stage()` of the same request. Optional hooks:
 
 - `start_state()` stores defaults of a new wizard or completes stages that need no input, and may
   return the stage to open;
+- `get_unavailable_reason()` returns why the wizard cannot be used now (for example the program was
+  archived); the stored wizard is deleted, the reason is shown as a notification on the return page;
 - `check_state()` stops a wizard whose stored state cannot be used any more;
 - `get_skipped_stages()` lists stages that do not apply now;
 - `finish()` is for wizards finished when all stages are completed; wizards with a last summary
   stage finish in `submit_stage()` of that stage instead, by returning the URL to go to;
 - `reload_stage()` handles reload buttons other than Back, such as adding a row, see below;
+- `get_locked_stages()` lists stages that cannot be changed once completed, together with all stages
+  before them; `create_form()` renders them read-only when `is_stage_locked()`, Continue and Back
+  there only move to the next or previous stage and nothing is submitted;
 - `keeps_later_stages()` is for wizards editing existing data: all stages are completed from the
   start, submitting one goes to the following stage and the later ones stay completed;
+- `get_heading()` is printed above the stepper, when the page heading is not the wizard title;
 - `render_page()` prints the page.
 
 Access control is not part of the class, check it in the constructor.
+
+Uploads: questions that affect the whole wizard (what to do with the uploaded rows, for example)
+are asked before it, usually in a dialog form whose answers become page parameters and part of the
+wizard name. The upload or pasted data is the first stage, stored parsed (never the draft item id of
+the file), and locked: later stages depend on it, different data means starting again.
 
 ### Wizard buttons
 

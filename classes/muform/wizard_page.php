@@ -120,6 +120,19 @@ abstract class wizard_page {
     }
 
     /**
+     * Why the wizard cannot be used now, for example the edited record does not allow it any more.
+     *
+     * Checked before the state is used, $this->state holds the stored data of a running wizard:
+     * the stored wizard is deleted, the reason is shown as a notification on the next page
+     * and the user goes to the return URL. Access control stays in the constructor.
+     *
+     * @return string|null null when the wizard can be used
+     */
+    protected function get_unavailable_reason(): ?string {
+        return null;
+    }
+
+    /**
      * Check the loaded state before anything else, for example that the edited record was not changed
      * by somebody else meanwhile; delete the wizard and redirect away if it cannot continue.
      */
@@ -133,6 +146,49 @@ abstract class wizard_page {
      */
     protected function get_skipped_stages(): array {
         return [];
+    }
+
+    /**
+     * Stages that cannot be changed once they are completed, for example uploaded data
+     * that later stages depend on. Stages before a locked stage are locked too.
+     *
+     * A locked stage is still shown, create_form() renders it read-only (see is_stage_locked()),
+     * Continue and Back only move to the next or previous stage and nothing is submitted.
+     *
+     * @return string[]
+     */
+    protected function get_locked_stages(): array {
+        return [];
+    }
+
+    /**
+     * Is the stage read-only because it or a later stage is locked and completed?
+     *
+     * @param string $stage
+     * @return bool
+     */
+    final protected function is_stage_locked(string $stage): bool {
+        $names = array_keys($this->get_stages());
+        $position = array_search($stage, $names, true);
+        foreach ($this->get_locked_stages() as $locked) {
+            $lockedposition = array_search($locked, $names, true);
+            if ($lockedposition === false) {
+                throw new \coding_exception('Unknown locked wizard stage: ' . $locked);
+            }
+            if ($lockedposition >= $position && $this->wizard->is_completed($locked)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Heading printed above the stepper.
+     *
+     * @return string|null null means no heading, for example when the page layout shows the title
+     */
+    protected function get_heading(): ?string {
+        return null;
     }
 
     /**
@@ -180,8 +236,29 @@ abstract class wizard_page {
         global $OUTPUT;
 
         echo $OUTPUT->header();
+        $heading = $this->get_heading();
+        if ($heading !== null) {
+            echo $OUTPUT->heading($heading, 2, 'mb-3');
+        }
         echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form);
         echo $OUTPUT->footer();
+    }
+
+    /**
+     * The stage after the current one that is not skipped.
+     *
+     * @return string|null null after the last stage
+     */
+    private function get_next_stage(): ?string {
+        $skipped = $this->get_skipped_stages();
+        $after = false;
+        foreach (array_keys($this->get_stages()) as $name) {
+            if ($after && !in_array($name, $skipped, true)) {
+                return $name;
+            }
+            $after = $after || ($name === $this->stage);
+        }
+        return null;
     }
 
     /**
@@ -194,12 +271,20 @@ abstract class wizard_page {
         $name = $this->get_name();
         $stages = $this->get_stages();
         $wizard = wizard::load($name, $stages);
+        if ($wizard) {
+            $this->wizard = $wizard;
+            $this->state = $wizard->get_data();
+        }
+        $reason = $this->get_unavailable_reason();
+        if ($reason !== null) {
+            $wizard?->delete();
+            \core\notification::warning($reason);
+            redirect($this->get_return_url());
+        }
         if (!$wizard) {
             $this->wizard = wizard::start($name, $stages);
             redirect($this->wizard->get_url($pageurl, $this->start_state()));
         }
-        $this->wizard = $wizard;
-        $this->state = $wizard->get_data();
         $this->check_state();
 
         $isvalid = fn(string $stage): bool => $this->is_stage_valid($stage);
@@ -211,8 +296,9 @@ abstract class wizard_page {
             }
         }
         $this->formurl = $wizard->get_url($pageurl, $this->stage);
+        $locked = $this->is_stage_locked($this->stage);
         $form = $this->create_form($this->stage, $this->formurl);
-        if ($wizard->is_changed($this->stage)) {
+        if (!$locked && $wizard->is_changed($this->stage)) {
             // Rows were changed without validation before.
             $form->set_changed(true);
         }
@@ -222,6 +308,11 @@ abstract class wizard_page {
         if ($form->is_cancelled()) {
             $wizard->delete();
             redirect($this->get_return_url());
+        }
+        if ($locked && !$form->is_new()) {
+            // Nothing can be changed, the buttons only move to the previous or next stage.
+            $goback = $previous !== null && $back?->get_value();
+            redirect($wizard->get_url($pageurl, $goback ? $previous : $this->get_next_stage()));
         }
         if ($form->is_reloaded()) {
             if ($previous !== null && $back?->get_value()) {

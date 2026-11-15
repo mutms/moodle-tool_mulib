@@ -349,6 +349,13 @@ final class wizard_test extends \advanced_testcase {
         $this->assertSame('source', $wizard->get_previous_stage());
         $this->assertSame('options', $this->resolve($wizard, fn() => true, 'columns', $skip));
         $this->assertFalse($wizard->is_finished());
+        $this->assertTrue($wizard->is_completed('source'));
+        $this->assertTrue($wizard->is_completed('columns'));
+        $this->assertFalse($wizard->is_completed('options'));
+        // Stored completion counts only with valid data.
+        $this->resolve($wizard, fn($stage) => $stage !== 'source', null, $skip);
+        $this->assertFalse($wizard->is_completed('source'));
+        $this->resolve($wizard, fn() => true, null, $skip);
 
         $wizard->complete_stage('options', []);
         $this->assertSame('options', $this->resolve($wizard, fn() => true, null, $skip));

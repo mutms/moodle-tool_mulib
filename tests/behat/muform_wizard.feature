@@ -151,3 +151,40 @@ Feature: muform wizard helper
     When I press "Back"
     Then I should see "Stage choice" in the "#muform_state" "css_element"
 
+
+  Scenario: A locked stage is read-only once it is completed
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "locked=1"
+    When I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Continue"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    When I press "Back"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "Jane Doe" in the "[data-muform-name='fullname']" "css_element"
+    And "input[name='fullname']" "css_element" should not exist
+    When I press "Continue"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And I should see "\"fullname\":\"Jane Doe\"" in the "#wizard_data" "css_element"
+    When I set the following muform fields:
+      | colour | Green |
+    And I press "Continue"
+    And I click on "Details" "link" in the ".muform-wizard-stages" "css_element"
+    And I press "Continue"
+    # Nothing was submitted, the later stages stay completed.
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And "//nav[contains(@class, 'muform-wizard-stages')]//a[normalize-space()='Summary']" "xpath_element" should exist
+    When I click on "Summary" "link" in the ".muform-wizard-stages" "css_element"
+    And I press "Finish"
+    Then I should see "Wizard finished for Jane Doe" in the "#muform_state" "css_element"
+
+  Scenario: An unavailable wizard is deleted with a notification
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
+    When I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Continue"
+    And I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "unavailable=1"
+    Then I should see "Fixture wizard is not available"
+    And I should see "Wizard cancelled" in the "#muform_state" "css_element"
+    When I click on "Start again" "link"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "{}" in the "#wizard_data" "css_element"

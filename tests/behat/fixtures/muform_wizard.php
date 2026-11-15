@@ -23,6 +23,9 @@
  * wizard=<id> and stage=<name> as the helper defines them, cancelled=1 and
  * finished=<name> are set by the redirects.
  *
+ * With locked=1 the details stage is locked once it is completed, with unavailable=1
+ * the wizard is not available and a stored wizard is deleted.
+ *
  * The page prints the current stage in #muform_state and the stored data in #wizard_data.
  *
  * @package     tool_mulib
@@ -51,9 +54,26 @@ require_once(__DIR__ . '/muform_wizard_summary_form.php');
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
+    /** @var string fixture page path */
+    private const string PATH = '/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php';
+
+    /**
+     * Constructor.
+     *
+     * @param bool $locked lock the details stage
+     * @param bool $unavailable the wizard cannot be used
+     */
+    public function __construct(
+        /** @var bool lock the details stage */
+        private bool $locked,
+        /** @var bool the wizard cannot be used */
+        private bool $unavailable
+    ) {
+    }
+
     #[\Override]
     protected function get_name(): string {
-        return 'tool_mulib_fixture';
+        return 'tool_mulib_fixture' . ($this->locked ? '_locked' : '');
     }
 
     #[\Override]
@@ -63,12 +83,23 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
 
     #[\Override]
     protected function get_page_url(): \core\url {
-        return new \core\url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php');
+        $params = $this->locked ? ['locked' => 1] : [];
+        return new \core\url(self::PATH, $params);
+    }
+
+    #[\Override]
+    protected function get_unavailable_reason(): ?string {
+        return $this->unavailable ? 'Fixture wizard is not available' : null;
+    }
+
+    #[\Override]
+    protected function get_locked_stages(): array {
+        return $this->locked ? ['details'] : [];
     }
 
     #[\Override]
     protected function get_return_url(): \core\url {
-        return new \core\url($this->get_page_url(), ['cancelled' => 1]);
+        return new \core\url(self::PATH, ['cancelled' => 1]);
     }
 
     #[\Override]
@@ -95,7 +126,7 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
     protected function create_form(string $stage, \core\url $formurl): form {
         $data = $this->state;
         if ($stage === 'details') {
-            return new tool_mulib_muform_wizard_details_form($formurl, $data);
+            return new tool_mulib_muform_wizard_details_form($formurl, $data, ['locked' => $this->is_stage_locked($stage)]);
         }
         if ($stage === 'choice') {
             return new tool_mulib_muform_wizard_choice_form($formurl, $data);
@@ -114,7 +145,7 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
     protected function submit_stage(string $stage, stdClass $data, form $form): ?\core\url {
         if ($stage === 'summary') {
             $this->wizard->delete();
-            return new \core\url($this->get_page_url(), ['finished' => $this->state['fullname']]);
+            return new \core\url(self::PATH, ['finished' => $this->state['fullname']]);
         }
         // Store only what this stage validated, keep the rest.
         foreach ((array)$data as $name => $value) {
@@ -142,7 +173,10 @@ if (optional_param('cancelled', 0, PARAM_BOOL)) {
     $state = 'Wizard finished for ' . $finished;
 }
 
-$page = new tool_mulib_muform_wizard_fixture_page();
+$page = new tool_mulib_muform_wizard_fixture_page(
+    optional_param('locked', 0, PARAM_BOOL),
+    optional_param('unavailable', 0, PARAM_BOOL)
+);
 if ($state === null) {
     $page->execute();
     die;
