@@ -90,7 +90,7 @@ final class tags_test extends route_testcase {
             'tool_mulib\\muform\\tagarea\\base',
             'tool_mulib\\muform\\tagarea\\missing',
             'tool_nope\\muform\\tagarea\\course',
-            'tool_mulib\\muform\\autocompletemany\\site_users',
+            'tool_mulib\\muform\\autocomplete\\site_users',
             '',
         ];
         foreach ($bad as $area) {

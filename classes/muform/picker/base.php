@@ -67,7 +67,24 @@ abstract class base {
      * @return string[] value => error text
      */
     public function validate(array $values): array {
-        return [];
+        $result = [];
+        foreach ($values as $value) {
+            $error = $this->validate_value((string)$value);
+            if ($error !== null) {
+                $result[(string)$value] = $error;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Why one value is refused, used by the default validate(); override validate() instead for checks of all values at once.
+     *
+     * @param string $value
+     * @return string|null error text, null when it may be selected
+     */
+    protected function validate_value(string $value): ?string {
+        return null;
     }
 
     /**

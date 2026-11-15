@@ -24,7 +24,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\muform\autocomplete\site_user;
+use tool_mulib\muform\autocomplete\site_users;
 use tool_mulib\muform\element\autocomplete;
 use tool_mulib\muform\element\buttons;
 use tool_mulib\muform\element\cancel;
@@ -57,7 +57,7 @@ final class tool_mulib_muform_fixture_autocomplete_form extends form {
 
         $syscontextid = \core\context\system::instance()->id;
 
-        $owner = (new autocomplete('owner', 'Owner', new site_user($syscontextid), ['placeholder' => 'Find a user...']))
+        $owner = (new autocomplete('owner', 'Owner', new site_users($syscontextid), ['placeholder' => 'Find a user...']))
             ->set_required($flags['required'])
             ->set_frozen($flags['frozen']);
         if ($flags['default']) {
@@ -65,7 +65,7 @@ final class tool_mulib_muform_fixture_autocomplete_form extends form {
         }
         $this->add($owner);
 
-        $this->add(new autocomplete('reviewer', 'Reviewer', new site_user($syscontextid)));
+        $this->add(new autocomplete('reviewer', 'Reviewer', new site_users($syscontextid)));
 
         $this->add(new buttons('buttons'));
         $this->add(new submit(), 'buttons');

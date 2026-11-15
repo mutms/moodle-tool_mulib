@@ -65,7 +65,7 @@ final class autocomplete_test extends route_testcase {
         $syscontext = system::instance();
 
         $response = $this->post([
-            'source' => \tool_mulib\muform\autocomplete\site_user::class,
+            'source' => \tool_mulib\muform\autocomplete\site_users::class,
             'args' => [$syscontext->id],
             'query' => 'Bert',
         ]);
@@ -76,16 +76,28 @@ final class autocomplete_test extends route_testcase {
         $this->assertCount(1, $payload['list']);
         $this->assertSame((string)$u2->id, $payload['list'][0]['value']);
         $this->assertStringContainsString('Bert Zeta', $payload['list'][0]['label']);
-        $this->assertNotEmpty($u1);
+
+        // Selected values of autocompletemany elements are not offered again.
+        $response = $this->post([
+            'source' => \tool_mulib\muform\autocomplete\site_users::class,
+            'args' => [$syscontext->id],
+            'query' => 'Zeta',
+            'exclude' => [(string)$u1->id],
+        ]);
+        $this->assertSame(200, $response->getStatusCode(), (string)$response->getBody());
+        $payload = json_decode((string)$response->getBody(), true);
+        $this->assertSame([(string)$u2->id], array_column($payload['list'], 'value'));
     }
 
     public function test_bad_sources(): void {
         $this->setAdminUser();
         $bad = [
+            // The removed namespace of the old multiple values sources.
             'tool_mulib\\muform\\autocompletemany\\site_users',
+            'tool_mulib\\muform\\userpicker\\site_users',
             'tool_mulib\\muform\\autocomplete\\base',
             'tool_mulib\\muform\\autocomplete\\missing',
-            'tool_nope\\muform\\autocomplete\\site_user',
+            'tool_nope\\muform\\autocomplete\\site_users',
             'tool_mulib\\muform\\element\\text',
             '',
         ];
@@ -94,7 +106,7 @@ final class autocomplete_test extends route_testcase {
             $this->assertSame(400, $response->getStatusCode(), $source);
         }
         $response = $this->post([
-            'source' => \tool_mulib\muform\autocomplete\site_user::class,
+            'source' => \tool_mulib\muform\autocomplete\site_users::class,
             'args' => [[1]],
             'query' => '',
         ]);
@@ -103,7 +115,7 @@ final class autocomplete_test extends route_testcase {
 
     public function test_access(): void {
         $syscontext = system::instance();
-        $body = ['source' => \tool_mulib\muform\autocomplete\site_user::class, 'args' => [$syscontext->id], 'query' => ''];
+        $body = ['source' => \tool_mulib\muform\autocomplete\site_users::class, 'args' => [$syscontext->id], 'query' => ''];
 
         $this->setUser(null);
         $this->assertNotSame(200, $this->post($body)->getStatusCode());

@@ -92,21 +92,21 @@ final class extdb_query_context_test extends \advanced_testcase {
             (string)$d['cat0']->id => $d['category0']->name,
             (string)$d['cat1']->id => 'Kategorie 1',
             (string)$d['cat2']->id => 'Kategorie 1 / Kategorie 2',
-        ], $source->search('', 50));
+        ], $source->search('', 50, []));
 
         // Name, idnumber and description are searched.
         $this->assertSame([
             (string)$d['cat1']->id => 'Kategorie 1',
-        ], $source->search('AT1', 50));
+        ], $source->search('AT1', 50, []));
         $this->assertSame([
             (string)$d['cat2']->id => 'Kategorie 1 / Kategorie 2',
-        ], $source->search('Popis 2', 50));
+        ], $source->search('Popis 2', 50, []));
         $this->assertSame([
             (string)$d['sys']->id => 'System',
-        ], $source->search('syst', 50));
+        ], $source->search('syst', 50, []));
 
         // Too many results.
-        $this->assertNull($source->search('', 3));
+        $this->assertNull($source->search('', 3, []));
     }
 
     public function test_label(): void {
@@ -114,12 +114,16 @@ final class extdb_query_context_test extends \advanced_testcase {
         $this->setUser($d['user1']);
 
         $source = new extdb_query_context($d['sys']->id);
-        $this->assertSame('System', $source->label((string)$d['sys']->id));
-        $this->assertSame('Kategorie 1', $source->label((string)$d['cat1']->id));
-        $this->assertSame('Kategorie 1 / Kategorie 2', $source->label((string)$d['cat2']->id));
-        $this->assertNull($source->label((string)$d['course1']->id));
-        $this->assertNull($source->label('-1'));
-        $this->assertNull($source->label('abc'));
+        $value = (string)$d['sys']->id;
+        $this->assertSame('System', $source->labels([$value])[$value] ?? null);
+        $value = (string)$d['cat1']->id;
+        $this->assertSame('Kategorie 1', $source->labels([$value])[$value] ?? null);
+        $value = (string)$d['cat2']->id;
+        $this->assertSame('Kategorie 1 / Kategorie 2', $source->labels([$value])[$value] ?? null);
+        $value = (string)$d['course1']->id;
+        $this->assertNull($source->labels([$value])[$value] ?? null);
+        $this->assertNull($source->labels(['-1'])['-1'] ?? null);
+        $this->assertNull($source->labels(['abc'])['abc'] ?? null);
     }
 
     public function test_label_capability(): void {
@@ -133,9 +137,11 @@ final class extdb_query_context_test extends \advanced_testcase {
         role_assign($roleid, $d['user1']->id, $d['cat1']->id);
         accesslib_clear_all_caches_for_unit_testing();
 
-        $this->assertNull($source->label((string)$d['cat1']->id));
-        $this->assertSame('Kategorie 1 / Kategorie 2', $source->label((string)$d['cat2']->id));
-        $this->assertNotContains('Kategorie 1', $source->search('', 50));
+        $value = (string)$d['cat1']->id;
+        $this->assertNull($source->labels([$value])[$value] ?? null);
+        $value = (string)$d['cat2']->id;
+        $this->assertSame('Kategorie 1 / Kategorie 2', $source->labels([$value])[$value] ?? null);
+        $this->assertNotContains('Kategorie 1', $source->search('', 50, []));
     }
 
     public function test_constructor_requires_system_capability(): void {
@@ -166,13 +172,13 @@ final class extdb_query_context_test extends \advanced_testcase {
         $source = new extdb_query_context($syscontext->id);
         $this->assertEqualsCanonicalizing(
             [$syscontext->id, $catcontext0->id, $catcontext1->id, $catcontext2->id],
-            array_keys($source->search('', 50))
+            array_keys($source->search('', 50, []))
         );
 
         \tool_mutenancy\local\tenancy::switch($tenant1->id);
         $this->assertEqualsCanonicalizing(
             [$syscontext->id, $catcontext0->id, $catcontext1->id],
-            array_keys($source->search('', 50))
+            array_keys($source->search('', 50, []))
         );
     }
 }

@@ -35,7 +35,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use tool_mulib\muform\autocomplete\base;
 
 /**
- * Search endpoint of all single value autocomplete elements.
+ * Search endpoint of all autocomplete and autocompletemany elements.
  *
  * The source class is reinstantiated from the request, its constructor does the access
  * control; only subclasses of the family base living in <component>\muform\autocomplete
@@ -59,7 +59,7 @@ class autocomplete {
     #[route(
         path: '/muform/autocomplete',
         method: ['POST'],
-        title: 'Search single value autocomplete options',
+        title: 'Search autocomplete options',
         requestbody: new request_body(
             content: new payload_response_type(
                 schema: new schema_object(
@@ -67,6 +67,7 @@ class autocomplete {
                         'source' => new scalar_type(param::RAW, required: true),
                         'args' => new array_of_strings(param::INT, param::RAW),
                         'query' => new scalar_type(param::RAW, required: true),
+                        'exclude' => new array_of_strings(param::INT, param::RAW),
                     ],
                 ),
             ),
@@ -91,11 +92,21 @@ class autocomplete {
         $source = self::instantiate((string)($body['source'] ?? ''), (array)($body['args'] ?? []));
 
         $maxitems = $source->get_maxitems();
-        $list = $source->search((string)($body['query'] ?? ''), $maxitems);
+        $exclude = [];
+        foreach ((array)($body['exclude'] ?? []) as $value) {
+            if (is_scalar($value)) {
+                $exclude[(string)$value] = (string)$value;
+            }
+        }
+        $list = $source->search((string)($body['query'] ?? ''), $maxitems, array_values($exclude));
         $payload = ['list' => null, 'overflow' => true, 'maxitems' => $maxitems];
         if ($list !== null) {
             $payload['list'] = [];
             foreach ($list as $value => $label) {
+                if (isset($exclude[(string)$value])) {
+                    // Values already selected are never offered again, even if the source ignores them.
+                    continue;
+                }
                 $payload['list'][] = ['value' => (string)$value, 'label' => (string)$label];
             }
             $payload['overflow'] = false;

@@ -39,7 +39,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[CoversClass(\tool_mulib\muform\element\autocompletemany::class)]
-#[CoversClass(\tool_mulib\muform\autocompletemany\base::class)]
+#[CoversClass(\tool_mulib\muform\autocomplete\base::class)]
 #[Group('MuTMS')]
 final class autocompletemany_test extends muform_testcase {
     /**
@@ -99,7 +99,7 @@ final class autocompletemany_test extends muform_testcase {
         $form = new simple_form($this->get_url(), ['members' => 'b,a']);
         $html = $this->render($form);
         $suffix = $form->get_idsuffix();
-        $this->assertStringContainsString('/tool_mulib/muform/autocompletemany"', $html);
+        $this->assertStringContainsString('/tool_mulib/muform/autocomplete"', $html);
         $this->assertStringContainsString('fake_sources&quot;,&quot;args&quot;:[&quot;&quot;]}"', $html);
         $this->assertStringContainsString('id="id_members' . $suffix . '" name="members" value="b,a"', $html);
         $this->assertStringContainsString('placeholder="Search..."', $html);

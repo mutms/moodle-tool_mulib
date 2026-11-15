@@ -22,14 +22,14 @@ use core\exception\moodle_exception;
 use core\output\core_renderer;
 use core\param;
 use core\router\util;
-use tool_mulib\muform\autocompletemany\base;
+use tool_mulib\muform\autocomplete\base;
 use tool_mulib\muform\element;
 
 /**
  * Multiple values autocomplete element, the value is a list of strings.
  *
  * The source given to the constructor owns searching, labels, per-option validation
- * and access control, the same class serves the tool_mulib autocompletemany endpoint.
+ * and access control, the same class serves the tool_mulib autocomplete endpoint.
  * Values are restricted to letters, digits and "_-.:@", never empty, so the list is
  * posted as one comma separated string. Not available to guests.
  *
@@ -158,7 +158,7 @@ final class autocompletemany extends element {
                 'error' => $this->valueerrors[$item] ?? null,
             ];
         }
-        $context['url'] = util::get_path_for_callable([\tool_mulib\route\api\muform\autocompletemany::class, 'search'])->out(false);
+        $context['url'] = util::get_path_for_callable([\tool_mulib\route\api\muform\autocomplete::class, 'search'])->out(false);
         $source = ['class' => get_class($this->source), 'args' => $this->source->get_args()];
         $context['sourcejson'] = json_encode($source, JSON_UNESCAPED_SLASHES);
         $context['selected'] = $selected;

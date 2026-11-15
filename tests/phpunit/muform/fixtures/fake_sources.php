@@ -18,10 +18,10 @@
 
 namespace tool_mulib\phpunit\muform\fixtures;
 
-use tool_mulib\muform\autocompletemany\base;
+use tool_mulib\muform\autocomplete\base;
 
 /**
- * Fake multiple values source: fixed options, one refused value.
+ * Fake source with labels and validation of all values at once: fixed options, one refused value.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda

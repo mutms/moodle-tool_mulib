@@ -21,7 +21,7 @@ namespace tool_mulib\phpunit\muform\fixtures;
 use tool_mulib\muform\autocomplete\base;
 
 /**
- * Fake single value source: fixed options, one refused value.
+ * Fake source with per-value labels and validation: fixed options, one refused value, exclusions ignored.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -37,7 +37,7 @@ final class fake_source extends base {
     /**
      * Constructor.
      *
-     * @param string $refused value that validate() refuses
+     * @param string $refused value that validate_value() refuses
      */
     public function __construct(string $refused = '') {
         $this->refused = $refused;
@@ -49,7 +49,7 @@ final class fake_source extends base {
     }
 
     #[\Override]
-    public function search(string $query, int $maxitems): ?array {
+    public function search(string $query, int $maxitems, array $exclude): ?array {
         if ($query === 'overflow') {
             return null;
         }
@@ -57,12 +57,12 @@ final class fake_source extends base {
     }
 
     #[\Override]
-    public function label(string $value): ?string {
+    protected function label_value(string $value): ?string {
         return self::OPTIONS[$value] ?? null;
     }
 
     #[\Override]
-    public function validate(string $value): ?string {
+    protected function validate_value(string $value): ?string {
         return ($value === $this->refused) ? 'Not allowed' : null;
     }
 }

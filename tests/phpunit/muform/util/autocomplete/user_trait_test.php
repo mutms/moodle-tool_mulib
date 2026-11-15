@@ -20,8 +20,7 @@ namespace tool_mulib\phpunit\muform\util\autocomplete;
 
 use core\context\system;
 use tool_mulib\local\sql;
-use tool_mulib\muform\autocomplete\site_user;
-use tool_mulib\muform\autocompletemany\site_users;
+use tool_mulib\muform\autocomplete\site_users;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Group;
@@ -34,8 +33,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[CoversTrait(\tool_mulib\muform\util\autocomplete\user_trait::class)]
-#[CoversClass(\tool_mulib\muform\autocomplete\site_user::class)]
-#[CoversClass(\tool_mulib\muform\autocompletemany\site_users::class)]
+#[CoversClass(\tool_mulib\muform\autocomplete\site_users::class)]
 #[Group('MuTMS')]
 final class user_trait_test extends \advanced_testcase {
     #[\Override]
@@ -74,19 +72,15 @@ final class user_trait_test extends \advanced_testcase {
         $this->assertEqualsCanonicalizing([(int)$u1->id, (int)$u5->id], array_keys($labels));
         $this->assertSame([], $source->validate([(string)$u1->id, (string)$u5->id]));
 
-        $single = new site_user($syscontext->id);
-        $this->assertStringContainsString('Bert Zeta', $single->label((string)$u2->id));
-        $this->assertNull($single->label((string)$u3->id));
-        $this->assertNull($single->validate((string)$u1->id));
-        $this->assertNull($single->validate((string)$u5->id));
-        $this->assertEqualsCanonicalizing([$u1->id, $u2->id, $u5->id], array_keys($single->search('Zeta', 50)));
+        $this->assertStringContainsString('Bert Zeta', $source->labels([(string)$u2->id])[$u2->id]);
+        $this->assertSame([], $source->labels([(string)$u3->id]));
     }
 
     public function test_extra_where(): void {
         $generator = $this->getDataGenerator();
         $u1 = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Zeta']);
         $u2 = $generator->create_user(['firstname' => 'Bert', 'lastname' => 'Zeta']);
-        $source = new class (system::instance()->id, $u2->id) extends \tool_mulib\muform\autocompletemany\base {
+        $source = new class (system::instance()->id, $u2->id) extends \tool_mulib\muform\autocomplete\base {
             use \tool_mulib\muform\util\autocomplete\user_trait;
 
             /**
@@ -126,7 +120,7 @@ final class user_trait_test extends \advanced_testcase {
 
     public function test_disallow_suspended_users(): void {
         $u1 = $this->getDataGenerator()->create_user(['suspended' => 1]);
-        $source = new class extends \tool_mulib\muform\autocompletemany\base {
+        $source = new class extends \tool_mulib\muform\autocomplete\base {
             use \tool_mulib\muform\util\autocomplete\user_trait;
 
             #[\Override]

@@ -153,7 +153,7 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
         const timer = setTimeout(async() => {
             const body = {source: source.class, args: source.args, query, exclude: selected.map((item) => item.value)};
             try {
-                const response = await Fetch.performPost('tool_mulib', 'muform/autocompletemany', {body});
+                const response = await Fetch.performPost('tool_mulib', 'muform/autocomplete', {body});
                 const answer = await response.json() as Answer;
                 if (answer.overflow || answer.list === null) {
                     setResults({kind: 'overflow'});

@@ -23,7 +23,7 @@ use tool_mulib\local\search_util;
 use tool_mulib\local\sql;
 
 /**
- * User search helpers for autocomplete sources of either family.
+ * User search helpers for autocomplete sources and the users picker.
  *
  * Deleted, unconfirmed and guest users are never returned, tenant restrictions apply,
  * labels are the core user selector suggestion html passed through clean_text().

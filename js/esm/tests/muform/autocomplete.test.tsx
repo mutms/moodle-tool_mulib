@@ -48,7 +48,7 @@ let mounted: {destroy(): void}[] = [];
 function fixture(selected: string, key: string, required = false): string {
     return wrap('owner', 'autocomplete',
         '<div class="muform-autocomplete w-100" data-muform-autocomplete data-muform-autocomplete-url="/api/one"'
-        + ` data-muform-autocomplete-source='{"class":"tool_mulib\\\\muform\\\\autocomplete\\\\site_user","args":[1]}'`
+        + ` data-muform-autocomplete-source='{"class":"tool_mulib\\\\muform\\\\autocomplete\\\\site_users","args":[1]}'`
         + ` data-muform-autocomplete-selected='${selected}'>`
         + `<input type="text" id="id_owner" name="owner" value="${key}" placeholder="Find a user"${required ? ' required' : ''}>`
         + '</div>');
@@ -151,7 +151,7 @@ describe('tool_mulib/muform/element/autocomplete', () => {
             type(input, 'ca');
         });
         await settle(300);
-        expect(bodies.at(-1)).toEqual({source: 'tool_mulib\\muform\\autocomplete\\site_user', args: [1], query: 'ca'});
+        expect(bodies.at(-1)).toEqual({source: 'tool_mulib\\muform\\autocomplete\\site_users', args: [1], query: 'ca'});
         const option = wrapper.querySelector<HTMLElement>('[data-muform-autocomplete-option="7"]')!;
         await act(async() => {
             option.click();

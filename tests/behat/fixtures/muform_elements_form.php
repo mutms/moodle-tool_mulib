@@ -97,9 +97,9 @@ final class tool_mulib_muform_elements_form extends form {
 
         $this->add(new section('pickers', 'Pickers'));
         $syscontextid = \core\context\system::instance()->id;
-        $ownersource = new \tool_mulib\muform\autocomplete\site_user($syscontextid);
+        $ownersource = new \tool_mulib\muform\autocomplete\site_users($syscontextid);
         $this->add(new autocomplete('owner', 'Owner', $ownersource, ['placeholder' => 'Find a user...']), 'pickers');
-        $memberssource = new \tool_mulib\muform\autocompletemany\site_users($syscontextid);
+        $memberssource = new \tool_mulib\muform\autocomplete\site_users($syscontextid);
         $this->add(new autocompletemany('members', 'Members', $memberssource, ['placeholder' => 'Find a user...']), 'pickers');
 
         $this->add(new section('choices', 'Choices'));

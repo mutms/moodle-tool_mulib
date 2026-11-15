@@ -48,7 +48,7 @@ let mounted: {destroy(): void}[] = [];
 function fixture(selected: string, keys: string, required = false): string {
     return wrap('members', 'autocompletemany',
         '<div class="muform-autocompletemany w-100" data-muform-autocompletemany data-muform-autocomplete-url="/api/many"'
-        + ` data-muform-autocomplete-source='{"class":"tool_mulib\\\\muform\\\\autocompletemany\\\\site_users","args":[1]}'`
+        + ` data-muform-autocomplete-source='{"class":"tool_mulib\\\\muform\\\\autocomplete\\\\site_users","args":[1]}'`
         + ` data-muform-autocomplete-selected='${selected}'>`
         + `<input type="text" id="id_members" name="members" value="${keys}" placeholder="Find users"`
         + `${required ? ' required' : ''}>`
@@ -113,7 +113,7 @@ beforeEach(() => {
     bodies = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: object}) => {
         expect(component).toBe('tool_mulib');
-        expect(action).toBe('muform/autocompletemany');
+        expect(action).toBe('muform/autocomplete');
         bodies.push(body);
         const answer = answers.shift() ?? {list: [], overflow: false, maxitems: 50};
         return {json: async() => answer};
@@ -153,7 +153,7 @@ describe('tool_mulib/muform/element/autocompletemany', () => {
         });
         await settle(300);
         expect(bodies.at(-1)).toEqual({
-            source: 'tool_mulib\\muform\\autocompletemany\\site_users', args: [1], query: '', exclude: [],
+            source: 'tool_mulib\\muform\\autocomplete\\site_users', args: [1], query: '', exclude: [],
         });
         const options = wrapper.querySelectorAll('[data-muform-autocomplete-option]');
         expect(options.length).toBe(2);

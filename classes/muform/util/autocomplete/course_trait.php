@@ -26,7 +26,7 @@ use tool_mulib\local\mulib;
 use tool_mulib\local\sql;
 
 /**
- * Course search helpers for autocomplete sources of either family.
+ * Course search helpers for autocomplete sources.
  *
  * Courses where the user has the capability are offered, with multi-tenancy
  * courses of other tenants are not. Courses already used by the edited item

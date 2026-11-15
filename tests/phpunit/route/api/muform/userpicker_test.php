@@ -87,7 +87,7 @@ final class userpicker_test extends route_testcase {
     public function test_bad_sources(): void {
         $this->setAdminUser();
         $bad = [
-            'tool_mulib\\muform\\autocompletemany\\site_users',
+            'tool_mulib\\muform\\autocomplete\\site_users',
             'tool_mulib\\muform\\userpicker\\base',
             'tool_mulib\\muform\\userpicker\\missing',
             'tool_nope\\muform\\userpicker\\site_users',

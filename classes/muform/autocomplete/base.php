@@ -18,14 +18,20 @@
 
 namespace tool_mulib\muform\autocomplete;
 
+use core\exception\coding_exception;
+
 /**
- * Source of a single value autocomplete element.
+ * Source of autocomplete and autocompletemany elements.
  *
  * A source owns the whole picker: the constructor takes scalar arguments only and does
  * the access control (require_capability etc.), because the same class is instantiated
  * in the form definition and again in the tool_mulib autocomplete endpoint from get_args().
  * Subclasses live in <component>\muform\autocomplete namespace, the endpoint refuses
- * anything else. Labels are HTML already passed through clean_text().
+ * anything else. The same source serves both elements, the element decides whether one
+ * or several values are selected. Labels are HTML already passed through clean_text().
+ *
+ * Labels and validation work either per value (label_value(), validate_value()) or for all values
+ * at once (labels(), validate()), override whichever is simpler.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
@@ -44,25 +50,62 @@ abstract class base {
      *
      * @param string $query
      * @param int $maxitems
+     * @param string[] $exclude values already selected, the endpoint removes them from the result anyway
      * @return array|null [value => label html], null when more than $maxitems match
      */
-    abstract public function search(string $query, int $maxitems): ?array;
+    abstract public function search(string $query, int $maxitems, array $exclude): ?array;
 
     /**
-     * Label of an existing value the current user may select.
+     * Labels of existing values the current user may select, unknown values are left out.
+     *
+     * @param string[] $values
+     * @return array [value => label html]
+     */
+    public function labels(array $values): array {
+        $result = [];
+        foreach ($values as $value) {
+            $label = $this->label_value((string)$value);
+            if ($label !== null) {
+                $result[(string)$value] = $label;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Label of one existing value the current user may select, used by the default labels().
      *
      * @param string $value
      * @return string|null label html, null when unknown or not allowed
      */
-    abstract public function label(string $value): ?string;
+    protected function label_value(string $value): ?string {
+        throw new coding_exception(static::class . ' must override labels() or label_value()');
+    }
 
     /**
-     * Why an existing value must not be selected, null when it may be.
+     * Why existing values must not be selected, called only for values known to labels().
+     *
+     * @param string[] $values
+     * @return array [value => error text], empty when all may be selected
+     */
+    public function validate(array $values): array {
+        $result = [];
+        foreach ($values as $value) {
+            $error = $this->validate_value((string)$value);
+            if ($error !== null) {
+                $result[(string)$value] = $error;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Why one existing value must not be selected, used by the default validate().
      *
      * @param string $value
-     * @return string|null error text
+     * @return string|null error text, null when it may be selected
      */
-    public function validate(string $value): ?string {
+    protected function validate_value(string $value): ?string {
         return null;
     }
 

@@ -34,11 +34,12 @@ $handler->render($form);
 - Dialog triggers: `tool_mulib\output\muform\dialog\{button,link,icon}`, `create_report_action()` for
   report builder, `dropdown::add_dialog()` for header menus, `set_submitted_action()` with
   `tool_mulib\muform\handler\dialog::ACTION_RELOAD|ACTION_REDIRECT|ACTION_NOTHING`. Default size is `lg`.
-- Autocomplete: sources in `<component>\muform\autocomplete\*` and `<component>\muform\autocompletemany\*`
-  extend `tool_mulib\muform\autocomplete(many)\base`. The constructor takes scalar ids and does the access
-  control, `get_args()` returns them, `search()`, `label()`/`labels()` and `validate()` decide what may be
-  selected. Reuse the traits in `classes/muform/util/autocomplete/`: `user_trait`, `cohort_trait`,
-  `category_context_trait`, and `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
+- Autocomplete: one source class serves both `autocomplete` and `autocompletemany`; sources live in
+  `<component>\muform\autocomplete\*` and extend `tool_mulib\muform\autocomplete\base`. The constructor takes scalar
+  ids and does the access control, `get_args()` returns them, `search($query, $maxitems, $exclude)`, `labels()` or
+  `label_value()` and `validate()` or `validate_value()` decide what may be selected. Reuse the traits in
+  `classes/muform/util/autocomplete/`: `user_trait`, `cohort_trait`, `course_trait`, `category_context_trait`, and
+  `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
 - Pickers (`picker`, `pickermany`): selected values are pills, a button opens a family panel (React) over the
   right half of the screen. A family is an abstract `tool_mulib\muform\picker\base` subclass, a panel module
   and the family's own endpoints (`base::require_browser_session()`, `<family base>::instantiate()`); values

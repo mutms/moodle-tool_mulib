@@ -97,7 +97,7 @@ final class autocomplete extends element {
             $this->errors[] = $this->get_invalid_hint();
             return;
         }
-        $this->valuelabel = $this->source->label($this->value);
+        $this->valuelabel = $this->source->labels([$this->value])[$this->value] ?? null;
         if ($this->valuelabel === null) {
             $this->value = null;
             $this->errors[] = $this->get_invalid_hint();
@@ -110,7 +110,7 @@ final class autocomplete extends element {
         if ($this->value === null || $this->errors) {
             return;
         }
-        $error = $this->source->validate($this->value);
+        $error = $this->source->validate([$this->value])[$this->value] ?? null;
         if ($error !== null) {
             $this->valueerror = $error;
             $allerrors[$this->get_name()][] = trim(strip_tags($this->valuelabel)) . ': ' . $error;

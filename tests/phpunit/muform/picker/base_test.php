@@ -50,6 +50,27 @@ final class base_test extends \advanced_testcase {
         $this->assertSame('Pick one', $source->export_panel(false)['strings']['title']);
     }
 
+    public function test_validate_value(): void {
+        $source = new class extends fake_picker_family {
+            #[\Override]
+            public function get_args(): array {
+                return [];
+            }
+
+            #[\Override]
+            public function labels(array $values): array {
+                return array_combine($values, $values);
+            }
+
+            #[\Override]
+            protected function validate_value(string $value): ?string {
+                return ($value === 'x') ? 'No x' : null;
+            }
+        };
+        $this->assertSame(['x' => 'No x'], $source->validate(['a', 'x']));
+        $this->assertSame([], $source->validate(['a']));
+    }
+
     public function test_instantiate(): void {
         $source = fake_picker_family::instantiate(fake_picker_source::class, ['b']);
         $this->assertInstanceOf(fake_picker_source::class, $source);

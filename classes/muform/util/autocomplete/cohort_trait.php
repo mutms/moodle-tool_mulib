@@ -27,7 +27,7 @@ use tool_mulib\local\mulib;
 use tool_mulib\local\sql;
 
 /**
- * Cohort search helpers for autocomplete sources of either family.
+ * Cohort search helpers for autocomplete sources.
  *
  * Visible cohorts, cohorts the user may view and advanced cohorts with an access record
  * of the user are offered, with multi-tenancy

@@ -16,7 +16,7 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\muform\autocompletemany;
+namespace tool_mulib\muform\autocomplete;
 
 use core\context;
 use tool_mulib\muform\util\autocomplete\user_trait;

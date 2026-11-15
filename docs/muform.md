@@ -349,15 +349,26 @@ $form->get_element('description')->save_area();
 ### Autocomplete
 
 `autocomplete` picks one value, `autocompletemany` a list. Both get a source object that decides
-everything. Its constructor takes plain ids and checks access. `search()` finds options,
-`label()` or `labels()` return labels for stored values, and `validate()` can refuse a value with a
-reason. `get_args()` returns the constructor arguments, so the shared endpoint in tool_mulib can
+everything, and the same source class serves both elements. Sources live in
+`<component>\muform\autocomplete\` and extend `tool_mulib\muform\autocomplete\base`. The constructor
+takes plain ids and checks access, `get_args()` returns them, so the shared endpoint in tool_mulib can
 create the same source again. Plugins never add their own endpoints.
 
-```php
-namespace tool_muprog\muform\autocompletemany;
+- `search($query, $maxitems, $exclude)` finds options. `$exclude` holds the values already selected
+  in an `autocompletemany` element. Excluding them in SQL keeps `$maxitems` accurate, but sources may
+  ignore it: the endpoint never offers selected values again.
+- Labels of stored values come from `labels(array)`, or from `label_value(string)` called for each
+  value by the default `labels()`.
+- Values may be refused with a reason by `validate(array)`, or by `validate_value(string)` called for
+  each value by the default `validate()`.
 
-final class program_allocation_userids extends \tool_mulib\muform\autocompletemany\base {
+Override whichever is simpler: per-value hooks for checks of one record, the array methods when one
+query handles all values, as the traits do.
+
+```php
+namespace tool_muprog\muform\autocomplete;
+
+final class program_allocation_userids extends \tool_mulib\muform\autocomplete\base {
     use \tool_mulib\muform\util\autocomplete\user_trait;
 
     public function __construct(private int $programid) {
@@ -381,12 +392,20 @@ final class program_allocation_userids extends \tool_mulib\muform\autocompletema
         return $this->validate_users($values);
     }
 }
+
+final class user_mapping_userid extends \tool_mulib\muform\autocomplete\base {
+    // ...
+    protected function validate_value(string $value): ?string {
+        return mapping::fetch_by_userid((int)$value) ? get_string('error_usermapped', 'auth_musaml') : null;
+    }
+}
 ```
 
 A value without a label is rejected on submit, which is how permissions are enforced. When more than
 `get_maxitems()` options match, `search()` returns `null` and the user is asked to type more. The
-traits in `classes/muform/util/autocomplete/` cover users, cohorts and category contexts, and
-`tool_mulib\local\search_util` has the search SQL.
+traits in `classes/muform/util/autocomplete/` cover users, cohorts, courses and category contexts, and
+`tool_mulib\local\search_util` has the search SQL. `site_users` offers all users of a context to users
+with `moodle/user:viewalldetails`.
 
 ### Picker
 
@@ -406,7 +425,8 @@ Pickers come in families. A family is three things:
 
 The source works like an autocomplete source. Its constructor takes plain ids and does the access
 control, and `get_args()` returns them. `labels()` returns label HTML for values that may be
-selected, and `validate()` can refuse a value with a reason. `get_panel_strings()` gives the panel
+selected, and `validate()` can refuse a value with a reason - or `validate_value()` one value at a
+time, the same as in autocomplete sources. `get_panel_strings()` gives the panel
 its strings and must include `title`. One source serves both elements; the panel gets `multiple`
 as a prop.
 
