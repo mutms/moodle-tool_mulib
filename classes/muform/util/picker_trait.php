@@ -23,7 +23,7 @@ use core\output\core_renderer;
 use tool_mulib\muform\picker\base;
 
 /**
- * Shared code of picker and pickermany elements.
+ * Shared code of picker, pickermany, userpicker and userpickermany elements.
  *
  * Classes using it must define is_multiple() and call init_picker() from the constructor.
  *
@@ -151,7 +151,7 @@ trait picker_trait {
         foreach ($selected as $item) {
             if (isset($this->valueerrors[$item])) {
                 $label = html_entity_decode(strip_tags($this->valuelabels[$item]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $allerrors[$this->get_name()][] = trim($label) . ': ' . $this->valueerrors[$item];
+                $allerrors[$this->get_name()][] = trim(preg_replace('/\s+/u', ' ', $label)) . ': ' . $this->valueerrors[$item];
             }
         }
     }

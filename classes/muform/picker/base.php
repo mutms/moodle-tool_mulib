@@ -110,7 +110,9 @@ abstract class base {
     /**
      * Reinstantiate a source in a family endpoint.
      *
-     * Call it on the family base: only instantiable subclasses of it living in its own namespace are accepted.
+     * Call it on the family base: only instantiable subclasses of it are accepted, living in the same namespace
+     * as the family base below any installed component - family "tool_x\muform\somepicker\base" accepts
+     * "tool_x\muform\somepicker\abc" and "tool_y\muform\somepicker\def".
      *
      * @param string $class full class name sent by the browser
      * @param array $args scalar constructor arguments
@@ -118,10 +120,14 @@ abstract class base {
      */
     final public static function instantiate(string $class, array $args): static {
         $namespace = substr(static::class, 0, (int)strrpos(static::class, '\\'));
-        if ($namespace === '' || !str_starts_with($class, $namespace . '\\')) {
+        $pos = strpos($namespace, '\\');
+        // Namespace of the family without the component, for example "muform\somepicker".
+        $relative = ($pos === false) ? '' : substr($namespace, $pos + 1);
+        if ($relative === '') {
             throw new invalid_parameter_exception('Invalid picker source');
         }
-        if (!preg_match('/^[a-z][a-z0-9_]*$/D', substr($class, strlen($namespace) + 1))) {
+        $regex = '/^([a-z][a-z0-9_]*)\\\\' . preg_quote($relative, '/') . '\\\\[a-z][a-z0-9_]*$/D';
+        if (!preg_match($regex, $class, $matches) || !\core_component::get_component_directory($matches[1])) {
             throw new invalid_parameter_exception('Invalid picker source');
         }
         if (!class_exists($class) || !is_subclass_of($class, static::class)) {

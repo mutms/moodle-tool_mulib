@@ -43,6 +43,9 @@ $handler->render($form);
   right half of the screen. A family is an abstract `tool_mulib\muform\picker\base` subclass, a panel module
   and the family's own endpoints (`base::require_browser_session()`, `<family base>::instantiate()`); values
   are opaque strings like autocomplete values. See "Picker" in `docs/muform.md`.
+- User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\muform\userpicker\*` extending
+  `tool_mulib\muform\userpicker\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
+  `allow_suspended_users()`); a panel with identity columns (`showuseridentity`) and paging, tenant rules apply.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one
   form class per stage in the same namespace and a thin entry script calling `execute()`; full page only (plain
   links, never dialogs). Stage forms use the `wizardcontinue` and `wizardback` buttons, wizard state never holds

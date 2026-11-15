@@ -169,6 +169,8 @@ download, also in a dialog.
 | `autocompletemany` | `(name, label, source, attributes)`                                          | `string[]` values                                          | `[]`             |
 | `picker`           | `(name, label, source)`                                                      | `string` value or `null`                                   | `null`           |
 | `pickermany`       | `(name, label, source)`                                                      | `string[]` values                                          | `[]`             |
+| `userpicker`       | `(name, label, source)`                                                      | user id `string` or `null`                                 | `null`           |
+| `userpickermany`   | `(name, label, source)`                                                      | `string[]` user ids                                        | `[]`             |
 | `tags`             | `(name, label, tagarea, attributes)`                                         | `string[]` tag names                                       | `[]`             |
 | `checkbox`         | `(name, label, text, attributes)`                                            | `1` or `0`                                                 | `0`              |
 | `yesno`            | `(name, label)`                                                              | `1` or `0`                                                 | never empty      |
@@ -389,7 +391,8 @@ traits in `classes/muform/util/autocomplete/` cover users, cohorts and category 
 ### Picker
 
 `picker` picks one value, `pickermany` a list. Use them when typing part of a name is not enough to
-find the right item: users need columns, filters or a tree to see what they pick. Selected values
+find the right item: users need columns, filters or a tree to see what they pick. For Moodle users use
+[User picker](#user-picker) elements, `picker` and `pickermany` are for picker families of plugins. Selected values
 are pills with a remove button. The button after them opens a panel over the right half of the
 screen, and the form stays visible on the left. The panel is a native modal `<dialog>` of its own, not
 a muform dialog, so it also works over forms in muform dialogs and wizards.
@@ -441,7 +444,8 @@ label is rejected on submit, which is how permissions are enforced.
 
 Family endpoints recreate the source from the class name and arguments sent by the browser. Call
 `base::require_browser_session()` first, then `instantiate()` on the family base: it accepts only
-instantiable subclasses of that base in the same namespace, with scalar arguments.
+instantiable subclasses of that base with scalar arguments, living in the namespace of the family base
+below any installed component (`tool_x\muform\somepicker\base` accepts `tool_y\muform\somepicker\abc`).
 
 ```php
 $source = \tool_x\local\categorypicker\base::instantiate($body['source'], $body['args']);
@@ -452,6 +456,52 @@ The panel component gets `PickerPanelProps` from `tool_mulib/muform/pickerpanel`
 `strings`, `onPick(items)` and `onClose()`. `onPick` returns the picked values with their label HTML,
 so the element never fetches labels itself. `openPanel()` from the same module opens a panel
 outside forms, for example in an editor that adds several items at once.
+
+### User picker
+
+`userpicker` picks one user, `userpickermany` a list. They are pickers with a panel for Moodle users:
+one page of users at a time with full names and the identity fields visible in the source context
+(`showuseridentity` and `moodle/site:viewuseridentity`), searching names and those fields. Use them
+instead of a user autocomplete when users need to see who they pick, for example when allocating users.
+
+The source says where the users are picked from, the same way as autocomplete sources. It extends
+`tool_mulib\muform\userpicker\base`, lives in `<component>\muform\userpicker\` and serves both elements.
+Deleted, unconfirmed and guest users are never offered and tenant rules apply, the same as in the user
+autocomplete. Values are user ids.
+
+```php
+namespace tool_muprog\muform\userpicker;
+
+final class source_manual_allocate_users extends \tool_mulib\muform\userpicker\base {
+    private context $context;
+
+    public function __construct(private readonly int $programid) {
+        $this->context = program::get_context($programid);
+        require_capability('tool/muprog:allocate', $this->context);
+    }
+
+    public function get_args(): array {
+        return [$this->programid];
+    }
+
+    protected function get_context(): context {
+        return $this->context;
+    }
+
+    protected function get_candidates_sql(): ?sql {
+        return new sql("NOT EXISTS (SELECT 'x' FROM {tool_muprog_allocation} pa
+                                     WHERE pa.userid = u.id AND pa.programid = :aprogid)", ['aprogid' => $this->programid]);
+    }
+}
+
+$form->add(new userpickermany('users', get_string('users'), new source_manual_allocate_users($programid)));
+```
+
+`get_candidates_sql()` limits who may be picked (all users by default), `get_selected_sql()` decides
+which stored values stay valid (the candidates by default), and `allow_suspended_users()` refuses
+suspended users when it returns false. `site_users` offers all users of a context to users with
+`moodle/user:viewalldetails`. The search endpoint is `tool_mulib\route\api\muform\userpicker`.
+In Behat, table values are user ids, full names or identity field values such as emails.
 
 ### Tags
 

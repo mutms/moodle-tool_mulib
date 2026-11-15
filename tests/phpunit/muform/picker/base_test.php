@@ -66,6 +66,8 @@ final class base_test extends \advanced_testcase {
             'tool_mulib\\phpunit\\muform\\fake_picker_source',
             '\\' . fake_picker_source::class,
             'tool_mulib\\phpunit\\muform\\fixtures\\missing',
+            // Same relative namespace in a missing component.
+            'tool_missingplugin\\phpunit\\muform\\fixtures\\fake_picker_source',
             '',
         ];
         foreach ($bad as $class) {

@@ -14,5 +14,9 @@
   "muform/tagspicker": {
     "eject": "risky",
     "wrap": "risky"
+  },
+  "muform/userpicker/panel": {
+    "eject": "risky",
+    "wrap": "risky"
   }
 }
