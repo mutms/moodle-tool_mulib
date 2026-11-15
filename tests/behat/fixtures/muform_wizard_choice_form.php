@@ -24,9 +24,9 @@
 
 use tool_mulib\muform\element\buttons;
 use tool_mulib\muform\element\cancel;
-use tool_mulib\muform\element\reload;
 use tool_mulib\muform\element\select;
-use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\wizardback;
+use tool_mulib\muform\element\wizardcontinue;
 use tool_mulib\muform\form;
 
 defined('MOODLE_INTERNAL') || die();
@@ -47,8 +47,8 @@ final class tool_mulib_muform_wizard_choice_form extends form {
         $this->add($colour);
 
         $this->add(new buttons('buttons'));
-        $this->add(new submit('submit', 'Continue'), 'buttons');
-        $this->add(new reload('back', get_string('muform_back', 'tool_mulib')), 'buttons');
+        $this->add(new wizardcontinue(), 'buttons');
+        $this->add(new wizardback(), 'buttons');
         $this->add(new cancel(), 'buttons');
     }
 }

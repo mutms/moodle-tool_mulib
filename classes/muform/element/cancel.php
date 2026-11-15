@@ -42,7 +42,7 @@ final class cancel extends button {
     }
 
     #[\Override]
-    public static function is_cancelling(): bool {
+    public function is_cancelling(): bool {
         return true;
     }
 }

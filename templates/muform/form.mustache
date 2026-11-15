@@ -27,6 +27,7 @@
     * rulesjson - JSON encoded display rules
     * has_errors - true if any validation errors
     * is_dirty - true when leaving the page asks for confirmation even without changes
+    * is_changed - true when the form shows changed values that are not saved, as if the user changed them now
     * errors - list of form level errors, already cleaned with clean_string()
     * elements_byname - rendered elements with name and html indexed by element name, for custom templates
     * elements - list of top level elements with name and html
@@ -40,13 +41,14 @@
         "rulesjson": "[]",
         "has_errors": false,
         "is_dirty": false,
+        "is_changed": false,
         "errors": [],
         "elements_byname": {"name": {"name": "name", "html": "<div>...</div>"} },
         "elements": [{"name": "name", "html": "<div>...</div>"}]
     }
 }}
 <form id="{{formid}}{{idsuffix}}" method="post" action="{{targeturl}}" class="muform mform" novalidate
-      data-muform="{{formid}}" data-muform-rules="{{rulesjson}}"{{#has_errors}} data-muform-has-errors="1"{{/has_errors}}{{#is_dirty}} data-muform-dirty="1"{{/is_dirty}}>
+      data-muform="{{formid}}" data-muform-rules="{{rulesjson}}"{{#has_errors}} data-muform-has-errors="1"{{/has_errors}}{{#is_dirty}} data-muform-dirty="1"{{/is_dirty}}{{#is_changed}} data-muform-changed="1"{{/is_changed}}>
     <input type="hidden" name="__sesskey" value="{{sesskey}}">
     <input type="hidden" name="__formid" value="{{formid}}">
     {{#errors.0}}

@@ -18,6 +18,7 @@
 namespace tool_mulib\muform;
 
 use core\url;
+use tool_mulib\muform\element\wizardback;
 use stdClass;
 
 /**
@@ -147,6 +148,9 @@ abstract class wizard_page {
     /**
      * The form was reloaded with another button than Back, for example a row was added.
      *
+     * Change $this->state only: a changed state is stored and the stage is marked as changed,
+     * so that Back validates it and leaving the stage asks for confirmation.
+     *
      * @param string $stage
      * @param form $form
      * @return bool true if the stage is to be shown again from the stored data, false shows the submitted values
@@ -208,17 +212,29 @@ abstract class wizard_page {
         }
         $this->formurl = $wizard->get_url($pageurl, $this->stage);
         $form = $this->create_form($this->stage, $this->formurl);
+        if ($wizard->is_changed($this->stage)) {
+            // Rows were changed without validation before.
+            $form->set_changed(true);
+        }
+        $previous = $wizard->get_previous_stage();
+        $back = $form->get_element(wizardback::NAME);
 
         if ($form->is_cancelled()) {
             $wizard->delete();
             redirect($this->get_return_url());
         }
         if ($form->is_reloaded()) {
-            $previous = $wizard->get_previous_stage();
-            if ($previous !== null && $form->get_element('back')?->get_value()) {
+            if ($previous !== null && $back?->get_value()) {
+                // Nothing was changed, or the stage is never stored when going back.
                 redirect($wizard->get_url($pageurl, $previous));
             }
-            if ($this->reload_stage($this->stage, $form)) {
+            $before = $this->state;
+            $again = $this->reload_stage($this->stage, $form);
+            if ($this->state !== $before) {
+                $wizard->set_data($this->state);
+                $wizard->mark_changed($this->stage);
+            }
+            if ($again) {
                 redirect($this->formurl);
             }
         }
@@ -227,14 +243,17 @@ abstract class wizard_page {
             if ($url !== null) {
                 redirect($url);
             }
+            // Back pressed after changes: the stage was validated and is stored like with Continue.
+            $goback = $previous !== null && $back instanceof wizardback && $back->get_value() && $back->is_submitting();
             if ($this->keeps_later_stages()) {
                 $names = array_keys($stages);
+                $wizard->mark_changed($this->stage, false);
                 $wizard->complete_stage(end($names), $this->state);
                 $next = $names[array_search($this->stage, $names, true) + 1] ?? null;
-                redirect($wizard->get_url($pageurl, $next));
+                redirect($wizard->get_url($pageurl, $goback ? $previous : $next));
             }
             $wizard->complete_stage($this->stage, $this->state);
-            redirect($wizard->get_url($pageurl));
+            redirect($wizard->get_url($pageurl, $goback ? $previous : null));
         }
 
         $this->render_page($form);

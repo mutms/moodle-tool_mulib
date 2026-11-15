@@ -313,6 +313,23 @@ final class form_test extends muform_testcase {
         $this->assertStringNotContainsString('data-muform-dirty', $html);
     }
 
+    public function test_changed(): void {
+        $form = new simple_form($this->get_url(), []);
+        $this->assertFalse($form->is_changed());
+        $this->assertStringNotContainsString('data-muform-changed', $this->render($form));
+        $form->set_changed(true);
+        $this->assertTrue($form->is_changed());
+        $this->assertStringContainsString(' data-muform-changed="1">', $this->render($form));
+        $form->set_changed(false);
+        $this->assertFalse($form->is_changed());
+
+        // Submitted values are not saved yet.
+        $this->simulate_post(simple_form::class, ['name' => '', 'submit' => '1']);
+        $form = new simple_form($this->get_url(), []);
+        $this->assertTrue($form->is_changed());
+        $this->assertStringContainsString(' data-muform-changed="1">', $this->render($form));
+    }
+
     public function test_dirty(): void {
         $form = new simple_form($this->get_url(), []);
         $this->assertFalse($form->is_dirty());

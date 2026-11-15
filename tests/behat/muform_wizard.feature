@@ -112,3 +112,42 @@ Feature: muform wizard helper
     Then I should see "Jane Doe likes green, files: empty.txt" in the "[data-muform-name='summary']" "css_element"
     When I press "Finish"
     Then I should see "Wizard finished for Jane Doe" in the "#muform_state" "css_element"
+
+  @javascript
+  Scenario: Back keeps changed values by validating and storing the stage
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
+    And I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Continue"
+    And I should see "Stage choice" in the "#muform_state" "css_element"
+    # Nothing was changed, the stage is not validated.
+    When I press "Back"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should not see "colour" in the "#wizard_data" "css_element"
+    When I press "Continue"
+    # Invalid changes cannot be stored, the user stays on the stage.
+    And I set the following muform fields:
+      | colour | Green |
+    And I set the following muform fields:
+      | colour | Choose... |
+    And I press "Back"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And I should see "Required" in the "[data-muform-name='colour'] .invalid-feedback" "css_element"
+    # Valid changes are stored before going back.
+    When I set the following muform fields:
+      | colour | Green |
+    And I press "Back"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "\"colour\":\"green\"" in the "#wizard_data" "css_element"
+    When I set the following muform fields:
+      | fullname | John Doe |
+    And I press "Continue"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And the following muform fields match:
+      | colour | Green |
+    When I press "Continue"
+    Then I should see "John Doe likes green" in the "[data-muform-name='summary']" "css_element"
+    # The last stage never stores anything when going back.
+    When I press "Back"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+

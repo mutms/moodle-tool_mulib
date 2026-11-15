@@ -35,6 +35,7 @@ abstract class muform_testcase extends \advanced_testcase {
         require_once($CFG->dirroot . '/admin/tool/mulib/tests/phpunit/muform/fixtures/simple_form.php');
         require_once($CFG->dirroot . '/admin/tool/mulib/tests/phpunit/muform/fixtures/dynamic_form.php');
         require_once($CFG->dirroot . '/admin/tool/mulib/tests/phpunit/muform/fixtures/collapsible_form.php');
+        require_once($CFG->dirroot . '/admin/tool/mulib/tests/phpunit/muform/fixtures/wizard_stage_form.php');
         $this->resetAfterTest();
         $this->setAdminUser();
     }

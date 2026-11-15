@@ -81,6 +81,7 @@ $string['muform_clearselection'] = 'Zrušit výběr';
 $string['muform_clearvalue'] = 'Vymazat aktuální hodnotu';
 $string['muform_close'] = 'Zavřít dialog';
 $string['muform_collapsibleerrors'] = 'Obsahuje chyby';
+$string['muform_continue'] = 'Pokračovat';
 $string['muform_datetimeformat'] = 'j. n. Y H:i';
 $string['muform_datetimeinvalid'] = 'Neplatné datum a čas';
 $string['muform_datetimerangeends'] = '{$a->duration}, končí {$a->end}';

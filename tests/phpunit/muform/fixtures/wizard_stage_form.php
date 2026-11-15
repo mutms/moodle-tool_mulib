@@ -1,0 +1,44 @@
+<?php
+// This file is part of MuTMS suite of plugins for Moodle™ LMS.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+
+namespace tool_mulib\phpunit\muform\fixtures;
+
+use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\cancel;
+use tool_mulib\muform\element\text;
+use tool_mulib\muform\element\wizardback;
+use tool_mulib\muform\element\wizardcontinue;
+use tool_mulib\muform\form;
+
+/**
+ * Test form of a wizard stage, extra data "validate" false makes the Back button reload only.
+ *
+ * @package     tool_mulib
+ * @copyright   2026 Petr Skoda
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+final class wizard_stage_form extends form {
+    #[\Override]
+    protected function definition(): void {
+        $this->add((new text('name', 'Name'))->set_required(true));
+        $this->add(new buttons('buttons'));
+        $this->add(new wizardcontinue(), 'buttons');
+        $this->add(new wizardback($this->get_extra_data()['validate'] ?? true), 'buttons');
+        $this->add(new cancel(), 'buttons');
+    }
+}

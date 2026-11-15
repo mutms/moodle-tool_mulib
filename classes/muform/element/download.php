@@ -48,7 +48,7 @@ final class download extends button {
     }
 
     #[\Override]
-    public static function is_submitting(): bool {
+    public function is_submitting(): bool {
         return true;
     }
 

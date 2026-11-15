@@ -25,8 +25,8 @@
 use tool_mulib\muform\element\buttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\info;
-use tool_mulib\muform\element\reload;
 use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\wizardback;
 use tool_mulib\muform\form;
 
 defined('MOODLE_INTERNAL') || die();
@@ -47,7 +47,7 @@ final class tool_mulib_muform_wizard_summary_form extends form {
 
         $this->add(new buttons('buttons'));
         $this->add(new submit('submit', 'Finish'), 'buttons');
-        $this->add(new reload('back', get_string('muform_back', 'tool_mulib')), 'buttons');
+        $this->add(new wizardback(validate: false), 'buttons');
         $this->add(new cancel(), 'buttons');
     }
 }

@@ -25,8 +25,8 @@
 use tool_mulib\muform\element\buttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\filemanager;
-use tool_mulib\muform\element\submit;
 use tool_mulib\muform\element\text;
+use tool_mulib\muform\element\wizardcontinue;
 use tool_mulib\muform\form;
 
 defined('MOODLE_INTERNAL') || die();
@@ -48,7 +48,7 @@ final class tool_mulib_muform_wizard_details_form extends form {
         $this->add(new filemanager('attachments', 'Attachments', 1, ['.txt']));
 
         $this->add(new buttons('buttons'));
-        $this->add(new submit('submit', 'Continue'), 'buttons');
+        $this->add(new wizardcontinue(), 'buttons');
         $this->add(new cancel(), 'buttons');
     }
 }

@@ -647,6 +647,7 @@ if ($form->is_cancelled()) {
     redirect($returnurl);
 }
 if ($form->is_reloaded() && $wizard->get_previous_stage() !== null && $form->get_element('back')->get_value()) {
+    // Back without changes, wizard_page also handles Back with changes.
     redirect($wizard->get_url($pageurl, $wizard->get_previous_stage()));
 }
 if ($submitted = $form->get_data()) {
@@ -694,14 +695,42 @@ completes the stage and prints the page. Optional hooks:
 - `get_skipped_stages()` lists stages that do not apply now;
 - `finish()` is for wizards finished when all stages are completed; wizards with a last summary
   stage finish in `submit_stage()` of that stage instead, by returning the URL to go to;
-- `reload_stage()` handles reload buttons other than Back, such as adding a row;
+- `reload_stage()` handles reload buttons other than Back, such as adding a row, see below;
 - `keeps_later_stages()` is for wizards editing existing data: all stages are completed from the
   start, submitting one goes to the following stage and the later ones stay completed;
 - `render_page()` prints the page.
 
 Access control is not part of the class, check it in the constructor.
 
-The Back button is a `reload` element. Cancel and the final submit delete the row. The stepper is
+### Wizard buttons
+
+Stage forms use `wizardcontinue` (submit named `submit`, "Continue") and `wizardback` (named `back`),
+the first stage has no Back:
+
+```php
+$this->add(new buttons('buttons'));
+$this->add(new wizardcontinue(), 'buttons');
+$this->add(new wizardback(), 'buttons');
+$this->add(new cancel(), 'buttons');
+```
+
+Back must not lose what the user entered, and the wizard never stores data that were not validated.
+So when nothing was changed in the browser Back reloads the form and the wizard goes to the
+previous stage; when something was changed Back submits the form for validation like Continue, the
+stage is stored and completed, then the wizard goes back. Invalid values keep the user on the stage.
+The browser picks the way, the server only sees a reload or a submission, so it cannot be made to
+store unvalidated data. Without JavaScript Back always reloads.
+
+Use `new wizardback(validate: false)` on a last stage whose submission finishes the wizard, there
+Back never stores anything. A form counts as changed also when it was rendered from submitted data,
+for example after a failed validation, or after `$form->set_changed(true)`.
+
+`reload_stage()` of `wizard_page` only changes `$this->state`, for example adds a row with the typed
+values. The page stores the changed state and marks the stage as changed (`wizard::mark_changed()`),
+so Back validates it and leaving the stage asks for confirmation; the mark is forgotten when the
+stage is completed.
+
+Cancel and the final submit delete the row. The stepper is
 horizontal for up to 6 steps when there is room, and a sticky column left of the form in wide pages.
 With completed stages the form is marked dirty, so leaving the page asks for confirmation; stepper
 links do not ask unless the current stage was changed.

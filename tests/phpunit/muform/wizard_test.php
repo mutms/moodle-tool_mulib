@@ -298,6 +298,45 @@ final class wizard_test extends \advanced_testcase {
         $this->assertSame('source', $this->resolve($wizard, fn() => true, null));
     }
 
+    public function test_changed_stages(): void {
+        global $DB;
+
+        $this->setAdminUser();
+        $wizard = wizard::start('tool_mulib_test', self::STAGES);
+        $this->resolve($wizard, fn() => true, null);
+        $wizard->complete_stage('source', ['x' => 1]);
+        $this->assertFalse($wizard->is_changed('columns'));
+
+        // Stages changed without validation are remembered next to the data.
+        $wizard->mark_changed('columns');
+        $wizard->mark_changed('columns');
+        $wizard->mark_changed('options');
+        $this->assertTrue($wizard->is_changed('columns'));
+        $this->assertFalse($wizard->is_changed('source'));
+        $this->assertSame(
+            '{"data":{"x":1},"completed":["source"],"changed":["columns","options"]}',
+            $DB->get_field('tool_mulib_muform_wizard', 'jsondata', ['id' => $wizard->get_id()])
+        );
+        $wizard->set_data(['x' => 2]);
+        $loaded = self::load('tool_mulib_test', $wizard->get_id());
+        $this->assertTrue($loaded->is_changed('columns'));
+
+        // Completing the stage forgets its mark only.
+        $this->resolve($wizard, fn() => true, null);
+        $wizard->complete_stage('columns', ['x' => 3]);
+        $this->assertFalse($wizard->is_changed('columns'));
+        $this->assertTrue($wizard->is_changed('options'));
+        $wizard->mark_changed('options', false);
+        $this->assertFalse($wizard->is_changed('options'));
+        $this->assertSame(
+            '{"data":{"x":3},"completed":["source","columns"]}',
+            $DB->get_field('tool_mulib_muform_wizard', 'jsondata', ['id' => $wizard->get_id()])
+        );
+
+        $this->expectException(coding_exception::class);
+        $wizard->mark_changed('xyz');
+    }
+
     public function test_skipped_stages(): void {
         $this->setAdminUser();
         $wizard = wizard::start('tool_mulib_test', self::STAGES);

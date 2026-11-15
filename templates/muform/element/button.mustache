@@ -33,6 +33,7 @@
     * is_disabled - true if initially disabled
     * confirm - question asked before submitting, empty for none
     * is_link - link style for minor actions
+    * is_submitifchanged - true if the button validates and submits the form when the user changed it (wizard Back)
     * is_small - small button
 
     Example context (json):
@@ -42,4 +43,4 @@
     }
 }}
 <button type="submit" id="{{id}}" name="{{name}}" value="1" class="btn {{#is_primary}}btn-primary{{/is_primary}}{{#is_link}}btn-link{{/is_link}}{{^is_primary}}{{^is_link}}btn-secondary{{/is_link}}{{/is_primary}}{{#is_small}} btn-sm{{/is_small}}"
-        data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}" data-muform-role="{{role}}"{{#is_novalidate}} formnovalidate{{/is_novalidate}}{{#is_download}} formtarget="_blank" data-muform-download="1"{{/is_download}}{{#confirm}} data-muform-confirm="{{confirm}}"{{/confirm}}{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} disabled data-muform-disabled="1"{{/is_disabled}}>{{label}}</button>
+        data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}" data-muform-role="{{role}}"{{#is_novalidate}} formnovalidate{{/is_novalidate}}{{#is_download}} formtarget="_blank" data-muform-download="1"{{/is_download}}{{#confirm}} data-muform-confirm="{{confirm}}"{{/confirm}}{{#is_submitifchanged}} data-muform-submit-if-changed="1"{{/is_submitifchanged}}{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} disabled data-muform-disabled="1"{{/is_disabled}}>{{label}}</button>

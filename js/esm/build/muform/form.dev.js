@@ -99,6 +99,7 @@ class MuForm {
       const module = await loadModule(specifier);
       this.elements.set(name, new module.default(wrapper, this));
     }
+    this.changed = this.form.dataset.muformChanged === "1";
     const rules = JSON.parse(this.form.dataset.muformRules || "[]");
     this.display = new DisplayManager(this.elements, rules);
     this.display.apply();
@@ -112,7 +113,7 @@ class MuForm {
     try {
       this.changechecker = await requireAsync("core_form/changechecker");
       this.changechecker.watchForm(this.form);
-      if (this.form.dataset.muformDirty === "1") {
+      if (this.form.dataset.muformDirty === "1" || this.changed) {
         this.changechecker.markFormAsDirty(this.form);
       }
     } catch {
@@ -307,7 +308,13 @@ class MuForm {
         return;
       }
     }
-    const role = submitter?.dataset.muformRole ?? "submit";
+    let role = submitter?.dataset.muformRole ?? "submit";
+    if (submitter?.dataset.muformSubmitIfChanged === "1") {
+      submitter.value = this.changed ? "validate" : "1";
+      if (this.changed) {
+        role = "submit";
+      }
+    }
     if (role === "submit") {
       this.submitAttempted = true;
       if (!this.validateAll()) {

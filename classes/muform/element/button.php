@@ -97,6 +97,7 @@ abstract class button extends element {
         $context['is_small'] = !empty($this->get_attribute('small'));
         $context['is_novalidate'] = ($this->get_role() !== 'submit');
         $context['confirm'] = $this->confirm === null ? '' : clean_string($this->confirm);
+        $context['is_submitifchanged'] = false;
         return $context;
     }
 }

@@ -28,8 +28,11 @@ use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\download;
 use tool_mulib\muform\element\reload;
 use tool_mulib\muform\element\submit;
+use tool_mulib\muform\element\wizardback;
+use tool_mulib\muform\element\wizardcontinue;
 use tool_mulib\phpunit\muform\fixtures\dynamic_form;
 use tool_mulib\phpunit\muform\fixtures\simple_form;
+use tool_mulib\phpunit\muform\fixtures\wizard_stage_form;
 use tool_mulib\phpunit\muform\muform_testcase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -46,6 +49,8 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversClass(\tool_mulib\muform\element\cancel::class)]
 #[CoversClass(\tool_mulib\muform\element\download::class)]
 #[CoversClass(\tool_mulib\muform\element\reload::class)]
+#[CoversClass(\tool_mulib\muform\element\wizardback::class)]
+#[CoversClass(\tool_mulib\muform\element\wizardcontinue::class)]
 #[CoversClass(\tool_mulib\muform\element\buttons::class)]
 #[CoversClass(\tool_mulib\muform\element\section::class)]
 #[Group('MuTMS')]
@@ -67,6 +72,80 @@ final class button_test extends muform_testcase {
         $reload = new reload('update', 'Update');
         $this->assertSame('reload', $reload->get_role());
         $this->assertTrue($reload->is_reloading());
+    }
+
+    public function test_wizard_buttons(): void {
+        $continue = new wizardcontinue();
+        $this->assertSame('submit', $continue->get_name());
+        $this->assertSame('submit', $continue->get_role());
+        $this->assertTrue($continue->is_submitting());
+        $this->assertFalse($continue->is_reloading());
+        $this->assertFalse($continue->returns_data());
+
+        // Not pressed.
+        $form = new wizard_stage_form($this->get_url(), ['name' => 'Stored']);
+        $back = $form->get_element('back');
+        $this->assertInstanceOf(wizardback::class, $back);
+        $this->assertFalse($back->get_value());
+        $this->assertTrue($back->is_reloading());
+        $this->assertFalse($back->is_submitting());
+        $html = $this->render($form);
+        $this->assertStringContainsString(
+            'data-muform-element="wizardback" data-muform-component="tool_mulib" data-muform-name="back"'
+            . ' data-muform-role="reload" formnovalidate data-muform-submit-if-changed="1">',
+            $html
+        );
+        $this->assertStringContainsString('data-muform-element="wizardcontinue"', $html);
+        $this->assertStringContainsString('>' . get_string('muform_continue', 'tool_mulib') . '</button>', $html);
+        $this->assertStringContainsString('>' . get_string('muform_back', 'tool_mulib') . '</button>', $html);
+        $this->assertStringNotContainsString('data-muform-changed', $html);
+
+        // Nothing was changed in the browser, the form is reloaded without validation.
+        $this->simulate_post(wizard_stage_form::class, ['name' => '', 'back' => '1']);
+        $form = new wizard_stage_form($this->get_url(), ['name' => 'Stored']);
+        $back = $form->get_element('back');
+        $this->assertTrue($back->get_value());
+        $this->assertTrue($back->is_reloading());
+        $this->assertFalse($back->is_submitting());
+        $this->assertTrue($form->is_reloaded());
+        $this->assertNull($form->get_data());
+
+        // Changed values are validated like with Continue.
+        $this->simulate_post(wizard_stage_form::class, ['name' => 'Typed', 'back' => 'validate']);
+        $form = new wizard_stage_form($this->get_url(), ['name' => 'Stored']);
+        $back = $form->get_element('back');
+        $this->assertTrue($back->get_value());
+        $this->assertFalse($back->is_reloading());
+        $this->assertTrue($back->is_submitting());
+        $this->assertTrue($form->is_valid());
+        $this->assertSame('Typed', $form->get_data()->name);
+        $this->assertFalse($form->get_element('submit')->get_value());
+
+        $this->simulate_post(wizard_stage_form::class, ['name' => '', 'back' => 'validate']);
+        $form = new wizard_stage_form($this->get_url(), ['name' => 'Stored']);
+        $this->assertTrue($form->is_invalid());
+        $this->assertNull($form->get_data());
+        // Values that are not stored are shown, the browser treats the form as changed.
+        $this->assertStringContainsString(' data-muform-changed="1">', $this->render($form));
+
+        // Only the known value validates, never when validation is switched off.
+        $this->simulate_post(wizard_stage_form::class, ['name' => 'Typed', 'back' => 'other']);
+        $form = new wizard_stage_form($this->get_url(), []);
+        $this->assertTrue($form->is_reloaded());
+        $this->simulate_post(wizard_stage_form::class, ['name' => 'Typed', 'back' => ['validate']]);
+        $form = new wizard_stage_form($this->get_url(), []);
+        $this->assertTrue($form->is_reloaded());
+        $this->simulate_post(wizard_stage_form::class, ['name' => 'Typed', 'back' => 'validate']);
+        $form = new wizard_stage_form($this->get_url(), [], ['validate' => false]);
+        $this->assertTrue($form->is_reloaded());
+        $this->assertNull($form->get_data());
+        $this->assertStringNotContainsString('data-muform-submit-if-changed', $this->render($form));
+
+        // Continue wins when both arrive.
+        $this->simulate_post(wizard_stage_form::class, ['name' => 'Typed', 'submit' => '1']);
+        $form = new wizard_stage_form($this->get_url(), []);
+        $this->assertTrue($form->is_valid());
+        $this->assertFalse($form->get_element('back')->is_submitting());
     }
 
     public function test_pressed(): void {

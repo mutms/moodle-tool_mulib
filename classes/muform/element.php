@@ -462,7 +462,7 @@ abstract class element {
      *
      * @return bool
      */
-    public static function is_cancelling(): bool {
+    public function is_cancelling(): bool {
         return false;
     }
 
@@ -473,7 +473,7 @@ abstract class element {
      *
      * @return bool
      */
-    public static function is_reloading(): bool {
+    public function is_reloading(): bool {
         return false;
     }
 
@@ -482,7 +482,7 @@ abstract class element {
      *
      * @return bool
      */
-    public static function is_submitting(): bool {
+    public function is_submitting(): bool {
         return false;
     }
 

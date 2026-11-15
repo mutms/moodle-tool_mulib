@@ -140,11 +140,42 @@ final class wizard {
      * @param array $data
      */
     public function set_data(array $data): void {
-        $this->store($data, $this->decode()['completed']);
+        $decoded = $this->decode();
+        $this->store($data, $decoded['completed'], $decoded['changed']);
+    }
+
+    /**
+     * Remember that the stored data of a stage were changed without validation, for example
+     * rows were added with a reload button; forgotten when the stage is completed.
+     *
+     * @param string $stage
+     * @param bool $changed false forgets the mark
+     */
+    public function mark_changed(string $stage, bool $changed = true): void {
+        if (!isset($this->stages[$stage])) {
+            throw new coding_exception('Unknown wizard stage: ' . $stage);
+        }
+        $decoded = $this->decode();
+        $marked = array_diff($decoded['changed'], [$stage]);
+        if ($changed) {
+            $marked[] = $stage;
+        }
+        $this->store($decoded['data'], $decoded['completed'], $marked);
+    }
+
+    /**
+     * Were the stored data of a stage changed without validation?
+     *
+     * @param string $stage
+     * @return bool
+     */
+    public function is_changed(string $stage): bool {
+        return in_array($stage, $this->decode()['changed'], true);
     }
 
     /**
      * Replace the stored data and complete the stage, later stages must be completed again.
+     * The stage is not marked as changed any more.
      *
      * @param string $stage
      * @param array $data
@@ -164,7 +195,7 @@ final class wizard {
                 break;
             }
         }
-        $this->store($data, $completed);
+        $this->store($data, $completed, array_diff($this->decode()['changed'], [$stage]));
     }
 
     /**
@@ -337,9 +368,9 @@ final class wizard {
     }
 
     /**
-     * Data and completed stages from the row.
+     * Data, completed and changed stages from the row.
      *
-     * @return array{data:array,completed:string[]}
+     * @return array{data:array,completed:string[],changed:string[]}
      */
     private function decode(): array {
         $decoded = json_decode($this->record->jsondata, true);
@@ -352,7 +383,15 @@ final class wizard {
                 }
             }
         }
-        return ['data' => $data, 'completed' => $completed];
+        $changed = [];
+        if (is_array($decoded) && is_array($decoded['changed'] ?? null)) {
+            foreach ($decoded['changed'] as $name) {
+                if (is_string($name) && isset($this->stages[$name])) {
+                    $changed[] = $name;
+                }
+            }
+        }
+        return ['data' => $data, 'completed' => $completed, 'changed' => $changed];
     }
 
     /**
@@ -360,12 +399,16 @@ final class wizard {
      *
      * @param array $data
      * @param string[] $completed names of completed stages
+     * @param string[] $changed names of stages changed without validation
      */
-    private function store(array $data, array $completed): void {
+    private function store(array $data, array $completed, array $changed = []): void {
         global $DB;
 
         // An empty array must stay a JSON object.
         $json = ['data' => (object)$data, 'completed' => array_values($completed)];
+        if ($changed) {
+            $json['changed'] = array_values(array_unique($changed));
+        }
         $this->record->jsondata = \tool_mulib\local\mulib::json_encode($json);
         $DB->set_field('tool_mulib_muform_wizard', 'jsondata', $this->record->jsondata, ['id' => $this->record->id]);
     }

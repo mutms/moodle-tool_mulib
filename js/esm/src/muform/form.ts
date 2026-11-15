@@ -149,6 +149,9 @@ export class MuForm implements FormApi {
             this.elements.set(name, new module.default(wrapper, this));
         }
 
+        // Values rendered by the server may already differ from what is saved.
+        this.changed = this.form.dataset.muformChanged === '1';
+
         const rules = JSON.parse(this.form.dataset.muformRules || '[]') as DisplayRule[];
         this.display = new DisplayManager(this.elements, rules);
         this.display.apply();
@@ -165,7 +168,7 @@ export class MuForm implements FormApi {
         try {
             this.changechecker = await requireAsync<ChangeChecker>('core_form/changechecker');
             this.changechecker.watchForm(this.form);
-            if (this.form.dataset.muformDirty === '1') {
+            if (this.form.dataset.muformDirty === '1' || this.changed) {
                 this.changechecker.markFormAsDirty(this.form);
             }
         } catch {
@@ -380,7 +383,14 @@ export class MuForm implements FormApi {
                 return;
             }
         }
-        const role = submitter?.dataset.muformRole ?? 'submit';
+        let role = submitter?.dataset.muformRole ?? 'submit';
+        if (submitter?.dataset.muformSubmitIfChanged === '1') {
+            // Wizard Back: changed values are validated and stored, otherwise the form is only reloaded.
+            submitter.value = this.changed ? 'validate' : '1';
+            if (this.changed) {
+                role = 'submit';
+            }
+        }
         if (role === 'submit') {
             this.submitAttempted = true;
             if (!this.validateAll()) {

@@ -72,6 +72,8 @@ abstract class form {
     private bool $finalised = false;
     /** @var bool leaving the page asks for confirmation even without changes */
     private bool $dirty = false;
+    /** @var bool the form shows values changed by the user that are not saved */
+    private bool $changed = false;
     /** @var display_manager resolves initial hidden and locked state of elements */
     private display_manager $display;
     /** @var element[] all elements indexed by name in order they were added */
@@ -404,6 +406,28 @@ abstract class form {
     }
 
     /**
+     * Tell the browser that the form already shows values changed by the user that are not saved,
+     * the same as if the user changed something after the page was loaded.
+     *
+     * Forms rendered from submitted data, such as after a failed validation, are always changed.
+     *
+     * @param bool $state
+     * @return void
+     */
+    final public function set_changed(bool $state): void {
+        $this->changed = $state;
+    }
+
+    /**
+     * Does the form show values changed by the user that are not saved?
+     *
+     * @return bool
+     */
+    final public function is_changed(): bool {
+        return $this->changed || $this->postdata !== null;
+    }
+
+    /**
      * Override form template.
      *
      * @param string $template
@@ -436,6 +460,7 @@ abstract class form {
         $context['elements'] = [];
         $context['has_errors'] = !empty($this->allerrors);
         $context['is_dirty'] = $this->dirty;
+        $context['is_changed'] = $this->is_changed();
         $context['errors'] = [];
 
         foreach ($this->allerrors as $elname => $errors) {

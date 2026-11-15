@@ -33,7 +33,7 @@ final class reload extends button {
     }
 
     #[\Override]
-    public static function is_reloading(): bool {
+    public function is_reloading(): bool {
         return true;
     }
 }
