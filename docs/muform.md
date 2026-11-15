@@ -657,6 +657,50 @@ echo $OUTPUT->header();
 echo $wizard->render($OUTPUT, $pageurl, $form);
 ```
 
+### Wizard page class
+
+The script above is the same in every wizard, so write a class extending `wizard_page` instead and
+keep the entry script thin (page parameters, `require_login()`, `execute()`). Keep everything of one
+wizard together: `<component>\local\wizard\<name>\wizard` with one form class per stage next to it.
+
+```php
+final class wizard extends \tool_mulib\muform\wizard_page {
+    public function __construct(private stdClass $idp) {
+        require_capability('auth/musaml:managemappings', \core\context\system::instance());
+    }
+    protected function get_name(): string {
+        return 'auth_musaml_user_upload:' . $this->idp->id;
+    }
+    protected function get_stages(): array {
+        return ['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'];
+    }
+    protected function is_stage_valid(string $stage): bool { ... }      // from $this->state
+    protected function create_form(string $stage, url $formurl): form { ... }
+    protected function submit_stage(string $stage, stdClass $data, form $form): ?url {
+        $this->state = ...;     // store the stage, it is completed after returning null
+        return null;
+    }
+    protected function finish(): ?url { ... }   // all stages completed: do the job, delete, return where to go
+    // Also get_page_url(), get_return_url() and setup_page().
+}
+```
+
+`execute()` does the rest: loads or starts the state, resolves the stage, handles Cancel and Back,
+completes the stage and prints the page. Optional hooks:
+
+- `start_state()` stores defaults of a new wizard or completes stages that need no input, and may
+  return the stage to open;
+- `check_state()` stops a wizard whose stored state cannot be used any more;
+- `get_skipped_stages()` lists stages that do not apply now;
+- `finish()` is for wizards finished when all stages are completed; wizards with a last summary
+  stage finish in `submit_stage()` of that stage instead, by returning the URL to go to;
+- `reload_stage()` handles reload buttons other than Back, such as adding a row;
+- `keeps_later_stages()` is for wizards editing existing data: all stages are completed from the
+  start, submitting one goes to the following stage and the later ones stay completed;
+- `render_page()` prints the page.
+
+Access control is not part of the class, check it in the constructor.
+
 The Back button is a `reload` element. Cancel and the final submit delete the row. The stepper is
 horizontal for up to 6 steps when there is room, and a sticky column left of the form in wide pages.
 With completed stages the form is marked dirty, so leaving the page asks for confirmation; stepper

@@ -30,7 +30,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\muform\wizard;
+use tool_mulib\muform\form;
+use tool_mulib\muform\wizard_page;
 
 require(__DIR__ . '/../../../../../../config.php');
 
@@ -42,12 +43,97 @@ require_once(__DIR__ . '/muform_wizard_details_form.php');
 require_once(__DIR__ . '/muform_wizard_choice_form.php');
 require_once(__DIR__ . '/muform_wizard_summary_form.php');
 
-$pageurl = new \core\url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php');
-$PAGE->set_url($pageurl);
-$PAGE->set_context(\core\context\system::instance());
-$PAGE->set_pagelayout('report');
-$PAGE->set_title('muform wizard');
-$PAGE->set_heading('muform wizard');
+/**
+ * The fixture wizard.
+ *
+ * @package     tool_mulib
+ * @copyright   2026 Petr Skoda
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
+    #[\Override]
+    protected function get_name(): string {
+        return 'tool_mulib_fixture';
+    }
+
+    #[\Override]
+    protected function get_stages(): array {
+        return ['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'];
+    }
+
+    #[\Override]
+    protected function get_page_url(): \core\url {
+        return new \core\url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php');
+    }
+
+    #[\Override]
+    protected function get_return_url(): \core\url {
+        return new \core\url($this->get_page_url(), ['cancelled' => 1]);
+    }
+
+    #[\Override]
+    protected function setup_page(): void {
+        global $PAGE;
+        $PAGE->set_url($this->get_page_url());
+        $PAGE->set_context(\core\context\system::instance());
+        $PAGE->set_pagelayout('report');
+        $PAGE->set_title('muform wizard');
+        $PAGE->set_heading('muform wizard');
+    }
+
+    #[\Override]
+    protected function is_stage_valid(string $stage): bool {
+        $data = $this->state;
+        return match ($stage) {
+            'details' => isset($data['fullname']) && is_string($data['fullname']) && trim($data['fullname']) !== '',
+            'choice' => in_array($data['colour'] ?? null, ['red', 'green'], true),
+            'summary' => false,
+        };
+    }
+
+    #[\Override]
+    protected function create_form(string $stage, \core\url $formurl): form {
+        $data = $this->state;
+        if ($stage === 'details') {
+            return new tool_mulib_muform_wizard_details_form($formurl, $data);
+        }
+        if ($stage === 'choice') {
+            return new tool_mulib_muform_wizard_choice_form($formurl, $data);
+        }
+        $files = [];
+        if (!empty($data['attachments'])) {
+            $probe = new tool_mulib_muform_wizard_details_form($formurl, $data);
+            $files = array_map(fn($file) => $file->get_filename(), $probe->get_element('attachments')->get_files());
+        }
+        $summary = ['fullname' => $data['fullname'], 'colour' => $data['colour']];
+        $summary['files'] = implode(', ', $files) ?: 'none';
+        return new tool_mulib_muform_wizard_summary_form($formurl, [], $summary);
+    }
+
+    #[\Override]
+    protected function submit_stage(string $stage, stdClass $data, form $form): ?\core\url {
+        if ($stage === 'summary') {
+            $this->wizard->delete();
+            return new \core\url($this->get_page_url(), ['finished' => $this->state['fullname']]);
+        }
+        // Store only what this stage validated, keep the rest.
+        foreach ((array)$data as $name => $value) {
+            $this->state[$name] = $value;
+        }
+        return null;
+    }
+
+    #[\Override]
+    protected function render_page(form $form): void {
+        global $OUTPUT;
+        echo $OUTPUT->header();
+        $text = 'Stage ' . $this->stage . ($form->is_invalid() ? ' is invalid' : '');
+        echo html_writer::div($text, 'alert alert-info', ['id' => 'muform_state']);
+        echo html_writer::tag('pre', s(json_encode((object)$this->state, JSON_UNESCAPED_SLASHES)), ['id' => 'wizard_data']);
+        echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form);
+        echo $OUTPUT->footer();
+    }
+}
 
 $state = null;
 if (optional_param('cancelled', 0, PARAM_BOOL)) {
@@ -56,71 +142,20 @@ if (optional_param('cancelled', 0, PARAM_BOOL)) {
     $state = 'Wizard finished for ' . $finished;
 }
 
+$page = new tool_mulib_muform_wizard_fixture_page();
 if ($state === null) {
-    $stages = ['details' => 'Details', 'choice' => 'Choice', 'summary' => 'Summary'];
-    $wizard = wizard::load('tool_mulib_fixture', $stages);
-    if (!$wizard) {
-        $wizard = wizard::start('tool_mulib_fixture', $stages);
-        redirect($wizard->get_url($pageurl));
-    }
-    $data = $wizard->get_data();
-
-    $isvalid = function (string $stage) use ($data): bool {
-        return match ($stage) {
-            'details' => isset($data['fullname']) && is_string($data['fullname']) && trim($data['fullname']) !== '',
-            'choice' => in_array($data['colour'] ?? null, ['red', 'green'], true),
-            'summary' => false,
-        };
-    };
-    $stage = $wizard->resolve_stages($isvalid);
-    $formurl = $wizard->get_url($pageurl, $stage);
-
-    if ($stage === 'details') {
-        $form = new tool_mulib_muform_wizard_details_form($formurl, $data);
-    } else if ($stage === 'choice') {
-        $form = new tool_mulib_muform_wizard_choice_form($formurl, $data);
-    } else {
-        $files = [];
-        if (!empty($data['attachments'])) {
-            $probe = new tool_mulib_muform_wizard_details_form($formurl, $data);
-            $files = array_map(fn($file) => $file->get_filename(), $probe->get_element('attachments')->get_files());
-        }
-        $summary = ['fullname' => $data['fullname'], 'colour' => $data['colour']];
-        $summary['files'] = implode(', ', $files) ?: 'none';
-        $form = new tool_mulib_muform_wizard_summary_form($formurl, [], $summary);
-    }
-
-    if ($form->is_cancelled()) {
-        $wizard->delete();
-        redirect(new \core\url($pageurl, ['cancelled' => 1]));
-    }
-    if ($form->is_reloaded() && $wizard->get_previous_stage() !== null && $form->get_element('back')->get_value()) {
-        redirect($wizard->get_url($pageurl, $wizard->get_previous_stage()));
-    }
-    if ($submitted = $form->get_data()) {
-        if ($stage === 'summary') {
-            $wizard->delete();
-            redirect(new \core\url($pageurl, ['finished' => $data['fullname']]));
-        }
-        // Store only what this stage validated, keep the rest.
-        foreach ((array)$submitted as $name => $value) {
-            $data[$name] = $value;
-        }
-        $wizard->complete_stage($stage, $data);
-        redirect($wizard->get_url($pageurl));
-    }
+    $page->execute();
+    die;
 }
+
+$pageurl = new \core\url('/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php');
+$PAGE->set_url($pageurl);
+$PAGE->set_context(\core\context\system::instance());
+$PAGE->set_pagelayout('report');
+$PAGE->set_title('muform wizard');
+$PAGE->set_heading('muform wizard');
 
 echo $OUTPUT->header();
-
-if ($state !== null) {
-    echo html_writer::div($state, 'alert alert-info', ['id' => 'muform_state']);
-    echo html_writer::link($pageurl, 'Start again', ['id' => 'wizard_start']);
-} else {
-    $text = 'Stage ' . $stage . ($form->is_invalid() ? ' is invalid' : '');
-    echo html_writer::div($text, 'alert alert-info', ['id' => 'muform_state']);
-    echo html_writer::tag('pre', s(json_encode((object)$data, JSON_UNESCAPED_SLASHES)), ['id' => 'wizard_data']);
-    echo $wizard->render($OUTPUT, $pageurl, $form);
-}
-
+echo html_writer::div($state, 'alert alert-info', ['id' => 'muform_state']);
+echo html_writer::link($pageurl, 'Start again', ['id' => 'wizard_start']);
 echo $OUTPUT->footer();
