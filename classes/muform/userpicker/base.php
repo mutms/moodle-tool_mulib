@@ -71,9 +71,35 @@ abstract class base extends \tool_mulib\muform\picker\base {
         return $this->get_candidates_sql();
     }
 
+    /**
+     * Users of the edited item that stay valid as the current value whatever changed since:
+     * candidates, selected and tenant rules do not apply to them, they are not offered by the search.
+     *
+     * @return int[] user ids
+     */
+    protected function get_current_userids(): array {
+        return [];
+    }
+
     #[\Override]
     final public function labels(array $values): array {
-        return $this->user_labels($this->get_context(), array_map('strval', $values), $this->get_selected_sql());
+        global $DB;
+
+        $values = array_map('strval', $values);
+        $context = $this->get_context();
+        $labels = $this->user_labels($context, $values, $this->get_selected_sql());
+
+        $current = array_map('strval', array_filter($this->get_current_userids()));
+        $missing = array_diff(array_intersect($values, $current), array_map('strval', array_keys($labels)));
+        if ($missing) {
+            foreach ($DB->get_records_list('user', 'id', $missing, 'id ASC') as $user) {
+                if ($user->deleted) {
+                    continue;
+                }
+                $labels[(string)$user->id] = search_util::format_user_label($user, $context);
+            }
+        }
+        return $labels;
     }
 
     #[\Override]

@@ -118,6 +118,18 @@ final class base_test extends \advanced_testcase {
         $errors = $source->validate([(string)$user->id, (string)$suspended->id]);
         $this->assertSame([(string)$suspended->id => 'Suspended user'], $errors);
 
+        // Current users of the edited item stay valid, they are not offered by the search.
+        $deleted = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Hidden']);
+        delete_user($deleted);
+        $source->currentuserids = [(int)$hidden->id, (int)$deleted->id, (int)$user->id];
+        $labels = $source->labels([(string)$user->id, (string)$hidden->id, (string)$deleted->id, (string)$kept->id]);
+        $this->assertSame([(string)$user->id, (string)$kept->id, (string)$hidden->id], array_map('strval', array_keys($labels)));
+        $this->assertStringContainsString('Anna Hidden', $labels[$hidden->id]);
+        $this->assertSame([], $source->labels([(string)$user->id . 'x']));
+        $this->assertSame(0, $source->search('Hidden', [], 0)['total']);
+        $source->currentuserids = [];
+        $this->assertArrayNotHasKey($hidden->id, $source->labels([(string)$hidden->id]));
+
         $panel = $source->export_panel(true);
         $this->assertSame('tool_mulib/muform/userpicker/panel', $panel['panel']);
         $this->assertSame('Select users', $panel['strings']['title']);

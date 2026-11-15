@@ -23,13 +23,16 @@ use tool_mulib\local\sql;
 
 /**
  * Fake users picker source: users without lastname "Hidden", no suspended users,
- * a stored user "Kept" stays valid.
+ * a stored user "Kept" stays valid, current users stay valid whatever they are.
  *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class fake_user_source extends \tool_mulib\muform\userpicker\base {
+    /** @var int[] current users of the edited item */
+    public array $currentuserids = [];
+
     #[\Override]
     public function get_args(): array {
         return [];
@@ -48,6 +51,11 @@ final class fake_user_source extends \tool_mulib\muform\userpicker\base {
     #[\Override]
     protected function get_selected_sql(): ?sql {
         return new sql("u.lastname <> 'Hidden'");
+    }
+
+    #[\Override]
+    protected function get_current_userids(): array {
+        return $this->currentuserids;
     }
 
     #[\Override]

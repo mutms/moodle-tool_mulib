@@ -519,7 +519,9 @@ $form->add(new userpickermany('users', get_string('users'), new source_manual_al
 
 `get_candidates_sql()` limits who may be picked (all users by default), `get_selected_sql()` decides
 which stored values stay valid (the candidates by default), and `allow_suspended_users()` refuses
-suspended users when it returns false. `site_users` offers all users of a context to users with
+suspended users when it returns false. `get_current_userids()` lists users of the edited item that
+stay valid as the current value whatever the candidates, selected and tenant rules say, for example
+the current supervisor of an edited relation; the search does not offer them. `site_users` offers all users of a context to users with
 `moodle/user:viewalldetails`. The search endpoint is `tool_mulib\route\api\muform\userpicker`.
 In Behat, table values are user ids, full names or identity field values such as emails.
 

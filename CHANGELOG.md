@@ -26,6 +26,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
+- get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
 - one autocomplete source base and namespace muform\autocomplete for both autocomplete elements, label_value() and validate_value() hooks
 
 ### Changed
