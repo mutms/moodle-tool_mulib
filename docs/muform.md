@@ -621,6 +621,9 @@ Stages that do not apply now are passed to `resolve_stages()` as skipped, the st
 greyed out. Stage names are lowercase letters, `?stage=` requests a completed stage.
 `set_data()` stores defaults without completing anything.
 
+Write wizards as a `wizard_page` class (below). The `wizard` class used directly looks like this,
+it is what `wizard_page` does for you:
+
 ```php
 $name = 'auth_musaml_user_upload:' . $idp->id;
 $stages = ['source' => 'Source', 'columns' => 'Columns', 'options' => 'Options'];
@@ -661,8 +664,11 @@ echo $wizard->render($OUTPUT, $pageurl, $form);
 ### Wizard page class
 
 The script above is the same in every wizard, so write a class extending `wizard_page` instead and
-keep the entry script thin (page parameters, `require_login()`, `execute()`). Keep everything of one
-wizard together: `<component>\local\wizard\<name>\wizard` with one form class per stage next to it.
+keep the entry script thin: page parameters, `require_login()`, then
+`(new \myplugin\local\wizard\user_upload\wizard($id))->execute();`. Keep everything of one wizard
+together: `<component>\local\wizard\<name>\wizard` with one form class per stage next to it, named
+after the stage (`source`, `columns`, `options`). Code shared by several wizards goes to
+`<component>\local\wizard\shared`.
 
 ```php
 final class wizard extends \tool_mulib\muform\wizard_page {
@@ -687,7 +693,19 @@ final class wizard extends \tool_mulib\muform\wizard_page {
 ```
 
 `execute()` does the rest: loads or starts the state, resolves the stage, handles Cancel and Back,
-completes the stage and prints the page. Optional hooks:
+completes the stage and prints the page. Hooks work with these properties:
+
+- `$this->state` - the stored data, loaded before `check_state()`; `submit_stage()` and
+  `reload_stage()` change it and the page stores it;
+- `$this->wizard` - the `wizard` object, for `set_data()` in `start_state()` and `delete()` when
+  finishing;
+- `$this->stage` and `$this->formurl` - the current stage and its URL, set before `create_form()`.
+
+`setup_page()` sets `$PAGE` (context, URL, layout, title, heading, navigation). `submit_stage()`
+returns null to complete the stage and continue, or a URL to go elsewhere without completing it:
+after finishing (delete the wizard first), or `$this->formurl` to show the stage again. Values
+computed in `create_form()`, such as problems shown on a summary stage, may be kept in properties
+for `submit_stage()` of the same request. Optional hooks:
 
 - `start_state()` stores defaults of a new wizard or completes stages that need no input, and may
   return the stage to open;
