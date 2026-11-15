@@ -28,6 +28,10 @@ use tool_mulib\muform\util\options;
  *
  * Use it instead of help buttons when options need an explanation, for example their consequences.
  *
+ * Value is always required, the same way as select element without "Choose..." option always
+ * has a value; specify default to preselect an option. Required marker is shown only when nothing
+ * is selected yet, submission without selection is a validation error.
+ *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -47,6 +51,7 @@ final class radiocards extends element {
         parent::__construct($name);
         $this->label = $label;
         $this->init_cards($options, $descriptions);
+        $this->set_required(true);
     }
 
     #[\Override]
@@ -67,6 +72,10 @@ final class radiocards extends element {
     #[\Override]
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
+        if ($this->value !== null) {
+            // Some option is already selected, the required marker would be only noise.
+            $context['is_required'] = false;
+        }
         return $this->add_cards_template_data($context, ($this->value === null) ? [] : [$this->value]);
     }
 }

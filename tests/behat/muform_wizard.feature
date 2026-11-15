@@ -151,7 +151,6 @@ Feature: muform wizard helper
     When I press "Back"
     Then I should see "Stage choice" in the "#muform_state" "css_element"
 
-
   Scenario: A locked stage is read-only once it is completed
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "locked=1"
     When I set the following muform fields:
