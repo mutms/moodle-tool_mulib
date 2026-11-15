@@ -39,6 +39,10 @@ $handler->render($form);
   control, `get_args()` returns them, `search()`, `label()`/`labels()` and `validate()` decide what may be
   selected. Reuse the traits in `classes/muform/util/autocomplete/`: `user_trait`, `cohort_trait`,
   `category_context_trait`, and `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
+- Pickers (`picker`, `pickermany`): selected values are pills, a button opens a family panel (React) over the
+  right half of the screen. A family is an abstract `tool_mulib\muform\picker\base` subclass, a panel module
+  and the family's own endpoints (`base::require_browser_session()`, `<family base>::instantiate()`); values
+  are opaque strings like autocomplete values. See "Picker" in `docs/muform.md`.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one
   form class per stage in the same namespace and a thin entry script calling `execute()`; full page only (plain
   links, never dialogs). Stage forms use the `wizardcontinue` and `wizardback` buttons, wizard state never holds

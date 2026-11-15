@@ -24,6 +24,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - boolean_yes report builder filter that filters only when set to "Yes"
 - report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
+- picker and pickermany muform elements, pills with a family panel over the right half of the screen
 
 ### Changed
 

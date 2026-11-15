@@ -167,6 +167,8 @@ download, also in a dialog.
 | `editor`           | `(name, label, maxfiles = 0, allowsubdirs = false, attributes)`              | `string` text, plus `<name>format` and `<name>draftitemid` | blank text       |
 | `autocomplete`     | `(name, label, source, attributes)`                                          | `string` value or `null`                                   | `null`           |
 | `autocompletemany` | `(name, label, source, attributes)`                                          | `string[]` values                                          | `[]`             |
+| `picker`           | `(name, label, source)`                                                      | `string` value or `null`                                   | `null`           |
+| `pickermany`       | `(name, label, source)`                                                      | `string[]` values                                          | `[]`             |
 | `tags`             | `(name, label, tagarea, attributes)`                                         | `string[]` tag names                                       | `[]`             |
 | `checkbox`         | `(name, label, text, attributes)`                                            | `1` or `0`                                                 | `0`              |
 | `yesno`            | `(name, label)`                                                              | `1` or `0`                                                 | never empty      |
@@ -384,6 +386,73 @@ A value without a label is rejected on submit, which is how permissions are enfo
 traits in `classes/muform/util/autocomplete/` cover users, cohorts and category contexts, and
 `tool_mulib\local\search_util` has the search SQL.
 
+### Picker
+
+`picker` picks one value, `pickermany` a list. Use them when typing part of a name is not enough to
+find the right item: users need columns, filters or a tree to see what they pick. Selected values
+are pills with a remove button. The button after them opens a panel over the right half of the
+screen, and the form stays visible on the left. The panel is a native modal `<dialog>` of its own, not
+a muform dialog, so it also works over forms in muform dialogs and wizards.
+
+Pickers come in families. A family is three things:
+
+- an abstract source base extending `tool_mulib\muform\picker\base`, with one subclass per usage;
+- a panel component (React), the default export of the module named by `get_panel()`;
+- the family's own endpoints that the panel talks to. Panels differ a lot (a paged search with filters,
+  a whole tree loaded at once), so tool_mulib has no generic picker endpoint.
+
+The source works like an autocomplete source. Its constructor takes plain ids and does the access
+control, and `get_args()` returns them. `labels()` returns label HTML for values that may be
+selected, and `validate()` can refuse a value with a reason. `get_panel_strings()` gives the panel
+its strings and must include `title`. One source serves both elements; the panel gets `multiple`
+as a prop.
+
+```php
+namespace tool_x\local\categorypicker;
+
+abstract class base extends \tool_mulib\muform\picker\base {
+    final public function get_panel(): string {
+        return 'tool_x/categorypicker/panel';
+    }
+
+    final public function get_panel_strings(bool $multiple): array {
+        return ['title' => get_string($multiple ? 'categories' : 'category'), 'search' => get_string('search')];
+    }
+
+    // Shared labels(), the tree for the panel, ...
+}
+
+final class program_category extends base {
+    public function __construct(private int $programid) {
+        require_capability('tool/x:edit', program::get_context($programid));
+    }
+
+    public function get_args(): array {
+        return [$this->programid];
+    }
+}
+
+$form->add(new pickermany('categoryids', get_string('categories'), new program_category($programid)));
+```
+
+Values are opaque strings of letters, digits and `_-.:@`, the same as autocomplete values, so ids
+and tokens such as `category:5` both work. Commas separate values in the browser. A value without a
+label is rejected on submit, which is how permissions are enforced.
+
+Family endpoints recreate the source from the class name and arguments sent by the browser. Call
+`base::require_browser_session()` first, then `instantiate()` on the family base: it accepts only
+instantiable subclasses of that base in the same namespace, with scalar arguments.
+
+```php
+$source = \tool_x\local\categorypicker\base::instantiate($body['source'], $body['args']);
+```
+
+The panel component gets `PickerPanelProps` from `tool_mulib/muform/pickerpanel`: `source`
+(`class` and `args`), `multiple`, `selected` (values already in the field, never offered again),
+`strings`, `onPick(items)` and `onClose()`. `onPick` returns the picked values with their label HTML,
+so the element never fetches labels itself. `openPanel()` from the same module opens a panel
+outside forms, for example in an editor that adds several items at once.
+
 ### Tags
 
 `tags` edits core tags of one item. Instead of a source it gets a tag area class, a subclass of
@@ -561,6 +630,13 @@ secret. Checkboxes are checked by anything except empty or `0`. Files are upload
 
 `I type "Faculty" into the "tenantid" muform search field` types into an autocomplete without picking
 anything, and `the open muform list should be fully visible` checks the result list is not cut off.
+
+Values of `picker` and `pickermany` depend on the panel family. The element helper removes the
+pills, opens the panel and leaves each comma separated item to the family's panel helper:
+module `<component>/<path>` is served by class `<component>\tests\muform\picker\<path with _>`
+in `<component>/tests/classes/muform/picker/`, extending `tool_mulib\tests\muform\picker\panel_base`
+(`is_ready()`, `search()`, `pick()`, `confirm()` and `label_matches()`). Steps working with a panel
+opened outside a form use `panel_base::wait_for_panel()`.
 
 Every element type has a Behat helper in `tests/classes/muform/element/<type>.php`, a fixture page in
 `tests/behat/fixtures/` and its own feature file. When you write a new element, copy the `text`
