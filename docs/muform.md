@@ -558,6 +558,9 @@ the options. Descriptions are always visible and linked to the input with `aria-
 whole card is clickable. Use them instead of help buttons when users must understand what the
 options mean before choosing, for example cohort types or consequences of a conversion. There is
 no inline variant. The look is inspired by Bootstrap 6 field group cards.
+
+Unlike `radios`, `radiocards` is required by default: submitting without a selection is a validation
+error, use `set_default()` to preselect an option or `set_required(false)` to allow no selection.
 Descriptions are plain text on purpose: the clickable card cannot contain links or other interactive
 content, and screen readers read the description as text.
 

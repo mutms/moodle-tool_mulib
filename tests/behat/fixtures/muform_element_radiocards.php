@@ -70,7 +70,8 @@ final class tool_mulib_muform_fixture_radiocards_form extends form {
 
         $sizeoptions = (new options([]))
             ->add_optgroup('Sizes', ['s' => 'Small', 'm' => 'Medium']);
-        $this->add(new radiocards('size', 'Size', $sizeoptions));
+        // Radiocards are required by default, keep this one optional so that it may stay empty.
+        $this->add((new radiocards('size', 'Size', $sizeoptions))->set_required(false));
 
         $this->add(new buttons('buttons'));
         $this->add(new submit(), 'buttons');
