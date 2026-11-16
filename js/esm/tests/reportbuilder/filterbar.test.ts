@@ -138,6 +138,24 @@ test('operators not offered by the bar are kept', () => {
     expect(buildValues([empty])).toEqual({'u:name_operator': TEXT_IS_EMPTY, 'u:name_value': ''});
 });
 
+test('checkboxes filters', () => {
+    const period = (checked: string[], extra: Partial<Filter> = {}): Filter => ({key: 't:period', type: 'checkboxes',
+        label: 'Period', operator: ANY_VALUE, value: '', checked, options: [{value: 'past', label: 'Past'},
+            {value: 'current', label: 'Current'}, {value: 'future', label: 'Future'}], ...extra});
+    expect(isActive(period([]))).toBe(false);
+    expect(isActive(period(['future']))).toBe(true);
+    // Labels in the order of options, not of checking.
+    expect(describe(period(['future', 'current']), STRINGS)).toBe('Current, Future');
+    expect(buttonLabel(period(['past']), STRINGS)).toBe('Period: Past');
+    expect(buttonLabel(period([], {pinned: true, anylabel: 'Any'}), STRINGS)).toBe('Period: Any');
+    expect(buildValues([period(['current', 'future'])])).toEqual({'t:period_values': ['current', 'future']});
+    expect(buildValues([period([])])).toEqual({'t:period_values': []});
+    const future = {'default': {operator: ANY_VALUE, value: '', checked: ['future']}};
+    expect(isDefault({...period(['future']), ...future})).toBe(true);
+    expect(isDefault({...period(['future', 'past']), ...future})).toBe(false);
+    expect(isInitial(period([]))).toBe(true);
+});
+
 test('other filters are kept or removed as a whole', () => {
     const date: Filter = {key: 'u:created', type: 'other', label: 'Created', operator: ANY_VALUE, value: '', options: [],
         values: {'u:created_operator': 3, 'u:created_from': 100, 'u:created_to': 200}, active: true};

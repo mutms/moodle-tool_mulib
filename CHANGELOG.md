@@ -22,6 +22,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - pinned filters of report_filter_bar that stay visible with "Any" when they do not filter
 - default filter values of report_filter_bar, stored for users without stored filters and after "Reset all"
 - boolean_yes report builder filter that filters only when set to "Yes"
+- checkboxes report builder filter matching any checked option, edited in report_filter_bar, replaces select filters without losing stored values
 - report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen

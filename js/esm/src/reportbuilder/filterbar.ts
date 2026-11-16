@@ -116,13 +116,15 @@ export interface FilterOption {
 export interface Filter {
     key: string;
     /** Filters of type "other" can be changed in the core form only. */
-    type: 'text' | 'select' | 'boolean' | 'date' | 'other';
+    type: 'text' | 'select' | 'boolean' | 'date' | 'checkboxes' | 'other';
     label: string;
     operator: number;
     /** Text, selected option or number of units of relative date operators. */
     value: string;
-    /** Select options, operators offered in date filters, or values of boolean filters that do not offer both. */
+    /** Select and checkboxes options, operators offered in date filters, or values of boolean filters that do not offer both. */
     options: FilterOption[];
+    /** Checked options of checkboxes filters, records matching any of them are shown. */
+    checked?: string[];
     /** Unit of relative date operators. */
     unit?: number;
     /** Start of date range, 0 means none. */
@@ -144,7 +146,7 @@ export interface Filter {
     /** Text of a pinned filter that is not restricting the report, such as "Any". */
     anylabel?: string;
     /** Default value defined by the page, stored for users without stored filters. */
-    default?: Pick<Filter, 'operator' | 'value' | 'unit' | 'from' | 'to' | 'fromtext' | 'totext' | 'operatorlabel'>;
+    default?: Pick<Filter, 'operator' | 'value' | 'checked' | 'unit' | 'from' | 'to' | 'fromtext' | 'totext' | 'operatorlabel'>;
 }
 
 /** Date and time settings of the user, exported when the report has date filters. */
@@ -260,6 +262,9 @@ export const isActive = (filter: Filter): boolean => {
     if (filter.type === 'other') {
         return filter.active === true;
     }
+    if (filter.type === 'checkboxes') {
+        return (filter.checked ?? []).length > 0;
+    }
     if (filter.operator === ANY_VALUE) {
         return false;
     }
@@ -296,6 +301,10 @@ export const describe = (filter: Filter, strings: Strings, settings: DateTimeSet
     }
     if (filter.type === 'date') {
         return describeDate(filter, strings, settings);
+    }
+    if (filter.type === 'checkboxes') {
+        const checked = filter.checked ?? [];
+        return filter.options.filter((option) => checked.includes(option.value)).map((option) => option.label).join(', ');
     }
     let value = filter.value;
     if (filter.type === 'select') {
@@ -368,15 +377,14 @@ export const buildValues = (filters: Filter[]): Record<string, unknown> => {
             }
             continue;
         }
+        if (filter.type === 'checkboxes') {
+            // Core replaces all stored values, values of a former select filter are dropped here.
+            values[filter.key + '_values'] = active ? [...(filter.checked ?? [])] : [];
+            continue;
+        }
         values[filter.key + '_operator'] = active ? filter.operator : ANY_VALUE;
         if (filter.type === 'date') {
-            // Defaults of the core form for unused parts.
-            const relative = active && (DATE_RELATIVE.includes(filter.operator) || filter.operator === DATE_CURRENT);
-            const range = active && filter.operator === DATE_RANGE;
-            values[filter.key + '_value'] = relative && DATE_RELATIVE.includes(filter.operator) ? Number(filter.value) : 1;
-            values[filter.key + '_unit'] = relative ? (filter.unit ?? DATE_UNIT_DAY) : DATE_UNIT_DAY;
-            values[filter.key + '_from'] = range ? (filter.from ?? 0) : 0;
-            values[filter.key + '_to'] = range ? (filter.to ?? 0) : 0;
+            Object.assign(values, buildDateValues(filter, active));
             continue;
         }
         if (filter.type !== 'boolean') {
@@ -384,6 +392,24 @@ export const buildValues = (filters: Filter[]): Record<string, unknown> => {
         }
     }
     return values;
+};
+
+/**
+ * Values of date filter except the operator, defaults of the core form for unused parts.
+ *
+ * @param filter
+ * @param active
+ * @returns values keyed by form element names
+ */
+const buildDateValues = (filter: Filter, active: boolean): Record<string, unknown> => {
+    const relative = active && (DATE_RELATIVE.includes(filter.operator) || filter.operator === DATE_CURRENT);
+    const range = active && filter.operator === DATE_RANGE;
+    return {
+        [filter.key + '_value']: relative && DATE_RELATIVE.includes(filter.operator) ? Number(filter.value) : 1,
+        [filter.key + '_unit']: relative ? (filter.unit ?? DATE_UNIT_DAY) : DATE_UNIT_DAY,
+        [filter.key + '_from']: range ? (filter.from ?? 0) : 0,
+        [filter.key + '_to']: range ? (filter.to ?? 0) : 0,
+    };
 };
 
 /**
@@ -537,6 +563,9 @@ class FilterBar {
         if (filter.type === 'other') {
             filter.active = false;
             filter.values = {};
+        }
+        if (filter.type === 'checkboxes') {
+            filter.checked = [];
         }
     }
 
@@ -729,6 +758,8 @@ class FilterBar {
             content.append(form);
         } else if (filter.type === 'date') {
             content.append(this.dateEditor(filter));
+        } else if (filter.type === 'checkboxes') {
+            content.append(this.checkboxesEditor(filter));
         } else if (filter.type === 'boolean') {
             const group = document.createElement('div');
             group.className = 'd-flex gap-2';
@@ -827,6 +858,44 @@ class FilterBar {
             select.append(new Option(option.label, option.value, false, option.value === value));
         }
         return select;
+    }
+
+    /**
+     * Editor of checkboxes filter, applied together so that the report is reloaded once.
+     *
+     * @param filter
+     * @returns form
+     */
+    private checkboxesEditor(filter: Filter): HTMLFormElement {
+        const form = document.createElement('form');
+        const checked = filter.checked ?? [];
+        const inputs: HTMLInputElement[] = [];
+        filter.options.forEach((option, index) => {
+            const item = document.createElement('div');
+            item.className = 'form-check';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'form-check-input';
+            input.id = this.root.id + '-option-' + index;
+            input.value = option.value;
+            input.checked = checked.includes(option.value);
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = input.id;
+            label.textContent = option.label;
+            item.append(input, label);
+            form.append(item);
+            inputs.push(input);
+        });
+        const apply = this.button(this.strings.apply, 'btn btn-sm btn-primary mt-2');
+        apply.type = 'submit';
+        form.append(apply);
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            filter.checked = inputs.filter((input) => input.checked).map((input) => input.value);
+            void this.save();
+        });
+        return form;
     }
 
     /**

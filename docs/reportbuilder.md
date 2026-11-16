@@ -26,12 +26,19 @@ a page may leave either out.
   that restrict a report when switched on, such as "Exclude sub-categories". "No" of the core `boolean_select`
   selects the opposite records (sub-categories only), here it does nothing. Add
   `->set_limited_operators(boolean_yes::OPERATORS)` to hide "No" in the core form; the filter bar offers "Yes" only.
+- `reportbuilder\local\filters\checkboxes` - records matching any of the checked options, nothing checked
+  does not filter; the bar shows checkboxes with "Apply", the core form a multiple autocomplete (stored values
+  `<name>_values` like the core autocomplete filter). Options are plain values of the field compared with one
+  `IN`, override `get_option_sql()` for options that are conditions of their own, such as "past", "current"
+  and "future". It may replace a core `select` filter with the same identifier: stored select values are read
+  as checked options ("is equal to" checks the option, "is not equal to" all others), the next save stores
+  checkbox values only. Option values must not be `''` or `'0'`.
 - `local\sql::rename_params()` - converts a `sql` fragment for report builder APIs that accept only their
   own parameter names (`database::generate_param_name()`), for example base conditions.
 
 ## Filter bar
 
-- Text, select, boolean and date filters are edited in the bar, other types (course role, number, ...) only in
+- Text, select, boolean, date and checkboxes filters are edited in the bar, other types (course role, number, ...) only in
   the core form, which moves into the bar as "Advanced filtering".
 - Filter names, select option labels and "any" texts are exported with `clean_string()` and decoded to plain
   text in the browser, so `format_string()` results are fine and tags are shown as text.

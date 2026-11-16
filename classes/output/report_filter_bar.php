@@ -27,6 +27,7 @@ use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
 use tool_mulib\muform\util\calendar;
 use tool_mulib\reportbuilder\local\filters\boolean_yes;
+use tool_mulib\reportbuilder\local\filters\checkboxes;
 
 /**
  * Always visible filter bar for system reports, replaces the core filters dropdown.
@@ -154,7 +155,7 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
                 // The bar offers "Reset to default" when the value differs.
                 $data['default'] = array_intersect_key(
                     $this->export_filter($filter, $defaultvalues),
-                    array_flip(['operator', 'value', 'unit', 'from', 'to', 'fromtext', 'totext', 'operatorlabel'])
+                    array_flip(['operator', 'value', 'checked', 'unit', 'from', 'to', 'fromtext', 'totext', 'operatorlabel'])
                 );
             }
             if (array_key_exists($key, $pinned)) {
@@ -194,7 +195,17 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
             'value' => $value,
             'options' => [],
         ];
-        if (is_a($class, boolean_select::class, true)) {
+        if (is_a($class, checkboxes::class, true)) {
+            // Values stored by a select filter that was replaced by checkboxes are converted.
+            $instance = $class::create($filter);
+            $data['type'] = 'checkboxes';
+            $data['operator'] = 0;
+            $data['value'] = '';
+            $data['checked'] = $instance->get_checked($values);
+            foreach ($instance->get_options() as $optionvalue => $optionlabel) {
+                $data['options'][] = ['value' => (string)$optionvalue, 'label' => clean_string((string)$optionlabel)];
+            }
+        } else if (is_a($class, boolean_select::class, true)) {
             $data['type'] = 'boolean';
             $allowed = $filter->restrict_limited_operators([
                 boolean_select::CHECKED => get_string('yes'),

@@ -77,6 +77,9 @@ const isActive = /* @__PURE__ */ __name((filter) => {
   if (filter.type === "other") {
     return filter.active === true;
   }
+  if (filter.type === "checkboxes") {
+    return (filter.checked ?? []).length > 0;
+  }
   if (filter.operator === ANY_VALUE) {
     return false;
   }
@@ -102,6 +105,10 @@ const describe = /* @__PURE__ */ __name((filter, strings, settings = null) => {
   }
   if (filter.type === "date") {
     return describeDate(filter, strings, settings);
+  }
+  if (filter.type === "checkboxes") {
+    const checked = filter.checked ?? [];
+    return filter.options.filter((option) => checked.includes(option.value)).map((option) => option.label).join(", ");
   }
   let value = filter.value;
   if (filter.type === "select") {
@@ -148,14 +155,13 @@ const buildValues = /* @__PURE__ */ __name((filters) => {
       }
       continue;
     }
+    if (filter.type === "checkboxes") {
+      values[filter.key + "_values"] = active ? [...filter.checked ?? []] : [];
+      continue;
+    }
     values[filter.key + "_operator"] = active ? filter.operator : ANY_VALUE;
     if (filter.type === "date") {
-      const relative = active && (DATE_RELATIVE.includes(filter.operator) || filter.operator === DATE_CURRENT);
-      const range = active && filter.operator === DATE_RANGE;
-      values[filter.key + "_value"] = relative && DATE_RELATIVE.includes(filter.operator) ? Number(filter.value) : 1;
-      values[filter.key + "_unit"] = relative ? filter.unit ?? DATE_UNIT_DAY : DATE_UNIT_DAY;
-      values[filter.key + "_from"] = range ? filter.from ?? 0 : 0;
-      values[filter.key + "_to"] = range ? filter.to ?? 0 : 0;
+      Object.assign(values, buildDateValues(filter, active));
       continue;
     }
     if (filter.type !== "boolean") {
@@ -164,6 +170,16 @@ const buildValues = /* @__PURE__ */ __name((filters) => {
   }
   return values;
 }, "buildValues");
+const buildDateValues = /* @__PURE__ */ __name((filter, active) => {
+  const relative = active && (DATE_RELATIVE.includes(filter.operator) || filter.operator === DATE_CURRENT);
+  const range = active && filter.operator === DATE_RANGE;
+  return {
+    [filter.key + "_value"]: relative && DATE_RELATIVE.includes(filter.operator) ? Number(filter.value) : 1,
+    [filter.key + "_unit"]: relative ? filter.unit ?? DATE_UNIT_DAY : DATE_UNIT_DAY,
+    [filter.key + "_from"]: range ? filter.from ?? 0 : 0,
+    [filter.key + "_to"]: range ? filter.to ?? 0 : 0
+  };
+}, "buildDateValues");
 const isDefault = /* @__PURE__ */ __name((filter) => {
   if (!filter.default) {
     return false;
@@ -281,6 +297,9 @@ class FilterBar {
     if (filter.type === "other") {
       filter.active = false;
       filter.values = {};
+    }
+    if (filter.type === "checkboxes") {
+      filter.checked = [];
     }
   }
   /** Render buttons of the bar. */
@@ -454,6 +473,8 @@ class FilterBar {
       content.append(form);
     } else if (filter.type === "date") {
       content.append(this.dateEditor(filter));
+    } else if (filter.type === "checkboxes") {
+      content.append(this.checkboxesEditor(filter));
     } else if (filter.type === "boolean") {
       const group = document.createElement("div");
       group.className = "d-flex gap-2";
@@ -544,6 +565,43 @@ class FilterBar {
       select.append(new Option(option.label, option.value, false, option.value === value));
     }
     return select;
+  }
+  /**
+   * Editor of checkboxes filter, applied together so that the report is reloaded once.
+   *
+   * @param filter
+   * @returns form
+   */
+  checkboxesEditor(filter) {
+    const form = document.createElement("form");
+    const checked = filter.checked ?? [];
+    const inputs = [];
+    filter.options.forEach((option, index) => {
+      const item = document.createElement("div");
+      item.className = "form-check";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.className = "form-check-input";
+      input.id = this.root.id + "-option-" + index;
+      input.value = option.value;
+      input.checked = checked.includes(option.value);
+      const label = document.createElement("label");
+      label.className = "form-check-label";
+      label.htmlFor = input.id;
+      label.textContent = option.label;
+      item.append(input, label);
+      form.append(item);
+      inputs.push(input);
+    });
+    const apply = this.button(this.strings.apply, "btn btn-sm btn-primary mt-2");
+    apply.type = "submit";
+    form.append(apply);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      filter.checked = inputs.filter((input) => input.checked).map((input) => input.value);
+      void this.save();
+    });
+    return form;
   }
   /**
    * Editor of date filter.
