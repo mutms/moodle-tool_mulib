@@ -68,6 +68,9 @@ final class fake_langpack {
         }
 
         get_string_manager()->reset_caches();
+        // List of languages is cached statically in user properties,
+        // new users with fake language would be silently created with default language.
+        \core\user::reset_caches();
     }
 
     /**
