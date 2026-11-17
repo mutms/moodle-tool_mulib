@@ -103,7 +103,7 @@ final class mudb {
      * @return bool true if record was inserted, false if record already existed
      */
     public static function insert_record_if_missing(string $table, stdClass|array $dataobject, array $uniqueindexcolumns): bool {
-        global $DB;
+        global $DB, $CFG;
 
         $dataobject = (object)(array)$dataobject;
 
@@ -134,36 +134,23 @@ final class mudb {
             }
             $conditions[$column] = $dataobject->$column;
         }
-
-        if ($DB->get_dbfamily() === 'postgres') {
-            $trans = $DB->start_delegated_transaction();
-
-            $id = $DB->get_field_sql(
-                "SELECT nextval(pg_get_serial_sequence(?, 'id'))",
-                [$DB->get_prefix() . $table]
-            );
-
-            $fields = ['id'];
-            $values = ['?'];
-            $params = [$id];
-            foreach ((array)$dataobject as $field => $value) {
-                $fields[] = $field;
-                $values[] = '?';
-                $params[] = $value;
+        if ($CFG->debugdeveloper) {
+            $found = false;
+            $expected = $uniqueindexcolumns;
+            sort($expected);
+            foreach ($DB->get_indexes($table) as $index) {
+                $indexcolumns = $index['columns'];
+                sort($indexcolumns);
+                if ($index['unique'] && $indexcolumns === $expected) {
+                    $found = true;
+                    break;
+                }
             }
-            $fields = implode(',', $fields);
-            $values = implode(',', $values);
-            $constraint = implode(',', $uniqueindexcolumns);
-
-            $sql = "INSERT INTO {{$table}} ($fields) VALUES ($values)
-                                ON CONFLICT ($constraint) DO NOTHING";
-            $DB->execute($sql, $params);
-
-            $inserted = $DB->record_exists($table, ['id' => $id]);
-
-            $trans->allow_commit();
-
-            return $inserted;
+            if (!$found) {
+                throw new \core\exception\coding_exception(
+                    'mudb::insert_record_if_missing() unique index with given columns does not exist'
+                );
+            }
         }
 
         if ($DB->record_exists($table, $conditions)) {

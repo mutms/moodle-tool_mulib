@@ -449,11 +449,22 @@ final class mudb_test extends \database_driver_testcase {
         $this->assertSame('50', $DB->get_field($tablename, 'value', ['course' => '2', 'name' => 'a']));
         $this->assertGreaterThan($DB->get_field($tablename, 'id', ['course' => '2', 'name' => 'a']), $record3->id);
 
+        $this->assertTrue(mudb::insert_record_if_missing($tablename, ['course' => true, 'name' => 'c', 'value' => false], ['course', 'name']));
+        $this->assertSame('0', $DB->get_field($tablename, 'value', ['course' => '1', 'name' => 'c']));
+        $this->assertTrue(mudb::insert_record_if_missing($tablename, ['course' => '1', 'name' => 'd', 'value' => ''], ['course', 'name']));
+        $this->assertSame('0', $DB->get_field($tablename, 'value', ['course' => '1', 'name' => 'd']));
+        $this->assertTrue(mudb::insert_record_if_missing($tablename, ['course' => '1', 'name' => 'e', 'value' => null], ['course', 'name']));
+        $this->assertNull($DB->get_field($tablename, 'value', ['course' => '1', 'name' => 'e']));
+        $DB->delete_records_select($tablename, "name IN ('c', 'd', 'e')");
+
         $invalid = [
             'requires list of unique constraint columns' => [['course' => '5', 'name' => 'a'], []],
             'dataobject must have all unique columns set' => [['course' => '5'], ['course', 'name']],
             'dataobject must not have id property' => [['id' => '9', 'course' => '5', 'name' => 'a'], ['course', 'name']],
             'dataobject contains unknown column' => [['course' => '5', 'name' => 'a', 'xvalue' => '1'], ['course', 'name']],
+            'unique index with given columns does not exist' => [['course' => '5', 'name' => 'a', 'value' => '1'], ['course']],
+            'unique index with given columns does not exist ' => [['course' => '5', 'name' => 'a', 'value' => '1'], ['course', 'name', 'value']],
+            'unique index with given columns does not exist  ' => [['course' => '5', 'name' => 'a', 'value' => '1'], ['value']],
         ];
         foreach ($invalid as $message => [$record, $columns]) {
             try {
@@ -462,7 +473,7 @@ final class mudb_test extends \database_driver_testcase {
             } catch (\core\exception\moodle_exception $ex) {
                 $this->assertInstanceOf(\core\exception\coding_exception::class, $ex);
                 $this->assertSame(
-                    'Coding error detected, it must be fixed by a programmer: mudb::insert_record_if_missing() ' . $message,
+                    'Coding error detected, it must be fixed by a programmer: mudb::insert_record_if_missing() ' . trim($message),
                     $ex->getMessage()
                 );
             }
