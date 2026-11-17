@@ -92,6 +92,9 @@ if (\tool_mulib\local\mulib::is_murelatio_active()) {
 
 $enabled = $notification->enabled ? get_string('yes') : get_string('no');
 $details->add(get_string('notification_enabled', 'tool_mulib'), $enabled);
+foreach ($classname::get_aux_details($notification) as $label => $value) {
+    $details->add($label, $value);
+}
 $details->add(get_string('description'), $description);
 $custom = $notification->custom ? get_string('yes') : get_string('no');
 $details->add(get_string('notification_custom', 'tool_mulib'), $custom);

@@ -95,7 +95,7 @@ final class util {
             $data->customjson = null;
         }
 
-        // Note: Add aux data support here.
+        $classname::normalise_aux_data($data, null);
 
         $id = $DB->insert_record('tool_mulib_notification', $data);
         $record = $DB->get_record('tool_mulib_notification', ['id' => $id], '*', MUST_EXIST);
@@ -155,7 +155,7 @@ final class util {
             unset($data->customjson);
         }
 
-        // Note: Add aux data support here.
+        $classname::normalise_aux_data($data, $oldrecord);
 
         $DB->update_record('tool_mulib_notification', $data);
         $record = $DB->get_record('tool_mulib_notification', ['id' => $data->id], '*', MUST_EXIST);

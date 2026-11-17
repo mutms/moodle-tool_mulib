@@ -30,6 +30,8 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
 - one autocomplete source base and namespace muform\autocomplete for both autocomplete elements, label_value() and validate_value() hooks
 - mudb::insert_record_if_missing() for concurrent inserts into tables with unique index, safe inside transactions
+- notification type hooks add_update_form_elements(), prepare_update_form_data(), normalise_aux_data() and get_aux_details()
+  for type specific settings stored in notification aux fields, aux data of types without support is discarded
 
 ### Changed
 

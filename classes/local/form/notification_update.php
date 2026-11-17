@@ -61,7 +61,7 @@ final class notification_update extends form {
         }
 
         $this->add(new checkbox('enabled', get_string('notification_enabled', 'tool_mulib')));
-        // Note: Add aux data support here.
+        $classname::add_update_form_elements($this, $notification);
         $this->add(new checkbox('custom', get_string('notification_custom', 'tool_mulib')));
         $this->add(new text('subject', get_string('notification_subject', 'tool_mulib'), ['type' => 'rawtext', 'width' => 'full']));
         $this->add(new editor('body', get_string('notification_body', 'tool_mulib')));

@@ -116,6 +116,53 @@ abstract class notificationtype {
     }
 
     /**
+     * Add type specific elements to notification update form,
+     * element names are expected to match the aux fields - auxint1, auxint2 or auxjson.
+     *
+     * @param \tool_mulib\muform\form $form
+     * @param stdClass $notification current notification data
+     * @return void
+     */
+    public static function add_update_form_elements(\tool_mulib\muform\form $form, stdClass $notification): void {
+    }
+
+    /**
+     * Prepare current data for notification update form,
+     * intended for conversion of stored aux data to form element values.
+     *
+     * @param array $current notification record with subject and body
+     * @return array
+     */
+    public static function prepare_update_form_data(array $current): array {
+        return $current;
+    }
+
+    /**
+     * Validate and normalise aux fields before notification is created or updated.
+     *
+     * Types that use aux data must override this, by default all aux data is discarded.
+     *
+     * @param stdClass $data data to be stored, fields that are not present must not be added on update
+     * @param stdClass|null $oldrecord current notification record, null when creating
+     * @return void
+     */
+    public static function normalise_aux_data(stdClass $data, ?stdClass $oldrecord): void {
+        unset($data->auxjson);
+        unset($data->auxint1);
+        unset($data->auxint2);
+    }
+
+    /**
+     * Returns type specific settings to be displayed on notification details page.
+     *
+     * @param stdClass $notification
+     * @return string[] HTML values indexed with plain text labels
+     */
+    public static function get_aux_details(stdClass $notification): array {
+        return [];
+    }
+
+    /**
      * Returns notification description text.
      *
      * @return string HTML text converted from Markdown lang string value

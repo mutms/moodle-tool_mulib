@@ -68,6 +68,7 @@ if ($notification->custom && $notification->customjson) {
     $current['body'] = str_replace('{$a->', '{$a-&gt;', markdown_to_html($classname::get_default_body()));
 }
 $current['bodyformat'] = FORMAT_HTML;
+$current = $classname::prepare_update_form_data($current);
 
 $handler = handler::from_request();
 $form = new \tool_mulib\local\form\notification_update($pageurl, $current, ['manager' => $manager]);
