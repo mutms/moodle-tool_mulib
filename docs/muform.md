@@ -530,7 +530,9 @@ Filters are pills below the search field that look and work like the report filt
 the editor of its value, the cross removes it, filters without a value are in "Add filter" and
 "Reset filters" returns to the default values. Every source that allows suspended users has the
 pinned "Active" filter, set to "Yes" when the panel opens, so suspended users are hidden until the
-filter is removed ("Active: Any") or changed to "No". Sources add their own filters in `get_filters()`:
+filter is removed ("Active: Any") or changed to "No". The "Cohort" filter in "Add filter" lists members
+of one cohort: only cohorts whose members the current user may list are found, see
+`cohort_util::get_view_members_sql()`. Sources add their own filters in `get_filters()`:
 
 ```php
 protected function get_filters(): array {
@@ -553,7 +555,11 @@ protected function get_filters(): array {
 
 `tool_mulib\muform\picker\filter::boolean()` has Yes and No values, `filter::select()` a list of options
 with plain text labels (a search box is added for more than 10); conditions use table alias `u`. The
-last argument is the default value, without it the filter starts in "Add filter". `set_pinned()` keeps
+last argument is the default value, without it the filter starts in "Add filter".
+`filter::autocomplete($key, $label, $source, $where)` is for values that cannot be listed: the editor searches
+an [autocomplete](#autocomplete) source through the autocomplete endpoint and only values known to `labels()`
+of the source are accepted, so the source is the access control of the filter values - the "Cohort" filter
+uses `tool_mulib\muform\autocomplete\member_cohorts`. `set_pinned()` keeps
 the pill in the bar when it has no value, as "Authentication: Any" (the second argument replaces "Any").
 Keys are unique in the source: lowercase letters, digits and underscores. Filters only narrow down the
 list of candidates, `validate()` and `get_selected_sql()` decide what may be stored.

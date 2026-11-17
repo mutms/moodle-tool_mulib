@@ -88,6 +88,9 @@ final class filter_set {
             'filterremove' => get_string('filterbar_remove', 'tool_mulib'),
             'filterresetall' => get_string('filterbar_resetall', 'tool_mulib'),
             'filterresetdefault' => get_string('filterbar_resetdefault', 'tool_mulib'),
+            'filternoresults' => get_string('muform_noresults', 'tool_mulib'),
+            'filtersearching' => get_string('muform_searching', 'tool_mulib'),
+            'filtertoomanyresults' => get_string('muform_toomanyresults', 'tool_mulib'),
             'search' => get_string('muform_search', 'tool_mulib'),
         ];
     }

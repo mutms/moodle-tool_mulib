@@ -6,24 +6,131 @@ import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
  *
  * A pill opens the editor of the filter value in a popover, its cross removes the value;
  * filters without a value are offered by the "Add filter" button, pinned filters stay in the bar instead.
+ * Values of autocomplete filters are searched in their source through the tool_mulib autocomplete endpoint.
  * Any picker family can use it: the panel renders this component with the filters exported
  * by tool_mulib\muform\picker\filter_set and sends the changed values to its endpoint.
  *
  * @module     tool_mulib/muform/pickerfilters
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+import Fetch from "@moodle/lms/core/fetch";
 import { useEffect, useRef, useState } from "react";
+import { labelText } from "./pickerpanel";
 const SEARCH_THRESHOLD = 10;
+const TYPING_DELAY = 250;
+function AutocompleteEditor({ filter, strings, onValue }) {
+  const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState(null);
+  const request = useRef(0);
+  const delay = useRef(0);
+  useEffect(() => {
+    setAnswer(null);
+    const id = ++request.current;
+    const timer = setTimeout(async () => {
+      const body = { source: filter.source?.class ?? "", args: filter.source?.args ?? [], query, exclude: [] };
+      let data = { list: [], overflow: false };
+      try {
+        const response = await Fetch.performPost("tool_mulib", "muform/autocomplete", { body });
+        data = await response.json();
+      } catch {
+      }
+      if (id === request.current) {
+        setAnswer(data);
+      }
+    }, delay.current);
+    delay.current = 0;
+    return () => clearTimeout(timer);
+  }, [query, filter.source]);
+  const list = answer?.list ?? [];
+  let message = "";
+  if (!answer) {
+    message = strings.filtersearching;
+  } else if (answer.overflow || answer.list === null) {
+    message = strings.filtertoomanyresults;
+  } else if (!list.length) {
+    message = strings.filternoresults;
+  }
+  return /* @__PURE__ */ jsxDEV(Fragment, { children: [
+    /* @__PURE__ */ jsxDEV(
+      "input",
+      {
+        type: "search",
+        className: "form-control form-control-sm mb-2",
+        placeholder: strings.search,
+        "aria-label": strings.search,
+        value: query,
+        "data-picker-filter-search": true,
+        onChange: (event) => {
+          delay.current = TYPING_DELAY;
+          setQuery(event.target.value);
+        },
+        onKeyDown: (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            if (list.length === 1) {
+              onValue(list[0].value, list[0].label);
+            }
+          }
+        }
+      },
+      void 0,
+      false,
+      {
+        fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+        lineNumber: 156,
+        columnNumber: 13
+      },
+      this
+    ),
+    /* @__PURE__ */ jsxDEV("div", { className: "list-group list-group-flush", "aria-busy": !answer, children: list.map((option) => /* @__PURE__ */ jsxDEV(
+      "button",
+      {
+        type: "button",
+        "data-picker-filter-option": option.value,
+        className: "list-group-item list-group-item-action border-0" + (option.value === filter.value ? " active" : ""),
+        onClick: () => onValue(option.value, option.label),
+        children: labelText(option.label)
+      },
+      option.value,
+      false,
+      {
+        fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+        lineNumber: 173,
+        columnNumber: 21
+      },
+      this
+    )) }, void 0, false, {
+      fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+      lineNumber: 171,
+      columnNumber: 13
+    }, this),
+    message !== "" && /* @__PURE__ */ jsxDEV("div", { className: "text-muted small", "data-picker-filter-message": true, children: message }, void 0, false, {
+      fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+      lineNumber: 181,
+      columnNumber: 32
+    }, this)
+  ] }, void 0, true, {
+    fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+    lineNumber: 155,
+    columnNumber: 9
+  }, this);
+}
+__name(AutocompleteEditor, "AutocompleteEditor");
 function Editor({ filter, strings, onValue }) {
   const [query, setQuery] = useState("");
   const search = query.trim().toLowerCase();
   return /* @__PURE__ */ jsxDEV(Fragment, { children: [
     /* @__PURE__ */ jsxDEV("div", { className: "fw-bold mb-2", children: filter.label }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-      lineNumber: 104,
+      lineNumber: 200,
       columnNumber: 13
     }, this),
-    filter.type === "boolean" ? /* @__PURE__ */ jsxDEV("div", { className: "d-flex gap-2", children: filter.options.map((option) => /* @__PURE__ */ jsxDEV(
+    filter.type === "autocomplete" && /* @__PURE__ */ jsxDEV(AutocompleteEditor, { filter, strings, onValue }, void 0, false, {
+      fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
+      lineNumber: 201,
+      columnNumber: 48
+    }, this),
+    filter.type === "boolean" && /* @__PURE__ */ jsxDEV("div", { className: "d-flex gap-2", children: filter.options.map((option) => /* @__PURE__ */ jsxDEV(
       "button",
       {
         type: "button",
@@ -36,15 +143,16 @@ function Editor({ filter, strings, onValue }) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-        lineNumber: 108,
+        lineNumber: 205,
         columnNumber: 25
       },
       this
     )) }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-      lineNumber: 106,
+      lineNumber: 203,
       columnNumber: 17
-    }, this) : /* @__PURE__ */ jsxDEV(Fragment, { children: [
+    }, this),
+    filter.type === "select" && /* @__PURE__ */ jsxDEV(Fragment, { children: [
       filter.options.length > SEARCH_THRESHOLD && /* @__PURE__ */ jsxDEV(
         "input",
         {
@@ -59,7 +167,7 @@ function Editor({ filter, strings, onValue }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-          lineNumber: 118,
+          lineNumber: 216,
           columnNumber: 25
         },
         this
@@ -77,18 +185,18 @@ function Editor({ filter, strings, onValue }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-          lineNumber: 123,
+          lineNumber: 221,
           columnNumber: 29
         },
         this
       )) }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-        lineNumber: 121,
+        lineNumber: 219,
         columnNumber: 21
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-      lineNumber: 116,
+      lineNumber: 214,
       columnNumber: 17
     }, this),
     filter.default !== null && filter.value !== filter.default && /* @__PURE__ */ jsxDEV(
@@ -103,20 +211,21 @@ function Editor({ filter, strings, onValue }) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-        lineNumber: 134,
+        lineNumber: 232,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-    lineNumber: 103,
+    lineNumber: 199,
     columnNumber: 9
   }, this);
 }
 __name(Editor, "Editor");
 function Filters({ filters, strings, onChange, onCancel }) {
   const [popover, setPopover] = useState(null);
+  const [picked, setPicked] = useState({});
   const rootRef = useRef(null);
   useEffect(() => {
     if (!popover) {
@@ -136,6 +245,13 @@ function Filters({ filters, strings, onChange, onCancel }) {
   }
   const inactive = filters.filter((filter) => filter.value === null && !filter.pinned);
   const edited = popover?.key ? filters.find((filter) => filter.key === popover.key) : void 0;
+  const valueText = /* @__PURE__ */ __name((filter) => {
+    if (filter.type === "autocomplete") {
+      const known = picked[filter.key]?.value === filter.value ? picked[filter.key].label : filter.valuelabel;
+      return known ? labelText(known) : filter.value ?? "";
+    }
+    return filter.options.find((option) => option.value === filter.value)?.label ?? filter.value ?? "";
+  }, "valueText");
   const change = /* @__PURE__ */ __name((changes) => {
     setPopover(null);
     onChange(changes);
@@ -173,14 +289,14 @@ function Filters({ filters, strings, onChange, onCancel }) {
               children: [
                 filter.label,
                 ": ",
-                filter.value === null ? filter.anylabel ?? "" : filter.options.find((option) => option.value === filter.value)?.label ?? filter.value
+                filter.value === null ? filter.anylabel ?? "" : valueText(filter)
               ]
             },
             void 0,
             true,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-              lineNumber: 201,
+              lineNumber: 315,
               columnNumber: 21
             },
             this
@@ -200,14 +316,14 @@ function Filters({ filters, strings, onChange, onCancel }) {
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-              lineNumber: 207,
+              lineNumber: 320,
               columnNumber: 25
             },
             this
           )
         ] }, filter.key, true, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-          lineNumber: 200,
+          lineNumber: 314,
           columnNumber: 17
         }, this)),
         inactive.length > 0 && /* @__PURE__ */ jsxDEV(
@@ -226,7 +342,7 @@ function Filters({ filters, strings, onChange, onCancel }) {
           true,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-            lineNumber: 214,
+            lineNumber: 327,
             columnNumber: 17
           },
           this
@@ -247,7 +363,7 @@ function Filters({ filters, strings, onChange, onCancel }) {
           true,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-            lineNumber: 220,
+            lineNumber: 333,
             columnNumber: 17
           },
           this
@@ -263,13 +379,18 @@ function Filters({ filters, strings, onChange, onCancel }) {
               {
                 filter: edited,
                 strings,
-                onValue: (value) => change({ [edited.key]: value })
+                onValue: (value, label) => {
+                  if (value !== null && label !== void 0) {
+                    setPicked({ ...picked, [edited.key]: { value, label } });
+                  }
+                  change({ [edited.key]: value });
+                }
               },
               edited.key,
               false,
               {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-                lineNumber: 229,
+                lineNumber: 342,
                 columnNumber: 25
               },
               this
@@ -286,13 +407,13 @@ function Filters({ filters, strings, onChange, onCancel }) {
               false,
               {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-                lineNumber: 234,
+                lineNumber: 352,
                 columnNumber: 33
               },
               this
             )) }, void 0, false, {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-              lineNumber: 232,
+              lineNumber: 350,
               columnNumber: 25
             }, this)
           },
@@ -300,7 +421,7 @@ function Filters({ filters, strings, onChange, onCancel }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-            lineNumber: 226,
+            lineNumber: 339,
             columnNumber: 17
           },
           this
@@ -311,7 +432,7 @@ function Filters({ filters, strings, onChange, onCancel }) {
     true,
     {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/pickerfilters.tsx",
-      lineNumber: 197,
+      lineNumber: 311,
       columnNumber: 9
     },
     this

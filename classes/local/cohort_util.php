@@ -24,8 +24,9 @@ use stdClass;
 /**
  * Cohort helpers for MuTMS plugins.
  *
- * Advanced cohort access records are read here only, the shape of tool_mucohort_access
- * (mucohortid, userid) is a contract between tool_mucohort and other MuTMS plugins.
+ * Advanced cohort access records are read here only, the shape of tool_mucohort (cohortid, type)
+ * and tool_mucohort_access (mucohortid, userid, viewmembers) is a contract between tool_mucohort
+ * and other MuTMS plugins.
  *
  * @package    tool_mulib
  * @copyright  2026 Petr Skoda
@@ -134,5 +135,65 @@ final class cohort_util {
         $sql = (new sql("SELECT 'x' FROM {cohort} c WHERE c.id = ? AND /* access */", [$cohort->id]))
             ->replace_comment('access', $sql);
         return $DB->record_exists_sql($sql->sql, $sql->params);
+    }
+
+    /**
+     * SQL condition matching cohorts whose members the user may list.
+     *
+     * The same rules as can_view_members() of tool_mucohort cohort types: standard cohorts and cohorts
+     * of other plugins need moodle/cohort:assign or tool/mucohort:viewmembers capability in the cohort context,
+     * advanced cohorts tool/mucohort:viewmembers capability or an access record that allows viewing of members.
+     * Without tool_mucohort only moodle/cohort:assign allows it, the same as in standard cohort pages.
+     *
+     * @param string $cohortalias alias of the cohort table
+     * @param int $userid
+     * @return sql condition
+     */
+    public static function get_view_members_sql(string $cohortalias, int $userid): sql {
+        if (!$userid || isguestuser($userid)) {
+            return new sql('1=2');
+        }
+        $levels = new sql("(ctx.contextlevel = ? OR ctx.contextlevel = ?)", [CONTEXT_SYSTEM, CONTEXT_COURSECAT]);
+        $assign = context_map::get_contexts_by_capability_query('moodle/cohort:assign', $userid, $levels)
+            ->wrap("{$cohortalias}.contextid IN (", ")");
+        if (!mulib::is_mucohort_available()) {
+            return $assign;
+        }
+
+        $sql = new sql(
+            "(/* viewmembers */
+              OR (/* assign */
+                  AND ({$cohortalias}.component IS NULL OR {$cohortalias}.component <> 'tool_mucohort' OR NOT EXISTS (
+                        SELECT 'x'
+                          FROM {tool_mucohort} vms_mc
+                         WHERE vms_mc.cohortid = {$cohortalias}.id AND vms_mc.type IN ('curated', 'rules'))))
+              OR ({$cohortalias}.component = 'tool_mucohort' AND EXISTS (
+                        SELECT 'x'
+                          FROM {tool_mucohort} vma_mc
+                          JOIN {tool_mucohort_access} vma_a ON vma_a.mucohortid = vma_mc.id
+                         WHERE vma_mc.cohortid = {$cohortalias}.id AND vma_mc.type IN ('curated', 'rules')
+                               AND vma_a.userid = ? AND vma_a.viewmembers = 1)))",
+            [$userid]
+        );
+        $viewmembers = context_map::get_contexts_by_capability_query('tool/mucohort:viewmembers', $userid, $levels)
+            ->wrap("{$cohortalias}.contextid IN (", ")");
+        return $sql->replace_comment('viewmembers', $viewmembers)->replace_comment('assign', $assign);
+    }
+
+    /**
+     * May the current user list members of the cohort?
+     *
+     * @param stdClass $cohort cohort record
+     * @return bool
+     */
+    public static function can_view_members(stdClass $cohort): bool {
+        if (!isloggedin() || isguestuser()) {
+            return false;
+        }
+        if (mulib::is_mucohort_available()) {
+            return \tool_mucohort\local\type\base::from_record($cohort)->can_view_members();
+        }
+        $context = \core\context::instance_by_id($cohort->contextid, IGNORE_MISSING);
+        return $context && has_capability('moodle/cohort:assign', $context);
     }
 }

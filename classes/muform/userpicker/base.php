@@ -21,6 +21,7 @@ namespace tool_mulib\muform\userpicker;
 use core\context;
 use tool_mulib\local\search_util;
 use tool_mulib\local\sql;
+use tool_mulib\muform\autocomplete\member_cohorts;
 use tool_mulib\muform\picker\filter;
 use tool_mulib\muform\picker\filter_set;
 use tool_mulib\muform\util\autocomplete\user_trait;
@@ -88,24 +89,33 @@ abstract class base extends \tool_mulib\muform\picker\base {
      * Filters of the panel, shown as pills above the list of users.
      *
      * Suspended users are hidden by the default value of the pinned "Active" filter, it is not offered
-     * when the source does not allow suspended users at all. Add filters of the source
+     * when the source does not allow suspended users at all. The "Cohort" filter lists members of one
+     * of the cohorts whose members the current user may list. Add filters of the source
      * to the result of the parent method, keys must be unique, conditions use table alias "u".
      *
      * @return filter[]
      */
     protected function get_filters(): array {
-        if (!$this->allow_suspended_users()) {
-            return [];
-        }
-        return [
-            filter::boolean(
+        $filters = [];
+        if ($this->allow_suspended_users()) {
+            $filters[] = filter::boolean(
                 'active',
                 get_string('muform_userpicker_filter_active', 'tool_mulib'),
                 new sql('u.suspended = 0'),
                 new sql('u.suspended = 1'),
                 true
-            )->set_pinned(),
-        ];
+            )->set_pinned();
+        }
+        $filters[] = filter::autocomplete(
+            'cohort',
+            get_string('cohort', 'cohort'),
+            new member_cohorts($this->get_context()->id),
+            fn(string $value): sql => new sql(
+                "EXISTS (SELECT 'x' FROM {cohort_members} fcm WHERE fcm.userid = u.id AND fcm.cohortid = :fcohortid)",
+                ['fcohortid' => (int)$value]
+            )
+        );
+        return $filters;
     }
 
     #[\Override]

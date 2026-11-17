@@ -31,6 +31,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - picker\filter, picker\filter_set and the pickerfilters component: filters of picker panels with default values and pinned filters,
   pills like in report_filter_bar, reusable in all picker families
 - filters of the users picker panel, suspended users are hidden by the default value of the pinned "Active" filter
+- filter::autocomplete() picker filters with values searched in autocomplete sources, "Cohort" filter of the users picker panel
+- cohort_util::get_view_members_sql() and cohort_util::can_view_members() for cohorts whose members the user may list,
+  member_cohorts autocomplete source
 - one autocomplete source base and namespace muform\autocomplete for both autocomplete elements, label_value() and validate_value() hooks
 - mudb::insert_record_if_missing() for concurrent inserts into tables with unique index, safe inside transactions
 - notification type hooks add_update_form_elements(), prepare_update_form_data(), normalise_aux_data() and get_aux_details()

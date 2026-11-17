@@ -23,6 +23,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../fixtures/fake_user_source.php');
 
 use tool_mulib\local\sql;
+use tool_mulib\muform\autocomplete\member_cohorts;
 use tool_mulib\muform\picker\filter;
 use tool_mulib\muform\picker\filter_set;
 use tool_mulib\muform\userpicker\base;
@@ -153,31 +154,35 @@ final class base_test extends \advanced_testcase {
         $source = new site_users(\core\context\system::instance()->id);
         $active = ['key' => 'active', 'type' => 'boolean', 'label' => 'Active', 'options' => $yesno, 'value' => '1'];
         $active += ['default' => '1', 'pinned' => true, 'anylabel' => 'Any'];
+        $cohort = ['key' => 'cohort', 'type' => 'autocomplete', 'label' => 'Cohort', 'options' => [], 'value' => null];
+        $cohort += ['default' => null, 'pinned' => false, 'anylabel' => 'Any'];
+        $cohort['source'] = ['class' => member_cohorts::class, 'args' => [\core\context\system::instance()->id]];
+        $cohort['valuelabel'] = null;
 
         // Suspended users are hidden by default.
         $result = $source->search('Filtered', [], 0);
         $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
-        $this->assertSame([$active], $result['filters']);
+        $this->assertSame([$active, $cohort], $result['filters']);
         $result = $source->search('Filtered', [], 0, ['active' => '1']);
         $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
-        $this->assertSame([$active], $result['filters']);
+        $this->assertSame([$active, $cohort], $result['filters']);
 
         $result = $source->search('Filtered', [], 0, ['active' => '0']);
         $this->assertSame([(int)$bert->id], $ids($result));
-        $this->assertSame([array_merge($active, ['value' => '0'])], $result['filters']);
+        $this->assertSame([array_merge($active, ['value' => '0']), $cohort], $result['filters']);
 
         // Removed filters and invalid values do not restrict the list.
         foreach ([[], ['active' => ''], ['active' => '2'], ['active' => ['1']], ['other' => '1']] as $values) {
             $result = $source->search('Filtered', [], 0, $values);
             $this->assertSame([(int)$anna->id, (int)$bert->id, (int)$cyril->id], $ids($result));
-            $this->assertSame([array_merge($active, ['value' => null])], $result['filters']);
+            $this->assertSame([array_merge($active, ['value' => null]), $cohort], $result['filters']);
         }
 
         // Sources that do not allow suspended users have no filter for them.
         $source = new fake_user_source();
         $result = $source->search('Filtered', [], 0, ['active' => '0']);
         $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
-        $this->assertSame([], $result['filters']);
+        $this->assertSame([$cohort], $result['filters']);
 
         // Filters of sources are combined with the candidates and the other filters.
         $source = new class extends base {
@@ -221,10 +226,10 @@ final class base_test extends \advanced_testcase {
         ];
         $result = $source->search('', [], 0);
         $this->assertSame([(int)$cyril->id], $ids($result));
-        $this->assertSame([$active, $city], $result['filters']);
+        $this->assertSame([$active, $cohort, $city], $result['filters']);
         $result = $source->search('', [], 0, ['city' => 'Brno']);
         $this->assertSame([(int)$bert->id, (int)$cyril->id], $ids($result));
-        $this->assertSame([array_merge($active, ['value' => null]), $city], $result['filters']);
+        $this->assertSame([array_merge($active, ['value' => null]), $cohort, $city], $result['filters']);
         $result = $source->search('', [], 0, ['active' => '1', 'city' => 'Prague']);
         $this->assertSame([(int)$anna->id], $ids($result));
         $result = $source->search('', [], 0, ['city' => 'Paris']);
@@ -233,6 +238,55 @@ final class base_test extends \advanced_testcase {
         // Filters do not change what may be stored.
         $this->assertSame([], $source->validate([(string)$bert->id]));
         $this->assertArrayHasKey($bert->id, $source->labels([(string)$bert->id]));
+    }
+
+    public function test_cohort_filter(): void {
+        $syscontext = \core\context\system::instance();
+        $generator = $this->getDataGenerator();
+        $anna = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Filtered']);
+        $bert = $generator->create_user(['firstname' => 'Bert', 'lastname' => 'Filtered', 'suspended' => 1]);
+        $cyril = $generator->create_user(['firstname' => 'Cyril', 'lastname' => 'Filtered']);
+        $cohort1 = $generator->create_cohort(['name' => 'Cohort <b>1</b>']);
+        $cohort2 = $generator->create_cohort(['name' => 'Cohort 2']);
+        cohort_add_member($cohort1->id, $anna->id);
+        cohort_add_member($cohort1->id, $bert->id);
+        cohort_add_member($cohort2->id, $cyril->id);
+        $ids = fn(array $result): array => array_column($result['rows'], 'id');
+
+        $this->setAdminUser();
+        $source = new site_users($syscontext->id);
+        $result = $source->search('Filtered', [], 0, ['active' => '1', 'cohort' => (string)$cohort1->id]);
+        $this->assertSame([(int)$anna->id], $ids($result));
+        $this->assertSame('cohort', $result['filters'][1]['key']);
+        $this->assertSame((string)$cohort1->id, $result['filters'][1]['value']);
+        $this->assertSame('Cohort 1', $result['filters'][1]['valuelabel']);
+        $result = $source->search('Filtered', [], 0, ['cohort' => (string)$cohort1->id]);
+        $this->assertSame([(int)$anna->id, (int)$bert->id], $ids($result));
+        $result = $source->search('Filtered', [], 0, ['cohort' => $cohort2->id]);
+        $this->assertSame([(int)$cyril->id], $ids($result));
+        foreach (['0', '-1', 'x', (string)($cohort2->id + 1000)] as $value) {
+            $result = $source->search('Filtered', [], 0, ['cohort' => $value]);
+            $this->assertSame([(int)$anna->id, (int)$bert->id, (int)$cyril->id], $ids($result));
+            $this->assertNull($result['filters'][1]['value']);
+        }
+
+        // Cohorts whose members may not be listed are ignored.
+        $viewer = $generator->create_user();
+        $roleid = $generator->create_role();
+        assign_capability('moodle/user:viewalldetails', CAP_ALLOW, $roleid, $syscontext);
+        assign_capability('moodle/cohort:view', CAP_ALLOW, $roleid, $syscontext);
+        role_assign($roleid, $viewer->id, $syscontext);
+        $this->setUser($viewer);
+        $source = new site_users($syscontext->id);
+        $result = $source->search('Filtered', [], 0, ['cohort' => (string)$cohort2->id]);
+        $this->assertSame([(int)$anna->id, (int)$bert->id, (int)$cyril->id], $ids($result));
+        $this->assertNull($result['filters'][1]['value']);
+        $this->assertNull($result['filters'][1]['valuelabel']);
+
+        assign_capability('moodle/cohort:assign', CAP_ALLOW, $roleid, $syscontext);
+        $result = $source->search('Filtered', [], 0, ['cohort' => (string)$cohort2->id]);
+        $this->assertSame([(int)$cyril->id], $ids($result));
+        $this->assertSame('Cohort 2', $result['filters'][1]['valuelabel']);
     }
 
     public function test_filter_definition(): void {
@@ -261,7 +315,10 @@ final class base_test extends \advanced_testcase {
         $this->assertNull(filter_set::clean_values('active'));
         $this->assertSame(['active' => '1'], filter_set::clean_values((object)['active' => 1, 'bad' => ['x']]));
         $this->assertSame(
-            ['filteradd', 'filterremove', 'filterresetall', 'filterresetdefault', 'search'],
+            [
+                'filteradd', 'filterremove', 'filterresetall', 'filterresetdefault',
+                'filternoresults', 'filtersearching', 'filtertoomanyresults', 'search',
+            ],
             array_keys(filter_set::get_panel_strings())
         );
         try {
@@ -270,6 +327,25 @@ final class base_test extends \advanced_testcase {
         } catch (\core\exception\coding_exception $ex) {
             $this->assertStringContainsString('Duplicate picker filter: active', $ex->getMessage());
         }
+
+        $this->setAdminUser();
+        $cohort = $this->getDataGenerator()->create_cohort(['name' => 'Cohort 1']);
+        $source = new member_cohorts(\core\context\system::instance()->id);
+        $where = fn(string $value): sql => new sql('x.cohortid = ?', [(int)$value]);
+        $filter = filter::autocomplete('cohort', 'Cohort', $source, $where, (string)$cohort->id);
+        $this->assertSame((string)$cohort->id, $filter->get_default());
+        $this->assertSame((string)$cohort->id, $filter->normalise((int)$cohort->id));
+        $this->assertNull($filter->normalise((string)($cohort->id + 1)));
+        $this->assertNull($filter->normalise(''));
+        $this->assertSame([(int)$cohort->id], array_values($filter->get_sql((string)$cohort->id)->params));
+        $this->assertNull($filter->get_sql((string)($cohort->id + 1)));
+        $exported = $filter->export((string)$cohort->id);
+        $this->assertSame('autocomplete', $exported['type']);
+        $this->assertSame([], $exported['options']);
+        $expected = ['class' => member_cohorts::class, 'args' => [\core\context\system::instance()->id]];
+        $this->assertSame($expected, $exported['source']);
+        $this->assertSame('Cohort 1', $exported['valuelabel']);
+        $this->assertNull($filter->export(null)['valuelabel']);
 
         try {
             filter::boolean('Active', 'Active', new sql('1=1'), new sql('1=0'));

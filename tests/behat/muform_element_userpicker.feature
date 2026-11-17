@@ -10,6 +10,15 @@ Feature: muform userpicker and userpickermany elements
       | user1    | User      | One      | user1@example.com | 0         |
       | user2    | User      | Two      | user2@example.com | 0         |
       | user3    | Other     | Three    | other@example.com | 1         |
+    And the following "cohorts" exist:
+      | name       | idnumber |
+      | First team | team1    |
+      | Other team | team2    |
+    And the following "cohort members" exist:
+      | user  | cohort |
+      | user2 | team1  |
+      | user3 | team1  |
+      | user1 | team2  |
     And I log in as "admin"
 
   Scenario: Current data and defaults are shown and submitted unchanged
@@ -93,7 +102,6 @@ Feature: muform userpicker and userpickermany elements
     Then I should see "Other Three" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
     And I should see "User One" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
     And I should see "Active: Any" in the "dialog.tool_mulib-picker-panel [data-picker-filters]" "css_element"
-    And I should not see "Add filter" in the "dialog.tool_mulib-picker-panel" "css_element"
     When I click on "Active: Any" "button" in the "dialog.tool_mulib-picker-panel" "css_element"
     And I click on "No" "button" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
     Then I should see "Active: No" in the "dialog.tool_mulib-picker-panel [data-picker-filters]" "css_element"
@@ -108,6 +116,29 @@ Feature: muform userpicker and userpickermany elements
     And I click on "Add selected (1)" "button" in the "dialog.tool_mulib-picker-panel" "css_element"
     Then the following muform fields match:
       | members | Admin User, Other Three |
+
+  @javascript
+  Scenario: Users are filtered by cohort membership
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_element_userpicker.php" with parameters "prefill=1"
+    When I click on "+ Add" "button" in the "[data-muform-name='members']" "css_element"
+    And I click on "+ Add filter" "button" in the "dialog.tool_mulib-picker-panel" "css_element"
+    And I click on "Cohort" "button" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
+    Then I should see "First team" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
+    And I should see "Other team" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
+    When I set the field with xpath "//dialog//input[@data-picker-filter-search]" to "First"
+    Then I should not see "Other team" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
+    When I click on "First team" "button" in the "dialog.tool_mulib-picker-panel [data-picker-filter-popover]" "css_element"
+    Then I should see "Cohort: First team" in the "dialog.tool_mulib-picker-panel [data-picker-filters]" "css_element"
+    And I should see "User Two" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
+    And I should not see "User One" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
+    And I should not see "Other Three" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
+    And I should see "Found: 1" in the "dialog.tool_mulib-picker-panel" "css_element"
+    When I click on "Remove filter: Active" "button" in the "dialog.tool_mulib-picker-panel" "css_element"
+    Then I should see "Other Three" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
+    And I should see "Found: 2" in the "dialog.tool_mulib-picker-panel" "css_element"
+    When I click on "Remove filter: Cohort" "button" in the "dialog.tool_mulib-picker-panel" "css_element"
+    Then I should see "User One" in the "dialog.tool_mulib-picker-panel tbody" "css_element"
+    And I should not see "Cohort:" in the "dialog.tool_mulib-picker-panel [data-picker-filters]" "css_element"
 
   @javascript
   Scenario: Hidden element still submits its value

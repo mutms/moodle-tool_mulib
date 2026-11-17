@@ -30,7 +30,8 @@ const performPost = Fetch.performPost as jest.Mock;
 
 const strings: Strings = {
     addselected: 'Add selected ({$a})', close: 'Close', filteradd: 'Add filter', filterremove: 'Remove filter',
-    filterresetall: 'Reset filters', filterresetdefault: 'Reset to default', found: 'Found: {$a}', name: 'Name', next: 'Next',
+    filterresetall: 'Reset filters', filterresetdefault: 'Reset to default', filternoresults: 'No matches',
+    filtersearching: 'Looking', filtertoomanyresults: 'Too many', found: 'Found: {$a}', name: 'Name', next: 'Next',
     noresults: 'No results',
     page: 'Page {$a}', previous: 'Previous', search: 'Search', searching: 'Searching', selectall: 'Select all', selectrow: 'Select',
     title: 'Select users',
@@ -44,6 +45,9 @@ let picked: PickerItem[][] = [];
 
 /** Filters returned by the endpoint, without values. */
 let filters: Omit<Filter, 'value'>[] = [];
+
+/** Recorded request bodies of the autocomplete endpoint. */
+let lookups: Record<string, unknown>[] = [];
 
 /** Mounted root. */
 let root: Root | null = null;
@@ -66,9 +70,14 @@ function answer(body: Record<string, unknown>): Answer {
     const applied = filters.map((filter) => ({...filter, value: values ? (values[filter.key] ?? null) : filter.default}));
     const active = applied.find((filter) => filter.key === 'active')?.value ?? null;
     const letter = applied.find((filter) => filter.key === 'letter')?.value ?? null;
+    const cohort = applied.find((filter) => filter.key === 'cohort');
+    if (cohort && cohort.value !== null) {
+        Object.assign(cohort, {valuelabel: `<b>Cohort</b> ${cohort.value}`});
+    }
     const rows = all.filter((user) => user.fullname.toLowerCase().includes(query) && !exclude.includes(user.id))
         .filter((user) => active === null || (active === '1') === (user.id !== 4))
-        .filter((user) => letter === null || user.fullname.startsWith(letter));
+        .filter((user) => letter === null || user.fullname.startsWith(letter))
+        .filter((user) => !cohort || cohort.value === null || String(user.id) === cohort.value);
     return {columns: [{name: 'email', label: 'Email'}], rows, total: rows.length, page: 0, perpage: 50, filters: applied};
 }
 
@@ -163,8 +172,19 @@ beforeEach(() => {
     filters = [];
     bodies = [];
     picked = [];
+    lookups = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: Record<string, unknown>}) => {
         expect(component).toBe('tool_mulib');
+        if (action === 'muform/autocomplete') {
+            lookups.push(body);
+            const query = String(body.query);
+            if (query === 'many') {
+                return {json: async() => ({list: null, overflow: true, maxitems: 50})};
+            }
+            const list = [{value: '2', label: '<b>Cohort</b> 2'}, {value: '3', label: '<b>Cohort</b> 3'}]
+                .filter((item) => item.label.includes(query));
+            return {json: async() => ({list, overflow: false, maxitems: 50})};
+        }
         expect(action).toBe('muform/userpicker/search');
         bodies.push(body);
         return {json: async() => answer(body)};
@@ -272,6 +292,48 @@ describe('tool_mulib/muform/userpicker/panel', () => {
         expect(bodies[bodies.length - 1].filters).toEqual({active: '1'});
         expect(bar(container)).toEqual(['Active: Yes×', '+ Add filter']);
         expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(2);
+    });
+
+    it('searches values of autocomplete filters', async() => {
+        const source = {'class': 'tool_x\\muform\\autocomplete\\cohorts', args: [1]};
+        filters = [{key: 'cohort', type: 'autocomplete', label: 'Cohort', options: [], 'default': null, source}];
+        const container = await render(true);
+        expect(bar(container)).toEqual(['+ Add filter']);
+
+        await click(container, '[data-picker-filter-add]');
+        await click(container, '[data-picker-filter-choice="cohort"]');
+        expect(lookups).toEqual([{source: 'tool_x\\muform\\autocomplete\\cohorts', args: [1], query: '', exclude: []}]);
+        const options = (): string[] => Array.from(container.querySelectorAll('[data-picker-filter-option]'))
+            .map((item) => item.textContent ?? '');
+        expect(options()).toEqual(['Cohort 2', 'Cohort 3']);
+        expect(container.querySelector('[data-picker-filter-message]')).toBeNull();
+
+        const search = async(text: string): Promise<void> => {
+            const input = container.querySelector<HTMLInputElement>('[data-picker-filter-search]')!;
+            await act(async() => {
+                Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text);
+                input.dispatchEvent(new Event('input', {bubbles: true}));
+            });
+            await settle(300);
+        };
+        await search('many');
+        expect(options()).toEqual([]);
+        expect(container.querySelector('[data-picker-filter-message]')!.textContent).toBe('Too many');
+        await search('nothing');
+        expect(container.querySelector('[data-picker-filter-message]')!.textContent).toBe('No matches');
+        await search('3');
+        expect(lookups[lookups.length - 1].query).toBe('3');
+        expect(options()).toEqual(['Cohort 3']);
+
+        await click(container, '[data-picker-filter-option="3"]');
+        expect(bodies[bodies.length - 1].filters).toEqual({cohort: '3'});
+        expect(bar(container)).toEqual(['Cohort: Cohort 3×', '↺ Reset filters']);
+        const rows = Array.from(container.querySelectorAll('[data-userpicker-row]'));
+        expect(rows.map((row) => row.getAttribute('data-userpicker-row'))).toEqual(['3']);
+
+        await click(container, '[data-picker-filter-remove]');
+        expect(bodies[bodies.length - 1].filters).toEqual({});
+        expect(bar(container)).toEqual(['+ Add filter']);
     });
 
     it('shows an empty result', async() => {

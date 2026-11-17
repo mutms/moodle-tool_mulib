@@ -47,8 +47,9 @@ $handler->render($form);
 - User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\muform\userpicker\*` extending
   `tool_mulib\muform\userpicker\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
   `allow_suspended_users()`); a panel with identity columns (`showuseridentity`) and paging, tenant rules apply.
-  Filter pills above the list: pinned "Active: Yes" hides suspended users by default, sources add
-  `picker\filter::boolean()` and `filter::select()` with optional default values and `set_pinned()` in `get_filters()`;
+  Filter pills above the list: pinned "Active: Yes" hides suspended users by default, "Cohort" filters by membership
+  of cohorts whose members the user may list; sources add `picker\filter::boolean()`, `filter::select()` and
+  `filter::autocomplete()` (values searched in an autocomplete source) with optional default values and `set_pinned()` in `get_filters()`;
   other picker families reuse them with `picker\filter_set` and the `tool_mulib/muform/pickerfilters` component.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one
   form class per stage in the same namespace and a thin entry script calling `execute()`; full page only (plain
@@ -93,6 +94,8 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
 - `local\mudb::upsert_record()` - concurrent-safe insert or update for tables with one unique index.
 - `local\mulib::is_<plugin>_available()` / `is_<plugin>_active()` - optional sibling plugins: muprog,
   mucertify, mutrain, murelatio, muhome, mutenancy, mucatalog.
+- `local\cohort_util` - cohort links and names, `get_access_record_sql()` (may find and use a cohort) and
+  `get_view_members_sql()` / `can_view_members()` (may list members, same rule as tool_mucohort cohort types).
 - `local\search_util` - search SQL for autocomplete sources (`get_search_query()`, cohort and user
   search), `is_cohort_visible()`, `get_tenant_related_users_where()`, `format_user_label()`.
 - `local\customfield_util::change_instances_context()` - move custom field data when an item moves.
