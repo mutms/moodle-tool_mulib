@@ -28,6 +28,8 @@ use tool_mulib\local\sql;
 /**
  * Cohort search helpers for autocomplete sources.
  *
+ * Forms select cohorts with cohortpicker and cohortpickermany elements, see tool_mulib\muform\cohortpicker\base.
+ *
  * Cohorts the user may use are offered, see cohort_util::get_use_sql(): visible cohorts, cohorts
  * the user may view and advanced cohorts with an access record that allows using; with multi-tenancy
  * cohorts of other tenants are not. Cohorts already used by the edited item

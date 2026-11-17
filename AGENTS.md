@@ -38,12 +38,13 @@ $handler->render($form);
   `<component>\muform\autocomplete\*` and extend `tool_mulib\muform\autocomplete\base`. The constructor takes scalar
   ids and does the access control, `get_args()` returns them, `search($query, $maxitems, $exclude)`, `labels()` or
   `label_value()` and `validate()` or `validate_value()` decide what may be selected. Reuse the traits in
-  `classes/muform/util/autocomplete/`: `user_trait`, `cohort_trait`, `course_trait`, `category_context_trait`, and
+  `classes/muform/util/autocomplete/`: `user_trait`, `course_trait`, `category_context_trait`, and
   `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
 - Pickers (`picker`, `pickermany`): selected values are pills, a button opens a family panel (React) over the
   right half of the screen. A family is an abstract `tool_mulib\muform\picker\base` subclass, a panel module
   and the family's own endpoints (`base::require_browser_session()`, `<family base>::instantiate()`); values
-  are opaque strings like autocomplete values. See "Picker" in `docs/muform.md`.
+  are opaque strings like autocomplete values; `are_allowed($values)` of a source re-checks values in form
+  `validation()`. See "Picker" in `docs/muform.md`.
 - User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\muform\userpicker\*` extending
   `tool_mulib\muform\userpicker\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
   `allow_suspended_users()`); a panel with identity columns (`showuseridentity`) and paging, tenant rules apply.
@@ -52,9 +53,11 @@ $handler->render($form);
   `filter::autocomplete()` (values searched in an autocomplete source) with optional default values and `set_pinned()` in `get_filters()`;
   other picker families reuse them with `picker\filter_set` and the `tool_mulib/muform/pickerfilters` component.
 - Cohort pickers: `cohortpicker`/`cohortpickermany` elements with a source in `<component>\muform\cohortpicker\*` extending
-  `tool_mulib\muform\cohortpicker\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`, `get_restriction_sql()`);
-  the panel shows cohorts the user may use in the tree of course categories, a search keeps found cohorts in their branch.
-  Use them instead of cohort autocompletes.
+  `tool_mulib\muform\cohortpicker\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`,
+  `get_restriction_sql()`); the panel shows cohorts in the tree of course categories, a search keeps found cohorts
+  in their branch. The base offers cohorts the user may use (`cohort_util::get_use_sql()`), tenant rules apply; forms
+  that reveal members of picked cohorts add `cohort_util::get_view_members_sql()` in `get_restriction_sql()`.
+  Never select cohorts with autocompletes, the only exception is the "Cohort" filter of user pickers.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one
   form class per stage in the same namespace and a thin entry script calling `execute()`; full page only (plain
   links, never dialogs). Stage forms use the `wizardcontinue` and `wizardback` buttons, wizard state never holds
@@ -98,9 +101,12 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
 - `local\mudb::upsert_record()` - concurrent-safe insert or update for tables with one unique index.
 - `local\mulib::is_<plugin>_available()` / `is_<plugin>_active()` - optional sibling plugins: muprog,
   mucertify, mutrain, murelatio, muhome, mutenancy, mucatalog.
-- `local\cohort_util` - cohort links and names, `get_use_sql()` / `can_use()` (may select the cohort in forms: visible,
-  `moodle/cohort:view` or "Use cohort" access record of advanced cohorts) and
-  `get_view_members_sql()` / `can_view_members()` (may list members, same rule as tool_mucohort cohort types).
+- `local\cohort_util` - cohort links and names and the two cohort permissions of MuTMS plugins:
+  `get_use_sql()` / `can_use()` (may select the cohort in forms: visible, `moodle/cohort:view` or "Use cohort" access
+  record of advanced cohorts) and `get_view_members_sql()` / `can_view_members()` (may list members:
+  `moodle/cohort:assign` or `tool/mucohort:viewmembers` for standard cohorts, `tool/mucohort:viewmembers` or "View members"
+  access record for advanced cohorts). Using does not include viewing of members. The rules are the same as in
+  tool_mucohort cohort types and are described in its README; web services must use `can_use()` like the forms.
 - `local\search_util` - search SQL for autocomplete sources (`get_search_query()`, cohort and user
   search), `get_tenant_related_users_where()`, `format_user_label()`.
 - `local\customfield_util::change_instances_context()` - move custom field data when an item moves.

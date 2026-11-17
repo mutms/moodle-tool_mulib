@@ -405,8 +405,9 @@ final class user_mapping_userid extends \tool_mulib\muform\autocomplete\base {
 
 A value without a label is rejected on submit, which is how permissions are enforced. When more than
 `get_maxitems()` options match, `search()` returns `null` and the user is asked to type more. The
-traits in `classes/muform/util/autocomplete/` cover users, cohorts, courses and category contexts, and
-`tool_mulib\local\search_util` has the search SQL. `site_users` offers all users of a context to users
+traits in `classes/muform/util/autocomplete/` cover users, courses and category contexts, and
+`tool_mulib\local\search_util` has the search SQL. Cohorts are selected with the [cohort picker](#cohort-picker),
+not with autocompletes. `site_users` offers all users of a context to users
 with `moodle/user:viewalldetails`.
 
 ### Picker
@@ -462,7 +463,9 @@ $form->add(new pickermany('categoryids', get_string('categories'), new program_c
 
 Values are opaque strings of letters, digits and `_-.:@`, the same as autocomplete values, so ids
 and tokens such as `category:5` both work. Commas separate values in the browser. A value without a
-label is rejected on submit, which is how permissions are enforced.
+label is rejected on submit, which is how permissions are enforced. `are_allowed($values)` of a source
+tells if all the values may be selected; forms use it in `validation()` to check values again with a source
+created from submitted data, for example for a newly selected category.
 
 Family endpoints recreate the source from the class name and arguments sent by the browser. Call
 `base::require_browser_session()` first, then `instantiate()` on the family base: it accepts only
@@ -585,9 +588,21 @@ keeps the found cohorts in their place of the tree, so cohorts with the same nam
 At most 200 cohorts are listed, with more the panel asks to refine the search.
 
 The source extends `tool_mulib\muform\cohortpicker\base`, lives in `<component>\muform\cohortpicker\`
-and serves both elements. Cohorts the current user may use are offered, see `cohort_util::get_use_sql()`:
-visible cohorts, cohorts with `moodle/cohort:view` and advanced cohorts with a "Use cohort" access record;
-with multi-tenancy cohorts of other tenants are not. Values are cohort ids.
+and serves both elements. Values are cohort ids.
+
+The source does the access control of the edited item in its constructor, the base decides which cohorts
+are offered - the cohorts the current user may **use**, see `cohort_util::get_use_sql()`:
+
+| Cohort | May be picked |
+|---|---|
+| standard cohorts and cohorts of other plugins | visible cohorts, or `moodle/cohort:view` in the cohort context |
+| advanced cohorts of tool_mucohort (curated, rule-based) | the same, or an access record with "Use cohort" |
+
+With multi-tenancy cohorts of other tenants are not offered. Using a cohort does not include seeing its
+members, that is a separate and stricter permission, see `cohort_util::get_view_members_sql()`. A form that
+reveals members of the picked cohorts must require it too, the compare tool of tool_mucohort does it with
+`get_restriction_sql()` returning `cohort_util::get_view_members_sql('ch', (int)$USER->id)`. Both rules are
+described in the README of tool_mucohort.
 
 ```php
 namespace tool_muprog\muform\cohortpicker;
@@ -623,8 +638,6 @@ $form->add(new cohortpickermany('cohortids', get_string('cohorts', 'cohort'), ne
 already used by the edited item, they stay valid as the current value; `get_excluded_cohortids()` lists cohorts
 that must never be picked, for example the edited cohort itself; `get_restriction_sql()` adds a condition cohorts
 must match to be picked (aliases `ch` for the cohort and `ctx` for its context), current cohorts are not affected.
-`are_allowed($values)` of any picker source tells if all the values may be selected, forms use it to check values
-again with a source created for submitted data, for example for the newly selected context.
 `context_cohorts` offers all cohorts the user may use for an item in a context. The search endpoint is
 `tool_mulib\route\api\muform\cohortpicker`.
 In Behat, table values are cohort names, ID numbers or ids.
