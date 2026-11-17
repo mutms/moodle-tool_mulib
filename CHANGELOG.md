@@ -31,6 +31,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - picker\filter, picker\filter_set and the pickerfilters component: filters of picker panels with default values and pinned filters,
   pills like in report_filter_bar, reusable in all picker families
 - filters of the users picker panel, suspended users are hidden by the default value of the pinned "Active" filter
+- cohortpicker and cohortpickermany muform elements, cohorts picked in a panel with the tree of course categories
 - filter::autocomplete() picker filters with values searched in autocomplete sources, "Cohort" filter of the users picker panel
 - cohort_util::get_view_members_sql() and cohort_util::can_view_members() for cohorts whose members the user may list,
   member_cohorts autocomplete source

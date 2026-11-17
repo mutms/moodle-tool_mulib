@@ -171,6 +171,8 @@ download, also in a dialog.
 | `pickermany`       | `(name, label, source)`                                                      | `string[]` values                                          | `[]`             |
 | `userpicker`       | `(name, label, source)`                                                      | user id `string` or `null`                                 | `null`           |
 | `userpickermany`   | `(name, label, source)`                                                      | `string[]` user ids                                        | `[]`             |
+| `cohortpicker`     | `(name, label, source)`                                                      | cohort id `string` or `null`                               | `null`           |
+| `cohortpickermany` | `(name, label, source)`                                                      | `string[]` cohort ids                                      | `[]`             |
 | `tags`             | `(name, label, tagarea, attributes)`                                         | `string[]` tag names                                       | `[]`             |
 | `checkbox`         | `(name, label, text, attributes)`                                            | `1` or `0`                                                 | `0`              |
 | `yesno`            | `(name, label)`                                                              | `1` or `0`                                                 | never empty      |
@@ -573,6 +575,55 @@ The filters are not specific to users, any picker family can have them:
 - the panel renders `<Filters filters strings onChange onCancel />` from `tool_mulib/muform/pickerfilters` and
   sends `filters` as an object of values by keys once the user changed one; until then the endpoint
   applies the default values.
+
+### Cohort picker
+
+`cohortpicker` picks one cohort, `cohortpickermany` a list. The panel shows cohorts inside the tree of
+course categories they belong to: "System" and each category are headings, the cohorts are listed below
+their category. Only branches with cohorts are shown, and a search in names, ID numbers and descriptions
+keeps the found cohorts in their place of the tree, so cohorts with the same name can be told apart.
+At most 200 cohorts are listed, with more the panel asks to refine the search.
+
+The source extends `tool_mulib\muform\cohortpicker\base`, lives in `<component>\muform\cohortpicker\`
+and serves both elements. Cohorts the current user may use are offered, see `cohort_util::get_use_sql()`:
+visible cohorts, cohorts with `moodle/cohort:view` and advanced cohorts with a "Use cohort" access record;
+with multi-tenancy cohorts of other tenants are not. Values are cohort ids.
+
+```php
+namespace tool_muprog\muform\cohortpicker;
+
+final class source_cohort_edit_cohortids extends \tool_mulib\muform\cohortpicker\base {
+    private context $context;
+
+    public function __construct(private readonly int $programid) {
+        $this->context = program::get_context($programid);
+        require_capability('tool/muprog:edit', $this->context);
+    }
+
+    public function get_args(): array {
+        return [$this->programid];
+    }
+
+    protected function get_context(): context {
+        return $this->context;
+    }
+
+    protected function get_current_cohortids(): array {
+        global $DB;
+        // Cohorts already allocated stay valid whatever changed since.
+        $source = $DB->get_record('tool_muprog_source', ['programid' => $this->programid, 'type' => 'cohort']);
+        return $source ? $DB->get_fieldset('tool_muprog_src_cohort', 'cohortid', ['sourceid' => $source->id]) : [];
+    }
+}
+
+$form->add(new cohortpickermany('cohortids', get_string('cohorts', 'cohort'), new source_cohort_edit_cohortids($programid)));
+```
+
+`get_context()` is the context of the edited item, tenant rules use it. `get_current_cohortids()` lists cohorts
+already used by the edited item, they stay valid as the current value; `get_excluded_cohortids()` lists cohorts
+that must never be picked, for example the edited cohort itself. `context_cohorts` offers all cohorts the user
+may use for an item in a context. The search endpoint is `tool_mulib\route\api\muform\cohortpicker`.
+In Behat, table values are cohort names, ID numbers or ids.
 
 ### Tags
 
