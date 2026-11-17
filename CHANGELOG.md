@@ -29,6 +29,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
 - one autocomplete source base and namespace muform\autocomplete for both autocomplete elements, label_value() and validate_value() hooks
+- mudb::insert_record_if_missing() for concurrent inserts into tables with unique index, safe inside transactions
 
 ### Changed
 

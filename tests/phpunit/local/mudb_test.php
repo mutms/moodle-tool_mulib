@@ -403,4 +403,72 @@ final class mudb_test extends \database_driver_testcase {
         $dbman->drop_table($table);
         $dbman->drop_table($table2);
     }
+
+    /**
+     * Test inserts of missing records.
+     */
+    public function test_insert_record_if_missing(): void {
+        $DB = $this->tdb;
+        $dbman = $DB->get_manager();
+
+        $table = $this->get_test_table();
+        $tablename = $table->getName();
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL);
+        $table->add_field('value', XMLDB_TYPE_INTEGER, '10', null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('course-name', XMLDB_INDEX_UNIQUE, ['course', 'name']);
+        $dbman->create_table($table);
+
+        $record1 = (object)['course' => '1', 'name' => 'a', 'value' => '10'];
+        $record1->id = $DB->insert_record($tablename, $record1);
+
+        $this->assertTrue(mudb::insert_record_if_missing($tablename, ['course' => '1', 'name' => 'b', 'value' => '20'], ['course', 'name']));
+        $record2 = $DB->get_record($tablename, ['course' => '1', 'name' => 'b'], '*', MUST_EXIST);
+        $this->assertSame('20', $record2->value);
+        $this->assertGreaterThan($record1->id, $record2->id);
+
+        $this->assertFalse(mudb::insert_record_if_missing($tablename, (object)['course' => '1', 'name' => 'b', 'value' => '30'], ['name', 'course']));
+        $this->assertEquals($record2, $DB->get_record($tablename, ['course' => '1', 'name' => 'b'], '*', MUST_EXIST));
+        $this->assertSame(2, $DB->count_records($tablename));
+
+        $this->assertFalse(mudb::insert_record_if_missing($tablename, ['course' => '1', 'name' => 'a'], ['course', 'name']));
+        $this->assertEquals($record1, $DB->get_record($tablename, ['id' => $record1->id], '*', MUST_EXIST));
+
+        $trans = $DB->start_delegated_transaction();
+        $this->assertFalse(mudb::insert_record_if_missing($tablename, ['course' => '1', 'name' => 'a', 'value' => '40'], ['course', 'name']));
+        $this->assertTrue(mudb::insert_record_if_missing($tablename, ['course' => '2', 'name' => 'a', 'value' => '50'], ['course', 'name']));
+        $this->assertFalse(mudb::insert_record_if_missing($tablename, ['course' => '2', 'name' => 'a', 'value' => '60'], ['course', 'name']));
+        $record3 = (object)['course' => '3', 'name' => 'a', 'value' => '70'];
+        $record3->id = $DB->insert_record($tablename, $record3);
+        $trans->allow_commit();
+        $this->assertSame(4, $DB->count_records($tablename));
+        $this->assertSame('10', $DB->get_field($tablename, 'value', ['course' => '1', 'name' => 'a']));
+        $this->assertSame('50', $DB->get_field($tablename, 'value', ['course' => '2', 'name' => 'a']));
+        $this->assertGreaterThan($DB->get_field($tablename, 'id', ['course' => '2', 'name' => 'a']), $record3->id);
+
+        $invalid = [
+            'requires list of unique constraint columns' => [['course' => '5', 'name' => 'a'], []],
+            'dataobject must have all unique columns set' => [['course' => '5'], ['course', 'name']],
+            'dataobject must not have id property' => [['id' => '9', 'course' => '5', 'name' => 'a'], ['course', 'name']],
+            'dataobject contains unknown column' => [['course' => '5', 'name' => 'a', 'xvalue' => '1'], ['course', 'name']],
+        ];
+        foreach ($invalid as $message => [$record, $columns]) {
+            try {
+                mudb::insert_record_if_missing($tablename, $record, $columns);
+                $this->fail('Exception expected');
+            } catch (\core\exception\moodle_exception $ex) {
+                $this->assertInstanceOf(\core\exception\coding_exception::class, $ex);
+                $this->assertSame(
+                    'Coding error detected, it must be fixed by a programmer: mudb::insert_record_if_missing() ' . $message,
+                    $ex->getMessage()
+                );
+            }
+        }
+        $this->assertSame(4, $DB->count_records($tablename));
+
+        $dbman->drop_table($table);
+    }
 }

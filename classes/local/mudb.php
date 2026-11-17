@@ -90,6 +90,97 @@ final class mudb {
     }
 
     /**
+     * Insert record unless there is already a record with the same values in unique index.
+     *
+     * Existing record is never modified.
+     *
+     * This method solves problems with concurrent inserts into tables with unique constraints,
+     * it is safe to use inside transactions.
+     *
+     * @param string $table
+     * @param stdClass|array $dataobject
+     * @param string[] $uniqueindexcolumns list of all columns in unique index
+     * @return bool true if record was inserted, false if record already existed
+     */
+    public static function insert_record_if_missing(string $table, stdClass|array $dataobject, array $uniqueindexcolumns): bool {
+        global $DB;
+
+        $dataobject = (object)(array)$dataobject;
+
+        if (!$uniqueindexcolumns) {
+            throw new \core\exception\coding_exception(
+                'mudb::insert_record_if_missing() requires list of unique constraint columns'
+            );
+        }
+        if (property_exists($dataobject, 'id')) {
+            throw new \core\exception\coding_exception(
+                'mudb::insert_record_if_missing() dataobject must not have id property'
+            );
+        }
+        $columns = $DB->get_columns($table);
+        foreach ((array)$dataobject as $field => $value) {
+            if (!isset($columns[$field])) {
+                throw new \core\exception\coding_exception(
+                    'mudb::insert_record_if_missing() dataobject contains unknown column'
+                );
+            }
+        }
+        $conditions = [];
+        foreach ($uniqueindexcolumns as $column) {
+            if (!isset($dataobject->$column)) {
+                throw new \core\exception\coding_exception(
+                    'mudb::insert_record_if_missing() dataobject must have all unique columns set'
+                );
+            }
+            $conditions[$column] = $dataobject->$column;
+        }
+
+        if ($DB->get_dbfamily() === 'postgres') {
+            $trans = $DB->start_delegated_transaction();
+
+            $id = $DB->get_field_sql(
+                "SELECT nextval(pg_get_serial_sequence(?, 'id'))",
+                [$DB->get_prefix() . $table]
+            );
+
+            $fields = ['id'];
+            $values = ['?'];
+            $params = [$id];
+            foreach ((array)$dataobject as $field => $value) {
+                $fields[] = $field;
+                $values[] = '?';
+                $params[] = $value;
+            }
+            $fields = implode(',', $fields);
+            $values = implode(',', $values);
+            $constraint = implode(',', $uniqueindexcolumns);
+
+            $sql = "INSERT INTO {{$table}} ($fields) VALUES ($values)
+                                ON CONFLICT ($constraint) DO NOTHING";
+            $DB->execute($sql, $params);
+
+            $inserted = $DB->record_exists($table, ['id' => $id]);
+
+            $trans->allow_commit();
+
+            return $inserted;
+        }
+
+        if ($DB->record_exists($table, $conditions)) {
+            return false;
+        }
+        try {
+            $DB->insert_record($table, $dataobject, false);
+        } catch (dml_write_exception $e) {
+            if (!$DB->record_exists($table, $conditions)) {
+                throw $e;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * PostgreSQL UPSERT.
      *
      * @param string $table
