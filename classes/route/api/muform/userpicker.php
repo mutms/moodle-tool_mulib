@@ -30,6 +30,7 @@ use core\router\schema\response\content\payload_response_type;
 use core\router\schema\response\payload_response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use tool_mulib\muform\picker\filter_set;
 use tool_mulib\muform\userpicker\base;
 
 /**
@@ -67,6 +68,7 @@ class userpicker {
                         'query' => new scalar_type(param::RAW, required: true),
                         'exclude' => new array_of_strings(param::INT, param::INT),
                         'page' => new scalar_type(param::INT),
+                        'filters' => new array_of_strings(param::ALPHANUMEXT, param::RAW),
                     ],
                 ),
             ),
@@ -88,7 +90,8 @@ class userpicker {
         }
         $query = $body['query'] ?? '';
         $page = $body['page'] ?? 0;
-        $payload = $source->search(is_string($query) ? $query : '', $exclude, is_scalar($page) ? (int)$page : 0);
+        $filters = filter_set::clean_values($body['filters'] ?? null);
+        $payload = $source->search(is_string($query) ? $query : '', $exclude, is_scalar($page) ? (int)$page : 0, $filters);
         return new payload_response(payload: $payload, request: $request, response: $response);
     }
 }

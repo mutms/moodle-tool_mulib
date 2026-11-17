@@ -21,6 +21,8 @@ namespace tool_mulib\muform\userpicker;
 use core\context;
 use tool_mulib\local\search_util;
 use tool_mulib\local\sql;
+use tool_mulib\muform\picker\filter;
+use tool_mulib\muform\picker\filter_set;
 use tool_mulib\muform\util\autocomplete\user_trait;
 
 /**
@@ -29,7 +31,8 @@ use tool_mulib\muform\util\autocomplete\user_trait;
  * The panel lists one page of users at a time with full names and the identity fields visible
  * in the source context (showuseridentity and moodle/site:viewuseridentity), words of the search
  * are looked up in names and those fields. Deleted, unconfirmed and guest users are never offered,
- * tenant restrictions apply. Values are user ids.
+ * tenant restrictions apply. Values are user ids. Filters above the list narrow it down, suspended
+ * users are hidden until the "Active" filter is removed.
  *
  * Sources live in <component>\muform\userpicker\ namespaces, the endpoint
  * tool_mulib\route\api\muform\userpicker creates them again from get_args(),
@@ -81,6 +84,30 @@ abstract class base extends \tool_mulib\muform\picker\base {
         return [];
     }
 
+    /**
+     * Filters of the panel, shown as pills above the list of users.
+     *
+     * Suspended users are hidden by the default value of the pinned "Active" filter, it is not offered
+     * when the source does not allow suspended users at all. Add filters of the source
+     * to the result of the parent method, keys must be unique, conditions use table alias "u".
+     *
+     * @return filter[]
+     */
+    protected function get_filters(): array {
+        if (!$this->allow_suspended_users()) {
+            return [];
+        }
+        return [
+            filter::boolean(
+                'active',
+                get_string('muform_userpicker_filter_active', 'tool_mulib'),
+                new sql('u.suspended = 0'),
+                new sql('u.suspended = 1'),
+                true
+            )->set_pinned(),
+        ];
+    }
+
     #[\Override]
     final public function labels(array $values): array {
         global $DB;
@@ -123,6 +150,7 @@ abstract class base extends \tool_mulib\muform\picker\base {
         foreach (['addselected', 'close', 'found', 'name', 'next', 'page', 'previous', 'selectall', 'selectrow'] as $key) {
             $strings[$key] = get_string('muform_userpicker_' . $key, 'tool_mulib');
         }
+        $strings += filter_set::get_panel_strings();
         return $strings;
     }
 
@@ -145,19 +173,28 @@ abstract class base extends \tool_mulib\muform\picker\base {
      * @param string $query words looked up in names and visible identity fields
      * @param string[] $exclude user ids not offered, such as values already selected
      * @param int $page page number starting with 0, out of range pages show the last page
-     * @return array with columns, rows (id, fullname, fields, label html), total, page and perpage
+     * @param array|null $filters filter values indexed with filter keys, filters without a valid value
+     *      do not restrict the list; null for the default values
+     * @return array with columns, rows (id, fullname, fields, label html), total, page, perpage
+     *      and filters (see filter::export())
      */
-    final public function search(string $query, array $exclude, int $page): array {
+    final public function search(string $query, array $exclude, int $page, ?array $filters = null): array {
         global $DB;
 
         $context = $this->get_context();
         $query = trim($query);
         $search = ($query === '') ? new sql('') : search_util::get_user_search_query($query, 'u', $context);
-        $where = $this->get_candidates_sql();
-        if (!$this->allow_suspended_users()) {
-            $suspended = new sql('u.suspended = 0');
-            $where = $where ? sql::join(' AND ', [$where->wrap('(', ')'), $suspended]) : $suspended;
+        $wheres = [];
+        $candidates = $this->get_candidates_sql();
+        if ($candidates) {
+            $wheres[] = $candidates->wrap('(', ')');
         }
+        if (!$this->allow_suspended_users()) {
+            $wheres[] = new sql('u.suspended = 0');
+        }
+        $filterset = new filter_set($this->get_filters(), $filters);
+        $wheres = array_merge($wheres, $filterset->get_sqls());
+        $where = $wheres ? sql::join(' AND ', $wheres) : null;
         $exclude = array_map('strval', array_filter($exclude, 'is_scalar'));
         $sql = $this->users_sql($context, $search, $exclude, $where);
 
@@ -183,6 +220,13 @@ abstract class base extends \tool_mulib\muform\picker\base {
                 'label' => search_util::format_user_label($user, $context),
             ];
         }
-        return ['columns' => $columns, 'rows' => $rows, 'total' => $total, 'page' => $page, 'perpage' => self::PERPAGE];
+        return [
+            'columns' => $columns,
+            'rows' => $rows,
+            'total' => $total,
+            'page' => $page,
+            'perpage' => self::PERPAGE,
+            'filters' => $filterset->export(),
+        ];
     }
 }

@@ -82,6 +82,36 @@ final class userpicker_test extends route_testcase {
         $this->assertSame('Bert Zeta', $payload['rows'][0]['fullname']);
         $this->assertSame(['email' => 'bert@example.com'], $payload['rows'][0]['fields']);
         $this->assertStringContainsString('Bert Zeta', $payload['rows'][0]['label']);
+        $this->assertSame('active', $payload['filters'][0]['key']);
+        $this->assertSame('1', $payload['filters'][0]['value']);
+    }
+
+    public function test_search_filters(): void {
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator();
+        $u1 = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Zeta']);
+        $u2 = $generator->create_user(['firstname' => 'Bert', 'lastname' => 'Zeta', 'suspended' => 1]);
+        $body = [
+            'source' => \tool_mulib\muform\userpicker\site_users::class,
+            'args' => [system::instance()->id],
+            'query' => 'Zeta',
+        ];
+
+        $payload = json_decode((string)$this->post($body)->getBody(), true);
+        $this->assertSame([(int)$u1->id], array_column($payload['rows'], 'id'));
+
+        $response = $this->post($body + ['filters' => ['active' => '0']]);
+        $this->assertSame(200, $response->getStatusCode(), (string)$response->getBody());
+        $payload = json_decode((string)$response->getBody(), true);
+        $this->assertSame([(int)$u2->id], array_column($payload['rows'], 'id'));
+        $this->assertSame('0', $payload['filters'][0]['value']);
+
+        // All filters removed.
+        $response = $this->post($body + ['filters' => new \stdClass()]);
+        $this->assertSame(200, $response->getStatusCode(), (string)$response->getBody());
+        $payload = json_decode((string)$response->getBody(), true);
+        $this->assertSame([(int)$u1->id, (int)$u2->id], array_column($payload['rows'], 'id'));
+        $this->assertNull($payload['filters'][0]['value']);
     }
 
     public function test_bad_sources(): void {

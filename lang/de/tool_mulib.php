@@ -135,6 +135,7 @@ $string['muform_typenewvalue'] = 'Neuen Wert eingeben ...';
 $string['muform_unsafehtml'] = 'Unsicheres HTML erlaubt, der Inhalt wird ohne Bereinigung gespeichert';
 $string['muform_userpicker_addselected'] = 'Ausgewählte hinzufügen ({$a})';
 $string['muform_userpicker_close'] = 'Schließen';
+$string['muform_userpicker_filter_active'] = 'Aktiv';
 $string['muform_userpicker_found'] = 'Gefunden: {$a}';
 $string['muform_userpicker_name'] = 'Name';
 $string['muform_userpicker_next'] = 'Nächste Seite';

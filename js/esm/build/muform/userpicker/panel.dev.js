@@ -9,11 +9,16 @@ import { jsxDEV } from "react/jsx-dev-runtime";
  * Several users: rows are ticked, Enter ticks the highlighted row and clears the search for the next
  * name, Enter with an empty search adds the ticked users, the footer button adds all ticked.
  *
+ * Filters of the source are pills below the search field, the same as in the report filter bar:
+ * a pill opens the editor of its value, the cross removes the value, filters without a value are
+ * in the "Add filter" list. The endpoint applies default values until the user changes a filter.
+ *
  * @module     tool_mulib/muform/userpicker/panel
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import Fetch from "@moodle/lms/core/fetch";
 import { useEffect, useRef, useState } from "react";
+import Filters from "../pickerfilters";
 const TYPING_DELAY = 250;
 function Panel({ source, multiple, selected, strings, onPick, onClose }) {
   const [query, setQuery] = useState("");
@@ -22,6 +27,7 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
   const [ticked, setTicked] = useState([]);
+  const [filterValues, setFilterValues] = useState(null);
   const searchRef = useRef(null);
   const request = useRef(0);
   const delay = useRef(0);
@@ -35,6 +41,9 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
     const id = ++request.current;
     const timer = setTimeout(async () => {
       const body = { source: source.class, args: source.args, query, page, exclude: selected };
+      if (filterValues) {
+        body.filters = filterValues;
+      }
       try {
         const response = await Fetch.performPost("tool_mulib", "muform/userpicker/search", { body });
         const data = await response.json();
@@ -50,18 +59,31 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
       } catch {
         if (id === request.current) {
           enterPending.current = false;
-          setAnswer({ columns: [], rows: [], total: 0, page: 0, perpage: 1 });
+          setAnswer((previous) => ({ columns: [], rows: [], total: 0, page: 0, perpage: 1, filters: previous?.filters ?? [] }));
           setLoading(false);
         }
       }
     }, delay.current);
     delay.current = 0;
     return () => clearTimeout(timer);
-  }, [query, page, source, selected]);
+  }, [query, page, source, selected, filterValues]);
   const rows = answer?.rows ?? [];
   const columns = answer?.columns ?? [];
   const pages = answer ? Math.max(1, Math.ceil(answer.total / answer.perpage)) : 1;
   const isTicked = /* @__PURE__ */ __name((user) => ticked.some((item) => item.id === user.id), "isTicked");
+  const filters = (answer?.filters ?? []).map((filter) => filterValues ? { ...filter, value: filterValues[filter.key] ?? null } : filter);
+  const changeFilters = /* @__PURE__ */ __name((changes) => {
+    const values = {};
+    for (const filter of filters) {
+      const value = filter.key in changes ? changes[filter.key] : filter.value;
+      if (value !== null) {
+        values[filter.key] = value;
+      }
+    }
+    setFilterValues(values);
+    setPage(0);
+    searchRef.current?.focus();
+  }, "changeFilters");
   const pick = /* @__PURE__ */ __name((users) => {
     onPick(users.map((user) => ({ value: String(user.id), label: user.label })));
   }, "pick");
@@ -122,7 +144,7 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
     /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-2 p-3 border-bottom", children: [
       /* @__PURE__ */ jsxDEV("h2", { className: "h5 mb-0 flex-grow-1", children: strings.title }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 212,
+        lineNumber: 251,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV(
@@ -138,45 +160,64 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 213,
+          lineNumber: 252,
           columnNumber: 17
         },
         this
       )
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 211,
+      lineNumber: 250,
       columnNumber: 13
     }, this),
-    /* @__PURE__ */ jsxDEV("div", { className: "p-3 border-bottom", children: /* @__PURE__ */ jsxDEV(
-      "input",
-      {
-        ref: searchRef,
-        type: "search",
-        className: "form-control",
-        autoComplete: "off",
-        placeholder: strings.search,
-        "aria-label": strings.search,
-        value: query,
-        "data-userpicker-search": true,
-        onChange: (event) => {
-          delay.current = TYPING_DELAY;
-          setQuery(event.target.value);
-          setPage(0);
+    /* @__PURE__ */ jsxDEV("div", { className: "p-3 border-bottom", children: [
+      /* @__PURE__ */ jsxDEV(
+        "input",
+        {
+          ref: searchRef,
+          type: "search",
+          className: "form-control",
+          autoComplete: "off",
+          placeholder: strings.search,
+          "aria-label": strings.search,
+          value: query,
+          "data-userpicker-search": true,
+          onChange: (event) => {
+            delay.current = TYPING_DELAY;
+            setQuery(event.target.value);
+            setPage(0);
+          },
+          onKeyDown: onSearchKeyDown
         },
-        onKeyDown: onSearchKeyDown
-      },
-      void 0,
-      false,
-      {
-        fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 217,
-        columnNumber: 17
-      },
-      this
-    ) }, void 0, false, {
+        void 0,
+        false,
+        {
+          fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
+          lineNumber: 256,
+          columnNumber: 17
+        },
+        this
+      ),
+      /* @__PURE__ */ jsxDEV(
+        Filters,
+        {
+          filters,
+          strings,
+          onChange: changeFilters,
+          onCancel: () => searchRef.current?.focus()
+        },
+        void 0,
+        false,
+        {
+          fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
+          lineNumber: 264,
+          columnNumber: 17
+        },
+        this
+      )
+    ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 216,
+      lineNumber: 255,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "flex-grow-1 overflow-auto", "aria-busy": loading, children: [
@@ -197,32 +238,32 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-              lineNumber: 232,
+              lineNumber: 273,
               columnNumber: 37
             },
             this
           ) }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 231,
+            lineNumber: 272,
             columnNumber: 33
           }, this),
           /* @__PURE__ */ jsxDEV("th", { scope: "col", className: multiple ? "" : "ps-3", children: strings.name }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 237,
+            lineNumber: 278,
             columnNumber: 29
           }, this),
           columns.map((column) => /* @__PURE__ */ jsxDEV("th", { scope: "col", children: column.label }, column.name, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 238,
+            lineNumber: 279,
             columnNumber: 54
           }, this))
         ] }, void 0, true, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 229,
+          lineNumber: 270,
           columnNumber: 25
         }, this) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 228,
+          lineNumber: 269,
           columnNumber: 21
         }, this),
         /* @__PURE__ */ jsxDEV("tbody", { children: rows.map((user, index) => /* @__PURE__ */ jsxDEV(
@@ -248,27 +289,27 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                  lineNumber: 248,
+                  lineNumber: 289,
                   columnNumber: 41
                 },
                 this
               ) }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 247,
+                lineNumber: 288,
                 columnNumber: 37
               }, this),
               /* @__PURE__ */ jsxDEV("td", { className: multiple ? "" : "ps-3", children: multiple ? user.fullname : /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-link p-0 text-start", children: user.fullname }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 256,
+                lineNumber: 297,
                 columnNumber: 41
               }, this) }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 254,
+                lineNumber: 295,
                 columnNumber: 33
               }, this),
               columns.map((column) => /* @__PURE__ */ jsxDEV("td", { "data-userpicker-field": column.name, children: user.fields[column.name] ?? "" }, column.name, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 260,
+                lineNumber: 301,
                 columnNumber: 37
               }, this))
             ]
@@ -277,34 +318,34 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           true,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 243,
+            lineNumber: 284,
             columnNumber: 29
           },
           this
         )) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 241,
+          lineNumber: 282,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 227,
+        lineNumber: 268,
         columnNumber: 17
       }, this),
       !rows.length && /* @__PURE__ */ jsxDEV("p", { className: "text-muted p-3 mb-0", "data-userpicker-empty": true, children: loading ? strings.searching : strings.noresults }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 267,
+        lineNumber: 308,
         columnNumber: 21
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 226,
+      lineNumber: 267,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "d-flex flex-wrap align-items-center gap-2 p-3 border-top", children: [
       /* @__PURE__ */ jsxDEV("span", { className: "text-muted small", "data-userpicker-total": answer ? answer.total : void 0, children: answer ? strings.found.replace("{$a}", String(answer.total)) : "" }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 271,
+        lineNumber: 312,
         columnNumber: 17
       }, this),
       pages > 1 && answer && /* @__PURE__ */ jsxDEV("span", { className: "d-inline-flex align-items-center gap-1", children: [
@@ -323,14 +364,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 276,
+            lineNumber: 317,
             columnNumber: 25
           },
           this
         ),
         /* @__PURE__ */ jsxDEV("span", { className: "small", children: strings.page.replace("{$a}", `${answer.page + 1} / ${pages}`) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 279,
+          lineNumber: 320,
           columnNumber: 25
         }, this),
         /* @__PURE__ */ jsxDEV(
@@ -348,14 +389,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 280,
+            lineNumber: 321,
             columnNumber: 25
           },
           this
         )
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 275,
+        lineNumber: 316,
         columnNumber: 21
       }, this),
       /* @__PURE__ */ jsxDEV("span", { className: "ms-auto d-inline-flex gap-2", children: [
@@ -373,29 +414,29 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 287,
+            lineNumber: 328,
             columnNumber: 25
           },
           this
         ),
         /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-secondary", onClick: onClose, children: strings.close }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 292,
+          lineNumber: 333,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 285,
+        lineNumber: 326,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 270,
+      lineNumber: 311,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-    lineNumber: 210,
+    lineNumber: 249,
     columnNumber: 9
   }, this);
 }

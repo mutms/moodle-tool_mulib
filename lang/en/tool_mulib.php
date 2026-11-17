@@ -131,6 +131,7 @@ $string['muform_typenewvalue'] = 'Type new value...';
 $string['muform_unsafehtml'] = 'Unsafe HTML allowed, content is saved without cleaning';
 $string['muform_userpicker_addselected'] = 'Add selected ({$a})';
 $string['muform_userpicker_close'] = 'Close';
+$string['muform_userpicker_filter_active'] = 'Active';
 $string['muform_userpicker_found'] = 'Found: {$a}';
 $string['muform_userpicker_name'] = 'Name';
 $string['muform_userpicker_next'] = 'Next page';

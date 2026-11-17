@@ -28,6 +28,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
+- picker\filter, picker\filter_set and the pickerfilters component: filters of picker panels with default values and pinned filters,
+  pills like in report_filter_bar, reusable in all picker families
+- filters of the users picker panel, suspended users are hidden by the default value of the pinned "Active" filter
 - one autocomplete source base and namespace muform\autocomplete for both autocomplete elements, label_value() and validate_value() hooks
 - mudb::insert_record_if_missing() for concurrent inserts into tables with unique index, safe inside transactions
 - notification type hooks add_update_form_elements(), prepare_update_form_data(), normalise_aux_data() and get_aux_details()

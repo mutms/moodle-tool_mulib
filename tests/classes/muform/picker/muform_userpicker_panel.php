@@ -26,6 +26,7 @@ use Behat\Mink\Exception\ExpectationException;
  *
  * Items are user ids, full names or values of visible identity fields such as emails: each is typed
  * into the search field and the matching row picked, a search with exactly one result is picked as well.
+ * Filters of the panel are removed first, so that any user that may be picked is found, such as suspended users.
  * Pill labels start with the full name followed by identity fields.
  *
  * Loaded by panel_base::get_class().
@@ -50,6 +51,7 @@ final class muform_userpicker_panel extends panel_base {
 
     #[\Override]
     public function pick(string $item): void {
+        $this->remove_filters();
         $this->search(ctype_digit($item) ? '' : $item);
         $this->wait_for_row($item)->click();
         \behat_base::wait_for_pending_js_in_session($this->context->getSession());
@@ -64,6 +66,27 @@ final class muform_userpicker_panel extends panel_base {
     #[\Override]
     public static function label_matches(string $label, string $item): bool {
         return $label === $item || str_starts_with($label, $item . ' ');
+    }
+
+    /**
+     * Remove values of all filters, default values hide users such as the suspended ones.
+     */
+    private function remove_filters(): void {
+        $session = $this->context->getSession();
+        $deadline = microtime(true) + 6;
+        while (microtime(true) < $deadline) {
+            if ($this->panel->find('css', '[aria-busy="true"]')) {
+                usleep(100000);
+                continue;
+            }
+            $remove = $this->panel->find('css', '[data-picker-filter-remove]');
+            if (!$remove) {
+                return;
+            }
+            $remove->click();
+            \behat_base::wait_for_pending_js_in_session($session);
+        }
+        throw new ExpectationException('Filters cannot be removed in ' . $this->what, $session);
     }
 
     /**

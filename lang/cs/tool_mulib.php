@@ -131,6 +131,7 @@ $string['muform_typenewvalue'] = 'Zadejte novou hodnotu...';
 $string['muform_unsafehtml'] = 'Je povoleno nebezpečné HTML, obsah se ukládá bez vyčištění';
 $string['muform_userpicker_addselected'] = 'Přidat vybrané ({$a})';
 $string['muform_userpicker_close'] = 'Zavřít';
+$string['muform_userpicker_filter_active'] = 'Aktivní';
 $string['muform_userpicker_found'] = 'Nalezeno: {$a}';
 $string['muform_userpicker_name'] = 'Jméno';
 $string['muform_userpicker_next'] = 'Další stránka';

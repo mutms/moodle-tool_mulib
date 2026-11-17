@@ -22,6 +22,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../fixtures/fake_user_source.php');
 
+use tool_mulib\local\sql;
+use tool_mulib\muform\picker\filter;
+use tool_mulib\muform\picker\filter_set;
 use tool_mulib\muform\userpicker\base;
 use tool_mulib\muform\userpicker\site_users;
 use tool_mulib\phpunit\muform\fixtures\fake_user_source;
@@ -37,6 +40,8 @@ use PHPUnit\Framework\Attributes\Group;
  */
 #[CoversClass(base::class)]
 #[CoversClass(site_users::class)]
+#[CoversClass(filter::class)]
+#[CoversClass(filter_set::class)]
 #[Group('MuTMS')]
 final class base_test extends \advanced_testcase {
     #[\Override]
@@ -134,6 +139,150 @@ final class base_test extends \advanced_testcase {
         $this->assertSame('tool_mulib/muform/userpicker/panel', $panel['panel']);
         $this->assertSame('Select users', $panel['strings']['title']);
         $this->assertSame('Select user', $source->export_panel(false)['strings']['title']);
+    }
+
+    public function test_filters(): void {
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator();
+        $anna = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Filtered', 'city' => 'Prague']);
+        $bert = $generator->create_user(['firstname' => 'Bert', 'lastname' => 'Filtered', 'city' => 'Brno', 'suspended' => 1]);
+        $cyril = $generator->create_user(['firstname' => 'Cyril', 'lastname' => 'Filtered', 'city' => 'Brno']);
+        $ids = fn(array $result): array => array_column($result['rows'], 'id');
+        $yesno = [['value' => '1', 'label' => 'Yes'], ['value' => '0', 'label' => 'No']];
+
+        $source = new site_users(\core\context\system::instance()->id);
+        $active = ['key' => 'active', 'type' => 'boolean', 'label' => 'Active', 'options' => $yesno, 'value' => '1'];
+        $active += ['default' => '1', 'pinned' => true, 'anylabel' => 'Any'];
+
+        // Suspended users are hidden by default.
+        $result = $source->search('Filtered', [], 0);
+        $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
+        $this->assertSame([$active], $result['filters']);
+        $result = $source->search('Filtered', [], 0, ['active' => '1']);
+        $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
+        $this->assertSame([$active], $result['filters']);
+
+        $result = $source->search('Filtered', [], 0, ['active' => '0']);
+        $this->assertSame([(int)$bert->id], $ids($result));
+        $this->assertSame([array_merge($active, ['value' => '0'])], $result['filters']);
+
+        // Removed filters and invalid values do not restrict the list.
+        foreach ([[], ['active' => ''], ['active' => '2'], ['active' => ['1']], ['other' => '1']] as $values) {
+            $result = $source->search('Filtered', [], 0, $values);
+            $this->assertSame([(int)$anna->id, (int)$bert->id, (int)$cyril->id], $ids($result));
+            $this->assertSame([array_merge($active, ['value' => null])], $result['filters']);
+        }
+
+        // Sources that do not allow suspended users have no filter for them.
+        $source = new fake_user_source();
+        $result = $source->search('Filtered', [], 0, ['active' => '0']);
+        $this->assertSame([(int)$anna->id, (int)$cyril->id], $ids($result));
+        $this->assertSame([], $result['filters']);
+
+        // Filters of sources are combined with the candidates and the other filters.
+        $source = new class extends base {
+            #[\Override]
+            public function get_args(): array {
+                return [];
+            }
+
+            #[\Override]
+            protected function get_context(): \core\context {
+                return \core\context\system::instance();
+            }
+
+            #[\Override]
+            protected function get_candidates_sql(): ?sql {
+                return new sql("u.lastname = 'Filtered' OR u.lastname = ?", ['Nobody']);
+            }
+
+            #[\Override]
+            protected function get_filters(): array {
+                $filters = parent::get_filters();
+                $filters[] = filter::select(
+                    'city',
+                    'City',
+                    ['Prague' => 'Praha', 'Brno' => 'Brno'],
+                    fn(string $value): sql => new sql('u.city = :city OR u.city = :city2', ['city' => $value, 'city2' => 'x']),
+                    'Brno'
+                );
+                return $filters;
+            }
+        };
+        $city = [
+            'key' => 'city',
+            'type' => 'select',
+            'label' => 'City',
+            'options' => [['value' => 'Prague', 'label' => 'Praha'], ['value' => 'Brno', 'label' => 'Brno']],
+            'value' => 'Brno',
+            'default' => 'Brno',
+            'pinned' => false,
+            'anylabel' => 'Any',
+        ];
+        $result = $source->search('', [], 0);
+        $this->assertSame([(int)$cyril->id], $ids($result));
+        $this->assertSame([$active, $city], $result['filters']);
+        $result = $source->search('', [], 0, ['city' => 'Brno']);
+        $this->assertSame([(int)$bert->id, (int)$cyril->id], $ids($result));
+        $this->assertSame([array_merge($active, ['value' => null]), $city], $result['filters']);
+        $result = $source->search('', [], 0, ['active' => '1', 'city' => 'Prague']);
+        $this->assertSame([(int)$anna->id], $ids($result));
+        $result = $source->search('', [], 0, ['city' => 'Paris']);
+        $this->assertSame([(int)$anna->id, (int)$bert->id, (int)$cyril->id], $ids($result));
+
+        // Filters do not change what may be stored.
+        $this->assertSame([], $source->validate([(string)$bert->id]));
+        $this->assertArrayHasKey($bert->id, $source->labels([(string)$bert->id]));
+    }
+
+    public function test_filter_definition(): void {
+        $filter = filter::boolean('active', 'Active', new sql('u.suspended = 0'), new sql('u.suspended = 1'));
+        $this->assertSame('active', $filter->get_key());
+        $this->assertNull($filter->get_default());
+        $this->assertSame('1', $filter->normalise(1));
+        $this->assertNull($filter->normalise(true));
+        $this->assertNull($filter->normalise('yes'));
+        $this->assertSame('u.suspended = 0', $filter->get_sql('1')->sql);
+        $this->assertSame('u.suspended = 1', $filter->get_sql('0')->sql);
+        $this->assertNull($filter->get_sql(null));
+        $this->assertNull($filter->get_sql('2'));
+        $this->assertSame('0', filter::boolean('active', 'Active', new sql('1=1'), new sql('1=0'), false)->get_default());
+        $this->assertFalse($filter->export(null)['pinned']);
+        $exported = $filter->set_pinned(true, 'All users')->export(null);
+        $this->assertTrue($exported['pinned']);
+        $this->assertSame('All users', $exported['anylabel']);
+
+        $set = new filter_set([$filter], ['active' => '0', 'other' => '1']);
+        $this->assertSame('0', $set->get_value('active'));
+        $this->assertNull($set->get_value('other'));
+        $this->assertSame(['(u.suspended = 1)'], array_column($set->get_sqls(), 'sql'));
+        $this->assertSame([], (new filter_set([$filter], null))->get_sqls());
+        $this->assertNull(filter_set::clean_values(null));
+        $this->assertNull(filter_set::clean_values('active'));
+        $this->assertSame(['active' => '1'], filter_set::clean_values((object)['active' => 1, 'bad' => ['x']]));
+        $this->assertSame(
+            ['filteradd', 'filterremove', 'filterresetall', 'filterresetdefault', 'search'],
+            array_keys(filter_set::get_panel_strings())
+        );
+        try {
+            new filter_set([$filter, $filter], null);
+            $this->fail('Exception expected');
+        } catch (\core\exception\coding_exception $ex) {
+            $this->assertStringContainsString('Duplicate picker filter: active', $ex->getMessage());
+        }
+
+        try {
+            filter::boolean('Active', 'Active', new sql('1=1'), new sql('1=0'));
+            $this->fail('Exception expected');
+        } catch (\core\exception\coding_exception $ex) {
+            $this->assertStringContainsString('Invalid picker filter key: Active', $ex->getMessage());
+        }
+        try {
+            filter::select('city', 'City', ['a' => 'A'], fn(string $value): sql => new sql('1=1'), 'b');
+            $this->fail('Exception expected');
+        } catch (\core\exception\coding_exception $ex) {
+            $this->assertStringContainsString('Default value of picker filter is not an option: city', $ex->getMessage());
+        }
     }
 
     public function test_site_users(): void {

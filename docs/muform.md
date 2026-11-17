@@ -523,7 +523,50 @@ suspended users when it returns false. `get_current_userids()` lists users of th
 stay valid as the current value whatever the candidates, selected and tenant rules say, for example
 the current supervisor of an edited relation; the search does not offer them. `site_users` offers all users of a context to users with
 `moodle/user:viewalldetails`. The search endpoint is `tool_mulib\route\api\muform\userpicker`.
-In Behat, table values are user ids, full names or identity field values such as emails.
+In Behat, table values are user ids, full names or identity field values such as emails; the filters are
+removed before a user is looked up, so suspended users are found too.
+
+Filters are pills below the search field that look and work like the report filter bar: a pill opens
+the editor of its value, the cross removes it, filters without a value are in "Add filter" and
+"Reset filters" returns to the default values. Every source that allows suspended users has the
+pinned "Active" filter, set to "Yes" when the panel opens, so suspended users are hidden until the
+filter is removed ("Active: Any") or changed to "No". Sources add their own filters in `get_filters()`:
+
+```php
+protected function get_filters(): array {
+    $filters = parent::get_filters();
+    $filters[] = filter::boolean(
+        'completed',
+        get_string('completed', 'tool_muprog'),
+        new sql("EXISTS (SELECT 'x' FROM {tool_muprog_allocation} ca WHERE ca.userid = u.id AND ca.timecompleted IS NOT NULL)"),
+        new sql("NOT EXISTS (SELECT 'x' FROM {tool_muprog_allocation} ca WHERE ca.userid = u.id AND ca.timecompleted IS NOT NULL)"),
+    );
+    $filters[] = filter::select(
+        'auth',
+        get_string('authentication'),
+        ['manual' => 'Manual accounts', 'oauth2' => 'OAuth 2'],
+        fn(string $value): sql => new sql('u.auth = :auth', ['auth' => $value]),
+    )->set_pinned();
+    return $filters;
+}
+```
+
+`tool_mulib\muform\picker\filter::boolean()` has Yes and No values, `filter::select()` a list of options
+with plain text labels (a search box is added for more than 10); conditions use table alias `u`. The
+last argument is the default value, without it the filter starts in "Add filter". `set_pinned()` keeps
+the pill in the bar when it has no value, as "Authentication: Any" (the second argument replaces "Any").
+Keys are unique in the source: lowercase letters, digits and underscores. Filters only narrow down the
+list of candidates, `validate()` and `get_selected_sql()` decide what may be stored.
+
+The filters are not specific to users, any picker family can have them:
+
+- the family base lets sources define `tool_mulib\muform\picker\filter` objects with conditions on its own table aliases;
+- the family endpoint creates `new filter_set($filters, filter_set::clean_values($body['filters'] ?? null))`,
+  adds `get_sqls()` to its query (or reads `get_value($key)`) and returns `export()` in the answer;
+- `get_panel_strings()` of the family adds `filter_set::get_panel_strings()`;
+- the panel renders `<Filters filters strings onChange onCancel />` from `tool_mulib/muform/pickerfilters` and
+  sends `filters` as an object of values by keys once the user changed one; until then the endpoint
+  applies the default values.
 
 ### Tags
 

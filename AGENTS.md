@@ -47,6 +47,9 @@ $handler->render($form);
 - User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\muform\userpicker\*` extending
   `tool_mulib\muform\userpicker\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
   `allow_suspended_users()`); a panel with identity columns (`showuseridentity`) and paging, tenant rules apply.
+  Filter pills above the list: pinned "Active: Yes" hides suspended users by default, sources add
+  `picker\filter::boolean()` and `filter::select()` with optional default values and `set_pinned()` in `get_filters()`;
+  other picker families reuse them with `picker\filter_set` and the `tool_mulib/muform/pickerfilters` component.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one
   form class per stage in the same namespace and a thin entry script calling `execute()`; full page only (plain
   links, never dialogs). Stage forms use the `wizardcontinue` and `wizardback` buttons, wizard state never holds

@@ -11,6 +11,10 @@
     "eject": "risky",
     "wrap": "risky"
   },
+  "muform/pickerfilters": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
   "muform/tagspicker": {
     "eject": "risky",
     "wrap": "risky"

@@ -21,6 +21,10 @@
  * Several users: rows are ticked, Enter ticks the highlighted row and clears the search for the next
  * name, Enter with an empty search adds the ticked users, the footer button adds all ticked.
  *
+ * Filters of the source are pills below the search field, the same as in the report filter bar:
+ * a pill opens the editor of its value, the cross removes the value, filters without a value are
+ * in the "Add filter" list. The endpoint applies default values until the user changes a filter.
+ *
  * @module     tool_mulib/muform/userpicker/panel
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,11 +32,16 @@
 import Fetch from '@moodle/lms/core/fetch';
 import {useEffect, useRef, useState} from 'react';
 import type {PickerPanelProps} from '../pickerpanel';
+import Filters, {type Filter} from '../pickerfilters';
 
 /** Localised texts. */
 export interface Strings {
     addselected: string;
     close: string;
+    filteradd: string;
+    filterremove: string;
+    filterresetall: string;
+    filterresetdefault: string;
     found: string;
     name: string;
     next: string;
@@ -70,6 +79,7 @@ export interface Answer {
     total: number;
     page: number;
     perpage: number;
+    filters?: Filter[];
 }
 
 /** Delay of searches while typing. */
@@ -82,6 +92,8 @@ export default function Panel({source, multiple, selected, strings, onPick, onCl
     const [loading, setLoading] = useState(true);
     const [active, setActive] = useState(0);
     const [ticked, setTicked] = useState<User[]>([]);
+    // Null until the user changes a filter, the endpoint applies default values then.
+    const [filterValues, setFilterValues] = useState<Record<string, string> | null>(null);
     const searchRef = useRef<HTMLInputElement>(null);
     const request = useRef(0);
     // Typing is delayed, everything else searches at once.
@@ -98,7 +110,10 @@ export default function Panel({source, multiple, selected, strings, onPick, onCl
         setLoading(true);
         const id = ++request.current;
         const timer = setTimeout(async() => {
-            const body = {source: source.class, args: source.args, query, page, exclude: selected};
+            const body: Record<string, unknown> = {source: source.class, args: source.args, query, page, exclude: selected};
+            if (filterValues) {
+                body.filters = filterValues;
+            }
             try {
                 const response = await Fetch.performPost('tool_mulib', 'muform/userpicker/search', {body});
                 const data = await response.json() as Answer;
@@ -114,19 +129,43 @@ export default function Panel({source, multiple, selected, strings, onPick, onCl
             } catch {
                 if (id === request.current) {
                     enterPending.current = false;
-                    setAnswer({columns: [], rows: [], total: 0, page: 0, perpage: 1});
+                    setAnswer((previous) => (
+                        {columns: [], rows: [], total: 0, page: 0, perpage: 1, filters: previous?.filters ?? []}
+                    ));
                     setLoading(false);
                 }
             }
         }, delay.current);
         delay.current = 0;
         return () => clearTimeout(timer);
-    }, [query, page, source, selected]);
+    }, [query, page, source, selected, filterValues]);
 
     const rows = answer?.rows ?? [];
     const columns = answer?.columns ?? [];
     const pages = answer ? Math.max(1, Math.ceil(answer.total / answer.perpage)) : 1;
     const isTicked = (user: User): boolean => ticked.some((item) => item.id === user.id);
+    // Values the user asked for are shown at once, the answer has the values applied by the endpoint.
+    const filters = (answer?.filters ?? []).map((filter) => (
+        filterValues ? {...filter, value: filterValues[filter.key] ?? null} : filter
+    ));
+
+    /**
+     * Search again with other filter values.
+     *
+     * @param changes values by filter keys, null removes the value
+     */
+    const changeFilters = (changes: Record<string, string | null>): void => {
+        const values: Record<string, string> = {};
+        for (const filter of filters) {
+            const value = filter.key in changes ? changes[filter.key] : filter.value;
+            if (value !== null) {
+                values[filter.key] = value;
+            }
+        }
+        setFilterValues(values);
+        setPage(0);
+        searchRef.current?.focus();
+    };
 
     /**
      * Return users to the element.
@@ -222,6 +261,8 @@ export default function Panel({source, multiple, selected, strings, onPick, onCl
                         setPage(0);
                     }}
                     onKeyDown={onSearchKeyDown} />
+                <Filters filters={filters} strings={strings} onChange={changeFilters}
+                    onCancel={() => searchRef.current?.focus()} />
             </div>
             <div className="flex-grow-1 overflow-auto" aria-busy={loading}>
                 <table className="table table-sm table-hover align-middle mb-0">

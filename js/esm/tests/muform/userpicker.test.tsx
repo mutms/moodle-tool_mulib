@@ -16,7 +16,7 @@
 import {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import Fetch from '@moodle/lms/core/fetch';
-import Panel, {type Answer, type Strings} from '../../src/muform/userpicker/panel';
+import Panel, {type Answer, type Filter, type Strings} from '../../src/muform/userpicker/panel';
 import type {PickerItem} from '../../src/muform/pickerpanel';
 
 jest.mock('@moodle/lms/core/fetch', () => ({
@@ -29,7 +29,9 @@ jest.mock('@moodle/lms/core/fetch', () => ({
 const performPost = Fetch.performPost as jest.Mock;
 
 const strings: Strings = {
-    addselected: 'Add selected ({$a})', close: 'Close', found: 'Found: {$a}', name: 'Name', next: 'Next', noresults: 'No results',
+    addselected: 'Add selected ({$a})', close: 'Close', filteradd: 'Add filter', filterremove: 'Remove filter',
+    filterresetall: 'Reset filters', filterresetdefault: 'Reset to default', found: 'Found: {$a}', name: 'Name', next: 'Next',
+    noresults: 'No results',
     page: 'Page {$a}', previous: 'Previous', search: 'Search', searching: 'Searching', selectall: 'Select all', selectrow: 'Select',
     title: 'Select users',
 };
@@ -39,6 +41,9 @@ let bodies: Record<string, unknown>[] = [];
 
 /** Picked items. */
 let picked: PickerItem[][] = [];
+
+/** Filters returned by the endpoint, without values. */
+let filters: Omit<Filter, 'value'>[] = [];
 
 /** Mounted root. */
 let root: Root | null = null;
@@ -57,8 +62,14 @@ function answer(body: Record<string, unknown>): Answer {
     ];
     const query = String(body.query).toLowerCase();
     const exclude = (body.exclude as string[]).map(Number);
-    const rows = all.filter((user) => user.fullname.toLowerCase().includes(query) && !exclude.includes(user.id));
-    return {columns: [{name: 'email', label: 'Email'}], rows, total: rows.length, page: 0, perpage: 50};
+    const values = body.filters as Record<string, string> | undefined;
+    const applied = filters.map((filter) => ({...filter, value: values ? (values[filter.key] ?? null) : filter.default}));
+    const active = applied.find((filter) => filter.key === 'active')?.value ?? null;
+    const letter = applied.find((filter) => filter.key === 'letter')?.value ?? null;
+    const rows = all.filter((user) => user.fullname.toLowerCase().includes(query) && !exclude.includes(user.id))
+        .filter((user) => active === null || (active === '1') === (user.id !== 4))
+        .filter((user) => letter === null || user.fullname.startsWith(letter));
+    return {columns: [{name: 'email', label: 'Email'}], rows, total: rows.length, page: 0, perpage: 50, filters: applied};
 }
 
 /**
@@ -124,7 +135,32 @@ async function press(container: HTMLElement, key: string): Promise<void> {
     await settle();
 }
 
+/**
+ * Click an element of the panel.
+ *
+ * @param container
+ * @param selector
+ */
+async function click(container: HTMLElement, selector: string): Promise<void> {
+    await act(async() => {
+        container.querySelector<HTMLElement>(selector)!.click();
+    });
+    await settle();
+}
+
+/**
+ * Texts of the filter pills and buttons.
+ *
+ * @param container
+ * @returns texts
+ */
+function bar(container: HTMLElement): string[] {
+    return Array.from(container.querySelectorAll('[data-picker-filters] > :not([data-picker-filter-popover])'))
+        .map((element) => element.textContent ?? '');
+}
+
 beforeEach(() => {
+    filters = [];
     bodies = [];
     picked = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: Record<string, unknown>}) => {
@@ -174,6 +210,68 @@ describe('tool_mulib/muform/userpicker/panel', () => {
         expect(container.querySelector('[data-userpicker-add]')!.textContent).toBe('Add selected (2)');
         await press(container, 'Enter');
         expect(picked).toEqual([[{value: '3', label: 'Bert Beta'}, {value: '4', label: 'Cyril Gamma'}]]);
+    });
+
+    it('has no filters when the source has none', async() => {
+        const container = await render(true);
+        expect(container.querySelector('[data-picker-filters]')).toBeNull();
+    });
+
+    it('filters users with pills', async() => {
+        const yesno = [{value: '1', label: 'Yes'}, {value: '0', label: 'No'}];
+        filters = [
+            {key: 'active', type: 'boolean', label: 'Active', options: yesno, 'default': '1', pinned: true, anylabel: 'Any'},
+            {key: 'letter', type: 'select', label: 'Letter', 'default': null,
+                options: [{value: 'A', label: 'A names'}, {value: 'B', label: 'B names'}]},
+        ];
+        const container = await render(true);
+        // Default values are applied by the endpoint.
+        expect(bodies[0]).not.toHaveProperty('filters');
+        expect(bar(container)).toEqual(['Active: Yes×', '+ Add filter']);
+        expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(2);
+        expect(container.querySelector('[data-picker-filter="active"] .btn')!.className).toBe('btn btn-primary');
+        expect(container.querySelector('[data-picker-filter-remove]')!.getAttribute('aria-label'))
+            .toBe('Remove filter: Active');
+
+        await click(container, '[data-picker-filter-remove]');
+        expect(bodies[bodies.length - 1].filters).toEqual({});
+        // Pinned filters stay in the bar without a value.
+        expect(bar(container)).toEqual(['Active: Any', '+ Add filter', '↺ Reset filters']);
+        expect(container.querySelector('[data-picker-filter="active"] .btn')!.className).toBe('btn btn-outline-secondary');
+        expect(container.querySelector('[data-picker-filter-remove]')).toBeNull();
+        expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(3);
+
+        await click(container, '[data-picker-filter-add]');
+        expect(Array.from(container.querySelectorAll('[data-picker-filter-choice]')).map((item) => item.textContent))
+            .toEqual(['Letter']);
+        await click(container, '[data-picker-filter-choice="letter"]');
+        await click(container, '[data-picker-filter-option="B"]');
+        expect(bodies[bodies.length - 1].filters).toEqual({letter: 'B'});
+        expect(bodies[bodies.length - 1].page).toBe(0);
+        expect(container.querySelector('[data-picker-filter-popover]')).toBeNull();
+        expect(bar(container)).toEqual(['Active: Any', 'Letter: B names×', '↺ Reset filters']);
+        expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(1);
+
+        await click(container, '[data-picker-filter="active"] .btn');
+        await click(container, '[data-picker-filter-option="0"]');
+        expect(bodies[bodies.length - 1].filters).toEqual({active: '0', letter: 'B'});
+        expect(bar(container)).toEqual(['Active: No×', 'Letter: B names×', '↺ Reset filters']);
+        expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(0);
+
+        // The editor of a filter offers its default value.
+        await click(container, '[data-picker-filter="active"] .btn');
+        const popover = container.querySelector('[data-picker-filter-popover]')!;
+        expect(popover.querySelector('[data-picker-filter-option="0"]')!.className).toBe('btn btn-sm btn-primary');
+        expect(popover.querySelector('.btn-link')!.textContent).toBe('Reset to default');
+        await act(async() => {
+            popover.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+        });
+        expect(container.querySelector('[data-picker-filter-popover]')).toBeNull();
+
+        await click(container, '[data-picker-filter-reset]');
+        expect(bodies[bodies.length - 1].filters).toEqual({active: '1'});
+        expect(bar(container)).toEqual(['Active: Yes×', '+ Add filter']);
+        expect(container.querySelectorAll('[data-userpicker-row]')).toHaveLength(2);
     });
 
     it('shows an empty result', async() => {
