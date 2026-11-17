@@ -69,6 +69,15 @@ abstract class base extends \tool_mulib\muform\picker\base {
         return [];
     }
 
+    /**
+     * Extra condition cohorts must match to be picked, cohorts already used by the edited item are not affected.
+     *
+     * @return sql|null condition with aliases ch for the cohort and ctx for its context
+     */
+    protected function get_restriction_sql(): ?sql {
+        return null;
+    }
+
     #[\Override]
     final public function labels(array $values): array {
         global $DB;
@@ -200,8 +209,11 @@ abstract class base extends \tool_mulib\muform\picker\base {
                FROM {cohort} ch
                JOIN {context} ctx ON ctx.id = ch.contextid /* tenant */
               WHERE /* use */
-                    /* only */ /* search */"
+                    /* restriction */ /* only */ /* search */"
         ))->replace_comment('use', cohort_util::get_use_sql('ch', (int)$USER->id));
+
+        $restriction = $this->get_restriction_sql();
+        $sql = $sql->replace_comment('restriction', $restriction ? $restriction->wrap('AND (', ')') : '');
 
         $context = $this->get_context();
         if (mulib::is_mutenancy_active() && $context->tenantid) {

@@ -78,6 +78,24 @@ abstract class base {
     }
 
     /**
+     * May all the values be selected? Forms use it to check values again after something else changed,
+     * for example with a source created for the newly selected context.
+     *
+     * @param string[] $values
+     * @return bool
+     */
+    final public function are_allowed(array $values): bool {
+        $values = array_map('strval', array_values($values));
+        $labels = $this->labels($values);
+        foreach ($values as $value) {
+            if (!isset($labels[$value])) {
+                return false;
+            }
+        }
+        return !$this->validate($values);
+    }
+
+    /**
      * Why one value is refused, used by the default validate(); override validate() instead for checks of all values at once.
      *
      * @param string $value

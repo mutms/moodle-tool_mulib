@@ -210,12 +210,65 @@ final class base_test extends \advanced_testcase {
         // Current cohorts stay valid, excluded cohorts never are.
         $source = $this->create_source([(int)$cohort2->id, (int)$cohort3->id], [(int)$cohort3->id]);
         $this->assertSame([$id1 => 'Cohort 1', $id2 => 'Cohort 2'], $source->labels([$id1, $id2, $id3]));
+        $this->assertTrue($source->are_allowed([$id1, $id2]));
+        $this->assertTrue($source->are_allowed([]));
+        $this->assertFalse($source->are_allowed([$id1, $id3]));
+        $this->assertFalse($source->are_allowed([$id1, 'x']));
 
         $panel = $source->export_panel(true);
         $this->assertSame('tool_mulib/muform/cohortpicker/panel', $panel['panel']);
         $this->assertSame('Select cohorts', $panel['strings']['title']);
         $this->assertSame('More than 200 cohorts found, search to narrow them down.', $panel['strings']['overflow']);
         $this->assertSame('Select cohort', $source->export_panel(false)['strings']['title']);
+    }
+
+    public function test_restriction(): void {
+        $generator = $this->getDataGenerator();
+        $cohort1 = $generator->create_cohort(['name' => 'Cohort 1', 'idnumber' => 'pick']);
+        $cohort2 = $generator->create_cohort(['name' => 'Cohort 2']);
+        $cohort3 = $generator->create_cohort(['name' => 'Cohort 3']);
+        $all = [(string)$cohort1->id, (string)$cohort2->id, (string)$cohort3->id];
+
+        $this->setAdminUser();
+        $source = new class ((int)$cohort3->id) extends base {
+            /**
+             * Constructor.
+             *
+             * @param int $currentid
+             */
+            public function __construct(
+                /** @var int current cohort id */
+                private int $currentid
+            ) {
+            }
+
+            #[\Override]
+            public function get_args(): array {
+                return [$this->currentid];
+            }
+
+            #[\Override]
+            protected function get_context(): \core\context {
+                return \core\context\system::instance();
+            }
+
+            #[\Override]
+            protected function get_current_cohortids(): array {
+                return [$this->currentid];
+            }
+
+            #[\Override]
+            protected function get_restriction_sql(): ?\tool_mulib\local\sql {
+                return new \tool_mulib\local\sql("ch.idnumber = ? OR ch.idnumber = ?", ['pick', 'other']);
+            }
+        };
+
+        $result = $source->search('', []);
+        $this->assertSame([(int)$cohort1->id], array_column($result['cohorts'], 'id'));
+        $this->assertSame(1, $result['total']);
+        $this->assertSame([], $source->search('Cohort 2', [])['cohorts']);
+        $labels = $source->labels($all);
+        $this->assertSame([(string)$cohort1->id, (string)$cohort3->id], array_map('strval', array_keys($labels)));
     }
 
     public function test_tenants(): void {

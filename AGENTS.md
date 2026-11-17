@@ -52,7 +52,7 @@ $handler->render($form);
   `filter::autocomplete()` (values searched in an autocomplete source) with optional default values and `set_pinned()` in `get_filters()`;
   other picker families reuse them with `picker\filter_set` and the `tool_mulib/muform/pickerfilters` component.
 - Cohort pickers: `cohortpicker`/`cohortpickermany` elements with a source in `<component>\muform\cohortpicker\*` extending
-  `tool_mulib\muform\cohortpicker\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`);
+  `tool_mulib\muform\cohortpicker\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`, `get_restriction_sql()`);
   the panel shows cohorts the user may use in the tree of course categories, a search keeps found cohorts in their branch.
   Use them instead of cohort autocompletes.
 - Multi-page forms: a `tool_mulib\muform\wizard_page` subclass `<component>\local\wizard\<name>\wizard` with one

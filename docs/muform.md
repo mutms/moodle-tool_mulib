@@ -621,8 +621,12 @@ $form->add(new cohortpickermany('cohortids', get_string('cohorts', 'cohort'), ne
 
 `get_context()` is the context of the edited item, tenant rules use it. `get_current_cohortids()` lists cohorts
 already used by the edited item, they stay valid as the current value; `get_excluded_cohortids()` lists cohorts
-that must never be picked, for example the edited cohort itself. `context_cohorts` offers all cohorts the user
-may use for an item in a context. The search endpoint is `tool_mulib\route\api\muform\cohortpicker`.
+that must never be picked, for example the edited cohort itself; `get_restriction_sql()` adds a condition cohorts
+must match to be picked (aliases `ch` for the cohort and `ctx` for its context), current cohorts are not affected.
+`are_allowed($values)` of any picker source tells if all the values may be selected, forms use it to check values
+again with a source created for submitted data, for example for the newly selected context.
+`context_cohorts` offers all cohorts the user may use for an item in a context. The search endpoint is
+`tool_mulib\route\api\muform\cohortpicker`.
 In Behat, table values are cohort names, ID numbers or ids.
 
 ### Tags
