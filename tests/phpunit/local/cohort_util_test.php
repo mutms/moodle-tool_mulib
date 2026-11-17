@@ -79,14 +79,58 @@ final class cohort_util_test extends \advanced_testcase {
         $this->assertSame([], cohort_util::format_cohort_names([]));
     }
 
-    public function test_access_records_without_mucohort(): void {
-        if (mulib::is_mucohort_available()) {
-            $this->markTestSkipped('Access records are tested in tool_mucohort');
-        }
+    public function test_use(): void {
+        global $DB;
+
+        $syscontext = \core\context\system::instance();
+        $category = $this->getDataGenerator()->create_category();
+        $catcontext = \core\context\coursecat::instance($category->id);
+        $cohort1 = $this->getDataGenerator()->create_cohort(['name' => 'Cohort 1']);
+        $cohort2 = $this->getDataGenerator()->create_cohort(['name' => 'Cohort 2', 'visible' => 0]);
+        $hidden = ['visible' => 0];
+        $cohort3 = $this->getDataGenerator()->create_cohort(['name' => 'Cohort 3', 'contextid' => $catcontext->id] + $hidden);
+        $cohort4 = $this->getDataGenerator()->create_cohort(['name' => 'Cohort 4', 'component' => 'enrol_database'] + $hidden);
+        $cohorts = [$cohort1, $cohort2, $cohort3, $cohort4];
         $user = $this->getDataGenerator()->create_user();
-        $cohort = $this->getDataGenerator()->create_cohort(['visible' => 0]);
-        $this->assertSame('1=2', cohort_util::get_access_record_sql('c', (int)$user->id)->sql);
-        $this->assertFalse(cohort_util::has_access_record($cohort, (int)$user->id));
+        $viewer = $this->getDataGenerator()->create_user();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/cohort:view', CAP_ALLOW, $roleid, $syscontext);
+        role_assign($roleid, $viewer->id, $syscontext);
+        $catviewer = $this->getDataGenerator()->create_user();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/cohort:view', CAP_ALLOW, $roleid, $catcontext);
+        role_assign($roleid, $catviewer->id, $catcontext);
+        $assigner = $this->getDataGenerator()->create_user();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/cohort:assign', CAP_ALLOW, $roleid, $syscontext);
+        role_assign($roleid, $assigner->id, $syscontext);
+
+        $ids = function (int $userid) use ($DB): array {
+            $sql = (new \tool_mulib\local\sql("SELECT ch.id FROM {cohort} ch WHERE /* use */ ORDER BY ch.id"))
+                ->replace_comment('use', cohort_util::get_use_sql('ch', $userid));
+            return array_map('intval', $DB->get_fieldset_sql($sql->sql, $sql->params));
+        };
+
+        $all = [(int)$cohort1->id, (int)$cohort2->id, (int)$cohort3->id, (int)$cohort4->id];
+        $this->assertSame([(int)$cohort1->id], $ids((int)$user->id));
+        $this->assertSame([(int)$cohort1->id], $ids((int)$assigner->id));
+        $this->assertSame($all, $ids((int)$viewer->id));
+        $this->assertSame([(int)$cohort1->id, (int)$cohort3->id], $ids((int)$catviewer->id));
+        $this->assertSame($all, $ids((int)get_admin()->id));
+        $this->assertSame([(int)$cohort1->id], $ids((int)guest_user()->id));
+        $this->assertSame([(int)$cohort1->id], $ids(0));
+
+        foreach ([$user, $viewer, $catviewer, $assigner, get_admin(), guest_user()] as $account) {
+            $this->setUser($account);
+            $expected = $ids((int)$account->id);
+            foreach ($cohorts as $cohort) {
+                $this->assertSame(in_array((int)$cohort->id, $expected), cohort_util::can_use($cohort), $cohort->name);
+            }
+        }
+
+        $this->setAdminUser();
+        $cohort1->contextid = -1;
+        $this->assertFalse(cohort_util::can_use($cohort1));
     }
 
     public function test_view_members(): void {

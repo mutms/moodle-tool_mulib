@@ -25,7 +25,7 @@ use stdClass;
  * Cohort helpers for MuTMS plugins.
  *
  * Advanced cohort access records are read here only, the shape of tool_mucohort (cohortid, type)
- * and tool_mucohort_access (mucohortid, userid, viewmembers) is a contract between tool_mucohort
+ * and tool_mucohort_access (mucohortid, userid, usecohort, viewmembers) is a contract between tool_mucohort
  * and other MuTMS plugins.
  *
  * @package    tool_mulib
@@ -96,45 +96,56 @@ final class cohort_util {
     }
 
     /**
-     * SQL condition matching advanced cohorts in which the user has any access record.
+     * SQL condition matching cohorts the user may use in MuTMS plugins, for example select them in forms.
      *
-     * Users with any access record may use the cohort, the same as with moodle/cohort:view capability.
+     * The same rules as can_use() of tool_mucohort cohort types: visible cohorts and cohorts in contexts
+     * with moodle/cohort:view capability, the same as in standard Moodle, and advanced cohorts
+     * with an access record that allows using of the cohort.
      *
      * @param string $cohortalias alias of the cohort table
      * @param int $userid
-     * @return sql condition, never true if advanced cohorts are not available
+     * @return sql condition
      */
-    public static function get_access_record_sql(string $cohortalias, int $userid): sql {
-        if (!mulib::is_mucohort_available() || !$userid || isguestuser($userid)) {
-            return new sql('1=2');
+    public static function get_use_sql(string $cohortalias, int $userid): sql {
+        if (!$userid) {
+            return new sql("{$cohortalias}.visible = 1");
         }
-        return new sql(
-            "EXISTS (SELECT 'x'
-                       FROM {tool_mucohort} mca_mc
-                       JOIN {tool_mucohort_access} mca_a ON mca_a.mucohortid = mca_mc.id
-                      WHERE mca_mc.cohortid = {$cohortalias}.id AND {$cohortalias}.component = 'tool_mucohort'
-                            AND mca_a.userid = ?)",
-            [$userid]
+        $levels = new sql("(ctx.contextlevel = ? OR ctx.contextlevel = ?)", [CONTEXT_SYSTEM, CONTEXT_COURSECAT]);
+        $view = context_map::get_contexts_by_capability_query('moodle/cohort:view', $userid, $levels)
+            ->wrap("{$cohortalias}.contextid IN (", ")");
+        $sql = (new sql("({$cohortalias}.visible = 1 OR /* view */ /* access */)"))->replace_comment('view', $view);
+        if (!mulib::is_mucohort_available() || isguestuser($userid)) {
+            return $sql->replace_comment('access', '');
+        }
+        return $sql->replace_comment(
+            'access',
+            new sql(
+                "OR ({$cohortalias}.component = 'tool_mucohort' AND EXISTS (
+                        SELECT 'x'
+                          FROM {tool_mucohort} cua_mc
+                          JOIN {tool_mucohort_access} cua_a ON cua_a.mucohortid = cua_mc.id
+                         WHERE cua_mc.cohortid = {$cohortalias}.id AND cua_mc.type IN ('curated', 'rules')
+                               AND cua_a.userid = ? AND cua_a.usecohort = 1))",
+                [$userid]
+            )
         );
     }
 
     /**
-     * Does the user have any access record in the advanced cohort?
+     * May the current user use the cohort in MuTMS plugins?
      *
      * @param stdClass $cohort cohort record
-     * @param int $userid
      * @return bool
      */
-    public static function has_access_record(stdClass $cohort, int $userid): bool {
-        global $DB;
-
-        if (($cohort->component ?? '') !== 'tool_mucohort') {
+    public static function can_use(stdClass $cohort): bool {
+        $context = \core\context::instance_by_id($cohort->contextid, IGNORE_MISSING);
+        if (!$context) {
             return false;
         }
-        $sql = self::get_access_record_sql('c', $userid);
-        $sql = (new sql("SELECT 'x' FROM {cohort} c WHERE c.id = ? AND /* access */", [$cohort->id]))
-            ->replace_comment('access', $sql);
-        return $DB->record_exists_sql($sql->sql, $sql->params);
+        if (mulib::is_mucohort_available()) {
+            return \tool_mucohort\local\type\base::from_record($cohort)->can_use();
+        }
+        return $cohort->visible || has_capability('moodle/cohort:view', $context);
     }
 
     /**

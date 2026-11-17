@@ -94,10 +94,11 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
 - `local\mudb::upsert_record()` - concurrent-safe insert or update for tables with one unique index.
 - `local\mulib::is_<plugin>_available()` / `is_<plugin>_active()` - optional sibling plugins: muprog,
   mucertify, mutrain, murelatio, muhome, mutenancy, mucatalog.
-- `local\cohort_util` - cohort links and names, `get_access_record_sql()` (may find and use a cohort) and
+- `local\cohort_util` - cohort links and names, `get_use_sql()` / `can_use()` (may select the cohort in forms: visible,
+  `moodle/cohort:view` or "Use cohort" access record of advanced cohorts) and
   `get_view_members_sql()` / `can_view_members()` (may list members, same rule as tool_mucohort cohort types).
 - `local\search_util` - search SQL for autocomplete sources (`get_search_query()`, cohort and user
-  search), `is_cohort_visible()`, `get_tenant_related_users_where()`, `format_user_label()`.
+  search), `get_tenant_related_users_where()`, `format_user_label()`.
 - `local\customfield_util::change_instances_context()` - move custom field data when an item moves.
 - `local\vendor_loader::register($vendordir)` - Composer libraries in plugin `vendor/` directories;
   never include a plugin's `vendor/autoload.php`.

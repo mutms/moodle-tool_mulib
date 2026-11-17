@@ -78,31 +78,6 @@ final class search_util {
     }
 
     /**
-     * Can the current user see the cohort?
-     *
-     * Visible cohorts, cohorts with moodle/cohort:view capability and advanced cohorts
-     * with any access record of the user may be seen.
-     *
-     * @param stdClass $cohort
-     * @return bool
-     */
-    public static function is_cohort_visible(stdClass $cohort): bool {
-        global $USER;
-
-        if ($cohort->visible) {
-            return true;
-        }
-        $cohortcontext = \context::instance_by_id($cohort->contextid, IGNORE_MISSING);
-        if (!$cohortcontext) {
-            return false;
-        }
-        if (has_capability('moodle/cohort:view', $cohortcontext)) {
-            return true;
-        }
-        return cohort_util::has_access_record($cohort, (int)$USER->id);
-    }
-
-    /**
      * User search in names and identity fields visible in the context.
      *
      * @param string $search

@@ -21,7 +21,6 @@ namespace tool_mulib\muform\util\autocomplete;
 use core\context;
 use stdClass;
 use tool_mulib\local\search_util;
-use tool_mulib\local\context_map;
 use tool_mulib\local\cohort_util;
 use tool_mulib\local\mulib;
 use tool_mulib\local\sql;
@@ -29,8 +28,8 @@ use tool_mulib\local\sql;
 /**
  * Cohort search helpers for autocomplete sources.
  *
- * Visible cohorts, cohorts the user may view and advanced cohorts with an access record
- * of the user are offered, with multi-tenancy
+ * Cohorts the user may use are offered, see cohort_util::get_use_sql(): visible cohorts, cohorts
+ * the user may view and advanced cohorts with an access record that allows using; with multi-tenancy
  * cohorts of other tenants are not. Cohorts already used by the edited item
  * ("current" ids) are always accepted, whatever changed since.
  *
@@ -55,20 +54,11 @@ trait cohort_trait {
             "SELECT ch.id, ch.name
                FROM {cohort} ch
                /* tenantjoin */
-               /* capsubquery */
-              WHERE (ch.visible = 1 OR capctx.id IS NOT NULL OR /* access */)
+              WHERE /* use */
                     /* exclude */ /* searchsql */
            ORDER BY ch.name ASC, ch.id ASC"
         ))
-            ->replace_comment(
-                'capsubquery',
-                context_map::get_contexts_by_capability_query(
-                    'moodle/cohort:view',
-                    $USER->id,
-                    new sql("(ctx.contextlevel = ? OR ctx.contextlevel = ?)", [CONTEXT_SYSTEM, CONTEXT_COURSECAT])
-                )->wrap("LEFT JOIN (", ")capctx ON capctx.id = ch.contextid")
-            )
-            ->replace_comment('access', cohort_util::get_access_record_sql('ch', (int)$USER->id))
+            ->replace_comment('use', cohort_util::get_use_sql('ch', (int)$USER->id))
             ->replace_comment('searchsql', search_util::get_cohort_search_query(trim($query), 'ch')->wrap('AND ', ''));
 
         $exclude = array_values(array_filter($exclude, fn($id) => is_string($id) && preg_match('/^\d+$/D', $id)));
@@ -154,7 +144,7 @@ trait cohort_trait {
                 return false;
             }
         }
-        return search_util::is_cohort_visible($cohort);
+        return cohort_util::can_use($cohort);
     }
 
     /**

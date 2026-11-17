@@ -79,19 +79,6 @@ final class search_util_test extends \advanced_testcase {
         $sql = (new sql("SELECT ch.id FROM {cohort} ch WHERE /* search */ ORDER BY ch.id ASC"))
             ->replace_comment('search', search_util::get_cohort_search_query('alpha', 'ch'));
         $this->assertEquals([$cohort1->id, $cohort2->id], array_keys($DB->get_records_sql($sql->sql, $sql->params)));
-
-        $user = $this->getDataGenerator()->create_user();
-        $this->setUser($user);
-        $this->assertTrue(search_util::is_cohort_visible($cohort3));
-        $this->assertFalse(search_util::is_cohort_visible($cohort2));
-
-        $roleid = $this->getDataGenerator()->create_role();
-        assign_capability('moodle/cohort:view', CAP_ALLOW, $roleid, $catcontext);
-        role_assign($roleid, $user->id, $catcontext->id);
-        $this->assertTrue(search_util::is_cohort_visible($cohort2));
-
-        $cohort2->contextid = -1;
-        $this->assertFalse(search_util::is_cohort_visible($cohort2));
     }
 
     public function test_user_helpers(): void {
