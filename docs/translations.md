@@ -383,6 +383,8 @@ the same reviewer then checked the result. Where a reviewed pack and the core pa
   - Failed status is `Non superato`, not `Fallito`. A failed program that ended is `terminato senza
     completamento`.
   - Course reset is `reimpostazione` like core, not `reset`.
+  - Completion delay is `differimento del completamento`, a deliberate postponement. `ritardo` means
+    being late and is used for overdue.
   - Core `Codice identificativo` for ID numbers, `di default`, `elaborazione ad hoc`, `periodo di
     tolleranza`. Database ids are `ID`, not `Id`.
 - **Event names** are nouns without article like core: `Creazione programma`, `Eliminazione

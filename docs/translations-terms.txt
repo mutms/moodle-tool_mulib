@@ -22,6 +22,7 @@ it /periodo di grazia/i use periodo di tolleranza
 it /data attesa/i use data limite
 it /\bId\b/ use ID
 it /\bReset\b/ use reimpostazione
+it /ritardo del completamento/i use differimento del completamento
 it /^(Buongiorno|Ciao)\b/ notifications open with Gentile
 it /^(Aggiungi|Modifica|Rimuovi|Elimina)[a-z ]*: \{\$a/ no colon before the placeholder
 it /[“”«»]/ use straight quotes
