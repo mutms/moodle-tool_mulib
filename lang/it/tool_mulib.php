@@ -19,10 +19,6 @@
 /**
  * Strings for component 'tool_mulib', language 'it'.
  *
- * NOTE: This Italian translation was produced automatically by an AI language
- * model and has not yet been reviewed by a human translator. Corrections are
- * welcome.
- *
  * @package    tool_mulib
  * @copyright  2026 Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -76,7 +72,7 @@ $string['import_file'] = 'File di origine';
 $string['import_file_or'] = 'Oppure carica un file';
 $string['import_paste'] = 'Incolla i dati';
 $string['import_paste_or'] = 'Oppure incolla i dati CSV';
-$string['import_source_locked'] = 'Sono state lette {$a} righe. Annulla la procedura guidata per usare dati diversi.';
+$string['import_source_locked'] = 'Sono state lette {$a} righe. Annullare la procedura guidata per usare dati diversi.';
 $string['lang_settings'] = 'Traduzioni MuTMS';
 $string['lang_string_a'] = '{$a}';
 $string['muform_apply'] = 'Applica';
@@ -85,7 +81,7 @@ $string['muform_clear'] = 'Svuota';
 $string['muform_clearselection'] = 'Annulla selezione';
 $string['muform_clearvalue'] = 'Svuota il valore corrente';
 $string['muform_close'] = 'Chiudi finestra di dialogo';
-$string['muform_cohortpicker_overflow'] = 'Trovati più di {$a} gruppi globali, restringi la ricerca.';
+$string['muform_cohortpicker_overflow'] = 'Trovati più di {$a} gruppi globali: restringere la ricerca.';
 $string['muform_cohortpicker_title'] = 'Seleziona gruppo globale';
 $string['muform_cohortpicker_title_multiple'] = 'Seleziona gruppi globali';
 $string['muform_collapsibleerrors'] = 'Contiene errori';

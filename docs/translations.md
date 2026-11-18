@@ -203,7 +203,7 @@ Language codes are the pack names: `cs`, `de`, and the European `fr`, `it`, `pt`
 | grace period | ochranná lhůta | Nachfrist | délai de grâce | periodo di tolleranza | período de tolerância | periodo de gracia |
 | revoked | zrušený | widerrufen | révoqué | revocato | revogado | revocado |
 | expired | vypršelý | abgelaufen | échu | scaduto | expirado | expirado |
-| recertification | recertifikace | Rezertifizierung | recertification | ricertificazione | recertificação | recertificación |
+| recertification | recertifikace | Rezertifizierung | recertification | rinnovo | recertificação | recertificación |
 | evidence | doklad | Nachweis | preuve | attestazione | comprovativo | evidencia |
 | sign up key | klíč k přihlášení | Anmeldeschlüssel | clef d’accès | chiave di accesso | chave de acesso | clave de acceso |
 | framework | rámec | Rahmen | référentiel | quadro | quadro | marco |
@@ -241,6 +241,10 @@ Language codes are the pack names: `cs`, `de`, and the European `fr`, `it`, `pt`
 
 - **Placeholders do not decline** and bring no article. Rephrase so that any value fits:
   `Program „{$a}“ byl odstraněn`, `Programm „{$a}“ wurde gelöscht`, `Programme « {$a} » supprimé`.
+- **Actions with a placeholder** such as `Add {$a}`, where `{$a}` is a title defined by the site:
+  Czech detaches it with a colon (`Přidat: {$a}`), German uses word order (`{$a} hinzufügen`),
+  Italian needs nothing (`Aggiungi {$a}`). French, Portuguese and Spanish use the colon until
+  a native speaker says otherwise.
 - **Counts:** never `{$a} users`, the noun form is wrong for some numbers. Use a label:
   `Počet uživatelů: {$a}`, `Anzahl der Nutzer/innen: {$a}`, `Nombre d’utilisateurs : {$a}`.
 - **Status words** follow the gender of the noun they describe, so check where the string is shown.
@@ -342,15 +346,16 @@ Formal register for partners in Switzerland and the EU.
 
 ## Italian
 
-A pack reviewed by a native speaker for MuTMS 5.0.8 was compared with these packs in November 2026.
-Where it and the core pack disagree, core decides.
+A pack reviewed by a native speaker for MuTMS 5.0.8 was compared with these packs in November 2026,
+the same reviewer then checked the result. Where a reviewed pack and the core pack disagree, core decides.
 
 - **Terms:**
   - Self allocation and self assignment are `allocazione spontanea` and `assegnazione spontanea`,
     after core `Iscrizione spontanea`. Not `autoallocazione`. Sign up stays `Aderisci`, `adesioni`.
   - Un-assignment is `rimozione dell'assegnazione`, the assignment is `rimossa`, not `annullata`.
   - Offline attendance is `presenza offline`, taking it is `rilevare la presenza`, no show is `Assenza`.
-  - Re-certification is `ricertificazione`, not `rinnovo`. Due date is `data limite`, not `data attesa`.
+  - Re-certification is `rinnovo`, the choice of the native reviewer, not `ricertificazione`:
+    `Programma di rinnovo`, `Rinnova automaticamente`. Due date is `data limite`, not `data attesa`.
   - Failed status is `Non superato`, not `Fallito`. A failed program that ended is `terminato senza
     completamento`.
   - Course reset is `reimpostazione` like core, not `reset`.
@@ -362,3 +367,5 @@ Where it and the core pack disagree, core decides.
 - **Notifications** open with `Gentile {$a->user_fullname},` like core emails, the text continues
   with `tu`.
 - **Not found messages** follow core: `Non sono stati trovati programmi.`
+- **Actions with a placeholder** take no colon, like core: `Aggiungi {$a}`, `Modifica {$a}`,
+  `Rimuovi {$a}`.
