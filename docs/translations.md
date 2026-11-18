@@ -33,7 +33,18 @@ mdl-lang-check public/admin/tool/muprog
 
 - `mdl-lang-normalise --header public/admin/tool/muprog` sorts the strings and writes them and the
   file header in the standard form, `--check` only reports files that are not normalised.
-- Then have a native speaker who knows the feature review the result plugin by plugin.
+- `--all` instead of plugin directories takes every plugin with translations, in all `mdl-lang-*` tools.
+- `translations-terms.txt` next to this file lists forbidden terms, one `<lang> /pattern/ note` per
+  line. Add a line whenever a term is settled or a reviewer rejects a wording, then check all plugins:
+
+```
+mdl-lang-check --terms=public/admin/tool/mulib/docs/translations-terms.txt --all
+```
+
+- `mdl-lang-dupes --lang=it --all` lists English texts that are translated in more than one way,
+  review them after larger changes.
+- Then have a native speaker who knows the feature review the result plugin by plugin. After the
+  review `mdl-lang-normalise --lang=it --reviewed --all` removes the `NOTE` from the file headers.
 
 ## File header
 
@@ -110,11 +121,24 @@ mdl-lang-backport --changed /srv/projects/mutms53 admin/tool/muprog
 mdl-lang-check admin/tool/muprog
 ```
 
+After a review of one language, all plugins at once:
+
+```
+mdl-lang-backport --lang=it --update --dry-run /srv/projects/mutms53 --all
+mdl-lang-backport --lang=it --update /srv/projects/mutms53 --all
+mdl-lang-check --lang=it --terms=/srv/projects/mutms53/public/admin/tool/mulib/docs/translations-terms.txt --all
+```
+
 - The default run copies only strings with the same English text in both branches, those are safe.
 - `--changed` copies strings whose English differs and lists each with both English texts. Review
   and fix every one of them by hand, the translation follows the newer English.
 - Strings that exist only in the older branch are reported as untranslated, translate them there.
 - Existing translations are kept, `--update` overwrites them when the English is the same.
+- Translated strings that exist only in the older branch are never updated, `--target-only` lists
+  them. Go through them by hand after a change of terminology.
+- A `SHARED` line means the plugin branch is checked out in other projects too, for example
+  `MOODLE_500_STABLE` in the 5.0, 5.1 and 5.2 projects: commit in one and pull in the others.
+- File headers are not copied, run `mdl-lang-normalise --reviewed` in each project.
 
 ## What must stay unchanged
 
