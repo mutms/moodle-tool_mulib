@@ -191,7 +191,7 @@ Language codes are the pack names: `cs`, `de`, and the European `fr`, `it`, `pt`
 | program allocation | přidělení | Zuordnung | affectation | allocazione | alocação | adscripción |
 | allocate to program | přidělit do programu | einem Programm zuordnen | affecter à un programme | allocare a un programma | alocar a um programa | adscribir a un programa |
 | allocation source | zdroj přidělení | Zuordnungsquelle | source d’affectation | fonte di allocazione | fonte de alocação | fuente de adscripción |
-| self allocation | samoobslužné přidělení | Selbstzuordnung | auto-affectation | autoallocazione | autoalocação | autoadscripción |
+| self allocation | samoobslužné přidělení | Selbstzuordnung | auto-affectation | allocazione spontanea | autoalocação | autoadscripción |
 | course set | sada | Kursset | ensemble de cours | set di corsi | conjunto de disciplinas | conjunto de cursos |
 | program item | položka | Element | élément | elemento | elemento | elemento |
 | certification | certifikace | Zertifizierung | certification | certificazione | certificação | certificación |
@@ -339,3 +339,26 @@ Formal register for partners in Switzerland and the EU.
 - **Italian, Portuguese and Spanish quotes:** straight `"text"` like core. Spanish questions and
   exclamations open with `¿` and `¡`.
 - **Dates:** `04/11/2026 14:30`, `muform_datetimeformat` is `d/m/Y H:i` in all four.
+
+## Italian
+
+A pack reviewed by a native speaker for MuTMS 5.0.8 was compared with these packs in November 2026.
+Where it and the core pack disagree, core decides.
+
+- **Terms:**
+  - Self allocation and self assignment are `allocazione spontanea` and `assegnazione spontanea`,
+    after core `Iscrizione spontanea`. Not `autoallocazione`. Sign up stays `Aderisci`, `adesioni`.
+  - Un-assignment is `rimozione dell'assegnazione`, the assignment is `rimossa`, not `annullata`.
+  - Offline attendance is `presenza offline`, taking it is `rilevare la presenza`, no show is `Assenza`.
+  - Re-certification is `ricertificazione`, not `rinnovo`. Due date is `data limite`, not `data attesa`.
+  - Failed status is `Non superato`, not `Fallito`. A failed program that ended is `terminato senza
+    completamento`.
+  - Course reset is `reimpostazione` like core, not `reset`.
+  - Core `Codice identificativo` for ID numbers, `di default`, `elaborazione ad hoc`, `periodo di
+    tolleranza`. Database ids are `ID`, not `Id`.
+- **Event names** are nouns without article like core: `Creazione programma`, `Eliminazione
+  certificazione`, `Ripristino dell'assegnazione alla certificazione`. Not `Programma creato`.
+  Failures keep `non riuscita`.
+- **Notifications** open with `Gentile {$a->user_fullname},` like core emails, the text continues
+  with `tu`.
+- **Not found messages** follow core: `Non sono stati trovati programmi.`
