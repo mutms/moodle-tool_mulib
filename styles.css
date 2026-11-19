@@ -31,6 +31,14 @@
         grid-column: 1 / -1;
     }
 }
+/* Two columns whenever each fits the minimum width (set_min_column_width()), never more than two. */
+.muform .muform-cards.muform-cards-fit {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--muform-cards-min-width), calc((100% - 0.5rem) / 2))), 1fr));
+}
+.muform .muform-cards.muform-cards-fit > .muform-cards-group {
+    grid-column: 1 / -1;
+}
 .muform .muform-card {
     position: relative;
     margin: 0;

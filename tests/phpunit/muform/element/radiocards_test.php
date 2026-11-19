@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
+// phpcs:disable moodle.Files.LineLength.TooLong
 
 namespace tool_mulib\phpunit\muform\element;
 
@@ -191,6 +192,33 @@ final class radiocards_test extends muform_testcase {
 
         $hook = function (muform_definition $hook): void {
             $hook->form->add((new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']))->set_max_columns(1));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-single">', $html);
+    }
+
+    public function test_min_column_width(): void {
+        $element = new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']);
+        $this->assertSame($element, $element->set_min_column_width(12.5));
+        try {
+            $element->set_min_column_width(0);
+            $this->fail('Exception expected');
+        } catch (coding_exception $ex) {
+            $this->assertStringContainsString('Card column width must be positive', $ex->getMessage());
+        }
+
+        $hook = function (muform_definition $hook): void {
+            $hook->form->add((new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']))->set_min_column_width(12.5));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-fit" style="--muform-cards-min-width: 12.5rem">', $html);
+
+        // One column wins.
+        $hook = function (muform_definition $hook): void {
+            $hook->form->add((new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']))
+                ->set_min_column_width(12)->set_max_columns(1));
         };
         \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
         $html = $this->render(new simple_form($this->get_url(), []));

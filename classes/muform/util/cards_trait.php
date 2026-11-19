@@ -36,6 +36,8 @@ trait cards_trait {
     private array $descriptions = [];
     /** @var int maximum number of card columns when the element is wide enough */
     private int $maxcolumns = 2;
+    /** @var float|null minimum card column width in rem for two columns in narrow elements, null means element width 48rem */
+    private ?float $mincolumnwidth = null;
 
     /**
      * Returns options.
@@ -60,6 +62,23 @@ trait cards_trait {
             throw new coding_exception('Card columns must be 1 or 2');
         }
         $this->maxcolumns = $columns;
+        return $this;
+    }
+
+    /**
+     * Show two card columns whenever each column can be at least this wide.
+     *
+     * By default cards are in two columns only when the element is at least 48rem wide (full page forms, xl dialogs),
+     * use this for short cards that fit side by side in smaller dialogs too. Ignored with set_max_columns(1).
+     *
+     * @param float $rem minimum column width in rem, for example 12
+     * @return static
+     */
+    public function set_min_column_width(float $rem): static {
+        if ($rem <= 0) {
+            throw new coding_exception('Card column width must be positive');
+        }
+        $this->mincolumnwidth = $rem;
         return $this;
     }
 
@@ -103,6 +122,8 @@ trait cards_trait {
         }
         $context['groups'] = $groups;
         $context['singlecolumn'] = ($this->maxcolumns === 1);
+        $context['mincolumnwidth'] = ($this->maxcolumns === 2 && $this->mincolumnwidth !== null)
+            ? rtrim(rtrim(sprintf('%.3F', $this->mincolumnwidth), '0'), '.') : null;
         return $context;
     }
 }

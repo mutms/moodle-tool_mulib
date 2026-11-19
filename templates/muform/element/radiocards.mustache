@@ -27,6 +27,7 @@
     * nolabelfor - always true
     * value - current value
     * singlecolumn - true when cards must not be shown in two columns in wide forms
+    * mincolumnwidth - minimum column width in rem for two columns in narrow elements, null for the default
     * groups - list of option groups with label (may be empty) and options (key, label, description, has_description, is_checked, id)
 
     Example context (json):
@@ -35,7 +36,7 @@
         "label": "Label", "nolabelfor": true, "is_required": false, "attr_required": false,
         "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
         "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
-        "singlecolumn": false, "value": "a", "groups": [{"label": "", "options": [
+        "singlecolumn": false, "mincolumnwidth": null, "value": "a", "groups": [{"label": "", "options": [
             {"key": "a", "label": "Option A", "description": "Explanation of A", "has_description": true, "is_checked": true, "id": "id_radiocards_0"},
             {"key": "b", "label": "Option B", "description": "", "has_description": false, "is_checked": false, "id": "id_radiocards_1"}
         ]}]
@@ -44,7 +45,7 @@
 {{< tool_mulib/muform/element/wrapper }}
     {{$control}}
         <div class="muform-cards-container w-100">
-        <div role="radiogroup" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}} class="w-100 muform-cards{{#singlecolumn}} muform-cards-single{{/singlecolumn}}">
+        <div role="radiogroup" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}} class="w-100 muform-cards{{#singlecolumn}} muform-cards-single{{/singlecolumn}}{{#mincolumnwidth}} muform-cards-fit{{/mincolumnwidth}}"{{#mincolumnwidth}} style="--muform-cards-min-width: {{mincolumnwidth}}rem"{{/mincolumnwidth}}>
             {{#groups}}
             {{#label}}<div class="w-100 fw-bold mt-2 muform-cards-group">{{label}}</div>{{/label}}
             {{#options}}
