@@ -59,27 +59,70 @@ final class options_test extends \advanced_testcase {
             [
                 'label' => '',
                 'options' => [
-                    ['key' => 'none', 'label' => 'No role', 'is_checked' => false, 'id' => 'id_x_0'],
-                    ['key' => '1', 'label' => 'One', 'is_checked' => true, 'id' => 'id_x_1'],
-                    ['key' => '2', 'label' => 'Two', 'is_checked' => false, 'id' => 'id_x_2'],
+                    ['key' => 'none', 'label' => 'No role', 'is_checked' => false, 'is_option_disabled' => false, 'id' => 'id_x_0'],
+                    ['key' => '1', 'label' => 'One', 'is_checked' => true, 'is_option_disabled' => false, 'id' => 'id_x_1'],
+                    ['key' => '2', 'label' => 'Two', 'is_checked' => false, 'is_option_disabled' => false, 'id' => 'id_x_2'],
                 ],
             ],
             [
                 'label' => 'Teachers',
                 'options' => [
-                    ['key' => 'teacher', 'label' => 'Teacher', 'is_checked' => false, 'id' => 'id_x_3'],
-                    ['key' => 'editing', 'label' => 'Editing teacher', 'is_checked' => true, 'id' => 'id_x_4'],
+                    [
+                        'key' => 'teacher',
+                        'label' => 'Teacher',
+                        'is_checked' => false,
+                        'is_option_disabled' => false,
+                        'id' => 'id_x_3',
+                    ],
+                    [
+                        'key' => 'editing',
+                        'label' => 'Editing teacher',
+                        'is_checked' => true,
+                        'is_option_disabled' => false,
+                        'id' => 'id_x_4',
+                    ],
                 ],
             ],
             [
                 'label' => 'Others',
                 'options' => [
-                    ['key' => 'student', 'label' => 'Student &#60;b&#62;', 'is_checked' => false, 'id' => 'id_x_5'],
+                    [
+                        'key' => 'student',
+                        'label' => 'Student &#60;b&#62;',
+                        'is_checked' => false,
+                        'is_option_disabled' => false,
+                        'id' => 'id_x_5',
+                    ],
                 ],
             ],
         ], $options->get_template_data('id_x', ['1', 'editing']));
 
         $this->assertSame([], (new options())->get_template_data('id_x', []));
+    }
+
+    public function test_disabled(): void {
+        $options = new options(['a' => 'A', 'b' => 'B']);
+        $this->assertFalse($options->is_disabled('a'));
+        $this->assertSame($options, $options->set_disabled(['b']));
+        $this->assertFalse($options->is_disabled('a'));
+        $this->assertTrue($options->is_disabled('b'));
+        $this->assertTrue($options->has_key('b'));
+        $this->assertSame([
+            [
+                'label' => '',
+                'options' => [
+                    ['key' => 'a', 'label' => 'A', 'is_checked' => true, 'is_option_disabled' => false, 'id' => 'id_x_0'],
+                    ['key' => 'b', 'label' => 'B', 'is_checked' => false, 'is_option_disabled' => true, 'id' => 'id_x_1'],
+                ],
+            ],
+        ], $options->get_template_data('id_x', ['a']));
+
+        $options->set_disabled([]);
+        $this->assertFalse($options->is_disabled('b'));
+
+        $this->expectException(coding_exception::class);
+        $this->expectExceptionMessage('Unknown option key: c');
+        $options->set_disabled(['c']);
     }
 
     public function test_duplicate_key(): void {

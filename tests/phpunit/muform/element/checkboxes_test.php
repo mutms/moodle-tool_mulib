@@ -94,6 +94,26 @@ final class checkboxes_test extends muform_testcase {
         $this->assertStringContainsString('id="id_role' . $suffix . '_2" name="role[]" value="student" checked', $html);
     }
 
+    public function test_disabled_options(): void {
+        $hook = function (muform_definition $hook): void {
+            $options = (new options(['a' => 'A', 'b' => 'B - not available']))->set_disabled(['b']);
+            $hook->form->add(new checkboxes('role', 'Role', $options));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+
+        $this->simulate_post(simple_form::class, ['name' => 'x', 'role' => ['', 'a'], 'submit' => '1']);
+        $form = new simple_form($this->get_url(), []);
+        $this->assertSame(['a'], $form->get_data()->role);
+        $html = $this->render($form);
+        $suffix = $form->get_idsuffix();
+        $this->assertStringContainsString('id="id_role' . $suffix . '_1" name="role[]" value="b" disabled>', $html);
+
+        // Disabled options cannot be submitted.
+        $this->simulate_post(simple_form::class, ['name' => 'x', 'role' => ['a', 'b'], 'submit' => '1']);
+        $form = new simple_form($this->get_url(), []);
+        $this->assertTrue($form->is_invalid());
+    }
+
     public function test_parsing(): void {
         $this->add_element();
 

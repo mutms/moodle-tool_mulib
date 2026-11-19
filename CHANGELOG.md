@@ -42,6 +42,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - notification type hooks add_update_form_elements(), prepare_update_form_data(), normalise_aux_data() and get_aux_details()
   for type specific settings stored in notification aux fields, aux data of types without support is discarded
 - dropdown::set_align_start() opening the menu to the right of the button, for buttons near the left edge of the page
+- options::set_disabled() for options shown but not selectable, rendered disabled and rejected when submitted by checkboxes
 
 ### Changed
 

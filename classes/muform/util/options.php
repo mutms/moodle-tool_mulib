@@ -35,6 +35,8 @@ final class options {
     private array $labels = [];
     /** @var array list of groups, each with label and list of keys */
     private array $groups = [];
+    /** @var array keys of options shown but not selectable, as array keys */
+    private array $disabled = [];
 
     /**
      * Constructor.
@@ -94,6 +96,35 @@ final class options {
     }
 
     /**
+     * Show options that cannot be selected, e.g. with the reason in the label; elements that support it
+     * render them disabled and reject them when submitted.
+     *
+     * @param array $keys option keys
+     * @return $this
+     */
+    public function set_disabled(array $keys): static {
+        $this->disabled = [];
+        foreach ($keys as $key) {
+            $key = (string)$key;
+            if (!array_key_exists($key, $this->labels)) {
+                throw new coding_exception('Unknown option key: ' . $key);
+            }
+            $this->disabled[$key] = true;
+        }
+        return $this;
+    }
+
+    /**
+     * Is the option shown but not selectable?
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function is_disabled(string $key): bool {
+        return isset($this->disabled[$key]);
+    }
+
+    /**
      * Is there an option with given key?
      *
      * @param string $key
@@ -136,7 +167,7 @@ final class options {
      *
      * @param string $idprefix html id prefix for options
      * @param string[] $selected selected keys
-     * @return array list of groups with label and options (key, label, is_checked, id)
+     * @return array list of groups with label and options (key, label, is_checked, is_option_disabled, id)
      */
     public function get_template_data(string $idprefix, array $selected): array {
         $result = [];
@@ -148,6 +179,7 @@ final class options {
                     'key' => $key,
                     'label' => clean_string($this->labels[$key]),
                     'is_checked' => in_array($key, $selected, true),
+                    'is_option_disabled' => isset($this->disabled[$key]),
                     'id' => $idprefix . '_' . $i,
                 ];
                 $i++;

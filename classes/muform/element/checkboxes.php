@@ -88,7 +88,7 @@ final class checkboxes extends element {
                 // Empty marker from the hidden input or empty CSV item.
                 continue;
             }
-            if (!$this->options->has_key($key)) {
+            if (!$this->options->has_key($key) || $this->options->is_disabled($key)) {
                 $this->value = [];
                 $this->errors[] = $this->get_invalid_hint();
                 return;
