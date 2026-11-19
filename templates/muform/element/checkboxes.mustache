@@ -44,7 +44,7 @@
             {{#label}}<div class="w-100 fw-bold mt-2">{{label}}</div>{{/label}}
             {{#options}}
             <div class="form-check{{#is_inline}} form-check-inline{{/is_inline}}">
-                <input type="checkbox" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}[]" value="{{key}}"{{#is_checked}} checked{{/is_checked}}{{#is_frozen}} disabled{{/is_frozen}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}{{#is_option_disabled}} disabled{{/is_option_disabled}}>
+                <input type="checkbox" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}[]" value="{{key}}"{{#is_checked}} checked{{/is_checked}}{{#is_frozen}} disabled{{/is_frozen}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}{{#is_option_disabled}} disabled data-muform-option-disabled="1"{{/is_option_disabled}}>
                 <label class="form-check-label" for="{{id}}">{{label}}</label>
             </div>
             {{/options}}

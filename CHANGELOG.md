@@ -43,6 +43,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
   for type specific settings stored in notification aux fields, aux data of types without support is discarded
 - dropdown::set_align_start() opening the menu to the right of the button, for buttons near the left edge of the page
 - options::set_disabled() for options shown but not selectable, rendered disabled and rejected when submitted by checkboxes
+- element::set_reload_on_change() reloading the form in browser when the value changes, for definitions built from submitted values
 
 ### Changed
 

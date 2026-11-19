@@ -106,7 +106,7 @@ final class checkboxes_test extends muform_testcase {
         $this->assertSame(['a'], $form->get_data()->role);
         $html = $this->render($form);
         $suffix = $form->get_idsuffix();
-        $this->assertStringContainsString('id="id_role' . $suffix . '_1" name="role[]" value="b" disabled>', $html);
+        $this->assertStringContainsString('id="id_role' . $suffix . '_1" name="role[]" value="b" disabled data-muform-option-disabled="1">', $html);
 
         // Disabled options cannot be submitted.
         $this->simulate_post(simple_form::class, ['name' => 'x', 'role' => ['a', 'b'], 'submit' => '1']);

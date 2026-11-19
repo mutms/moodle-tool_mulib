@@ -98,7 +98,7 @@ class NativeElement extends Element {
     const { state } = this;
     const invalid = state.errors.length > 0;
     for (const control of this.controls()) {
-      control.disabled = state.disabled;
+      control.disabled = state.disabled || control.dataset.muformOptionDisabled === "1";
       if (control.type === "submit" || control.type === "button") {
         continue;
       }

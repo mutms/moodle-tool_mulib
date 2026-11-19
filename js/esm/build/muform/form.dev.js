@@ -251,13 +251,19 @@ class MuForm {
     button.click();
   }
   /**
-   * Re-evaluate display rules when a dependency changed.
+   * Reload the form when an element marked with set_reload_on_change() changed,
+   * otherwise re-evaluate display rules when a dependency changed.
    *
    * @param detail change detail
    */
   onChange(detail) {
     this.changed = true;
     this.emit("change", detail);
+    const selector = `[data-muform-name="${CSS.escape(detail.name)}"][data-muform-reload-on-change]`;
+    if (this.form.querySelector(selector)) {
+      this.reload();
+      return;
+    }
     if (this.display?.dependsOn(detail.name)) {
       const changed = this.display.apply();
       if (changed.length) {

@@ -30,6 +30,7 @@
     * is_hidden - true if element is initially hidden
     * is_disabled - true if element is initially disabled
     * is_frozen - true if element is frozen
+    * is_reloadonchange - true if changes reload the form, see element::set_reload_on_change()
 
     Example context (json):
     {
@@ -37,6 +38,6 @@
         "is_hidden": false, "is_disabled": false, "is_frozen": false
     }
 }}
-<div id="fitem_{{id}}" class="{{$outerclass}}mb-3 row fitem muform-element{{/outerclass}}" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_frozen}} data-muform-frozen="1"{{/is_frozen}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
+<div id="fitem_{{id}}" class="{{$outerclass}}mb-3 row fitem muform-element{{/outerclass}}" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_frozen}} data-muform-frozen="1"{{/is_frozen}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}{{#is_reloadonchange}} data-muform-reload-on-change="1"{{/is_reloadonchange}}>
     {{$content}}{{/content}}
 </div>

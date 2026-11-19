@@ -66,6 +66,25 @@ final class text_test extends muform_testcase {
         return new simple_form($this->get_url(), []);
     }
 
+    public function test_reload_on_change(): void {
+        $this->add_element([]);
+        $this->assertStringNotContainsString('data-muform-reload-on-change', $this->render($this->submit('x')));
+
+        $hook = function (muform_definition $hook): void {
+            $hook->form->add((new text('txt', 'Text'))->set_reload_on_change());
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $html = $this->render($this->submit('x'));
+        $this->assertStringContainsString('data-muform-name="txt" data-muform-reload-on-change="1"', $html);
+
+        // Frozen elements never change.
+        $hook = function (muform_definition $hook): void {
+            $hook->form->add((new text('txt', 'Text'))->set_reload_on_change()->set_frozen(true));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $this->assertStringNotContainsString('data-muform-reload-on-change', $this->render($this->submit('x')));
+    }
+
     public function test_width(): void {
         $this->add_element([]);
         $this->assertStringContainsString('class="form-control"', $this->render($this->submit('x')));

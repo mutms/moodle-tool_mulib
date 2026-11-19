@@ -323,13 +323,20 @@ export class MuForm implements FormApi {
     }
 
     /**
-     * Re-evaluate display rules when a dependency changed.
+     * Reload the form when an element marked with set_reload_on_change() changed,
+     * otherwise re-evaluate display rules when a dependency changed.
      *
      * @param detail change detail
      */
     private onChange(detail: ChangeDetail): void {
         this.changed = true;
         this.emit('change', detail);
+        const selector = `[data-muform-name="${CSS.escape(detail.name)}"][data-muform-reload-on-change]`;
+        if (this.form.querySelector(selector)) {
+            // The server builds the rest of the definition from the new value.
+            this.reload();
+            return;
+        }
         if (this.display?.dependsOn(detail.name)) {
             const changed = this.display.apply();
             if (changed.length) {
