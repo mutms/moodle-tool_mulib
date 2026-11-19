@@ -41,6 +41,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - mudb::insert_record_if_missing() for concurrent inserts into tables with unique index, safe inside transactions
 - notification type hooks add_update_form_elements(), prepare_update_form_data(), normalise_aux_data() and get_aux_details()
   for type specific settings stored in notification aux fields, aux data of types without support is discarded
+- dropdown::set_align_start() opening the menu to the right of the button, for buttons near the left edge of the page
 
 ### Changed
 

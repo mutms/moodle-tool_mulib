@@ -22,11 +22,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {{!
     @template tool_mulib/dropdown
 
-    Simple dropdown with actions.
+    Simple dropdown with actions, the menu opens to the left of the button unless alignstart is set.
 
     Example context (json):
     {
         "title": "Actions",
+        "alignstart": false,
         "items": [
             { "divider": true },
             { "url": "https://example.com/something.php", "label": "Something" },
@@ -44,7 +45,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     >
         <i class="icon fa fa-ellipsis-v fa-fw m-0" aria-hidden="true"></i>
     </button>
-    <div class="dropdown-menu dropdown-menu-end">
+    <div class="dropdown-menu{{^alignstart}} dropdown-menu-end{{/alignstart}}">
         {{#items}}
             {{#divider}}
                 <div class="dropdown-divider"></div>

@@ -32,6 +32,8 @@ class dropdown implements \core\output\named_templatable, \core\output\renderabl
     private $items = [];
     /** @var string */
     private $title;
+    /** @var bool menu opens to the right of the button */
+    private $alignstart = false;
 
     /**
      * Constructor.
@@ -40,6 +42,16 @@ class dropdown implements \core\output\named_templatable, \core\output\renderabl
      */
     public function __construct(string $title) {
         $this->title = $title;
+    }
+
+    /**
+     * Open the menu to the right of the button instead of to the left, e.g. for buttons near the left edge of
+     * the page where the menu would go under fixed panels.
+     *
+     * @param bool $alignstart
+     */
+    final public function set_align_start(bool $alignstart = true): void {
+        $this->alignstart = $alignstart;
     }
 
     /**
@@ -100,6 +112,7 @@ class dropdown implements \core\output\named_templatable, \core\output\renderabl
 
         return [
             'title' => $this->title,
+            'alignstart' => $this->alignstart,
             'items' => $items,
         ];
     }
