@@ -992,7 +992,29 @@ for `submit_stage()` of the same request. Optional hooks:
 - `get_heading()` is printed above the stepper, when the page heading is not the wizard title;
 - `render_page()` prints the page.
 
-Access control is not part of the class, check it in the constructor.
+### Wizard access control
+
+`wizard_page` does no access control of its own. Every request goes through the same steps, so
+follow these rules in every wizard:
+
+1. The entry script reads the page parameters, calls `require_login()` and then
+   `(new wizard(...))->execute()`, nothing else.
+2. The constructor loads the records named by the parameters with `MUST_EXIST`, finds their
+   context and checks the capability there with `require_capability()`, or throws
+   `required_capability_exception` for rules that are not a single capability. It runs on every
+   request, so a revoked permission stops the wizard at the next step.
+3. The stored state is input from earlier requests. Anything chosen in an earlier stage that
+   depends on permissions or on the current data, such as an action, a type or a target record,
+   is checked again before it is used, in `check_state()`, `is_stage_valid()` or `finish()`.
+4. `get_unavailable_reason()` covers changes of the target that make the wizard pointless, such
+   as an archived program, it is evaluated on every request too.
+5. Rows of uploaded data pass the same checks as the single item pages, the user pickers and the
+   web services of the same feature: tenant restrictions, protection of site administrators,
+   deleted and suspended users. Keep each rule in one function and call it from all of them, an
+   upload must never accept a user that the user picker would not offer.
+6. Changes are written only in `submit_stage()` or `finish()`, which run after a muform submission
+   with a valid sesskey. Never change data in `create_form()`, `start_state()` or
+   `get_unavailable_reason()`, they also run on plain page loads.
 
 Uploads: questions that affect the whole wizard (what to do with the uploaded rows, for example)
 are asked before it, usually in a dialog form whose answers become page parameters and part of the
