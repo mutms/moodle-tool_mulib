@@ -93,7 +93,9 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
 - `local\sql` - immutable SQL fragment with parameters. Write the whole query with `/* name */`
   placeholders, fill them with `replace_comment()` (throws when the placeholder is missing), use
   `wrap('AND ', '')` for optional parts (empty stays empty) and `sql::join()`. `?` and `:named`
-  parameters may be mixed, collisions are renamed. `"mdl_table"` works as `{table}`.
+  parameters may be mixed, collisions are renamed. `"mdl_table"` works as `{table}`. `sql::for_db(pgsql: ..., mariadb: ...[, db: $extdb])`
+  picks the variant for `$DB` or the given database, MariaDB/MySQL get the mariadb variant, all other databases
+  the pgsql one; plugins never mention "mysql".
 - `local\context_map` - fast capability lookups on system, tenant, category and course levels without
   walking the context tree: `get_contexts_by_capability_query()` (subquery of context ids, usually
   `wrap("JOIN (", ")capctx ON capctx.id = x.contextid")`) and `get_contexts_by_capability_join()`

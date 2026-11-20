@@ -197,6 +197,44 @@ final class sql_test extends \advanced_testcase {
     }
 
     /**
+     * Test database specific variants.
+     */
+    public function test_for_db(): void {
+        global $DB;
+
+        $pgsql = new sql('a = :a', ['a' => 1]);
+        $mariadb = new sql('b = :b', ['b' => 2]);
+        $result = sql::for_db(pgsql: $pgsql, mariadb: $mariadb);
+        if ($DB->get_dbfamily() === 'postgres') {
+            $this->assertSame($pgsql, $result);
+        } else {
+            $this->assertSame($mariadb, $result);
+        }
+
+        $result = sql::for_db(pgsql: 'x::text', mariadb: 'CAST(x AS CHAR)');
+        $this->assertInstanceOf(sql::class, $result);
+        if ($DB->get_dbfamily() === 'postgres') {
+            $this->assertSame('x::text', $result->sql);
+        } else {
+            $this->assertSame('CAST(x AS CHAR)', $result->sql);
+        }
+        $this->assertSame([], $result->params);
+
+        $sql = sql::for_db(
+            pgsql: new sql('SELECT CAST(:v AS INTEGER) + 1', ['v' => 1]),
+            mariadb: new sql('SELECT CAST(:v AS SIGNED) + 1', ['v' => 1])
+        );
+        $this->assertEquals(2, $DB->get_field_sql($sql->sql, $sql->params));
+
+        $families = ['postgres' => 'a', 'mysql' => 'b', 'mssql' => 'a', 'oracle' => 'a'];
+        foreach ($families as $family => $expected) {
+            $db = $this->createMock(\moodle_database::class);
+            $db->method('get_dbfamily')->willReturn($family);
+            $this->assertSame($expected, sql::for_db(pgsql: 'a', mariadb: 'b', db: $db)->sql);
+        }
+    }
+
+    /**
      * Test parameter renaming.
      */
     public function test_rename_params(): void {

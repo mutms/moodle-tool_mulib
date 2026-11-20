@@ -126,6 +126,34 @@ final class sql implements \ArrayAccess {
     }
 
     /**
+     * Select SQL fragment variant for a database.
+     *
+     * Readability helper replacing conditions on database family, it returns one of the given
+     * variants unchanged and does not translate SQL in any way. MariaDB and MySQL use the mariadb
+     * variant, all other databases use the pgsql variant.
+     *
+     * @param sql|string $pgsql PostgreSQL variant, also used for other databases
+     * @param sql|string $mariadb MariaDB and MySQL variant
+     * @param \moodle_database|null $db database the fragment is used with, null means $DB
+     * @return sql
+     */
+    public static function for_db(sql|string $pgsql, sql|string $mariadb, ?\moodle_database $db = null): sql {
+        global $DB;
+
+        $db = $db ?? $DB;
+        if ($db->get_dbfamily() === 'mysql') {
+            $sql = $mariadb;
+        } else {
+            $sql = $pgsql;
+        }
+
+        if (is_string($sql)) {
+            return new self($sql);
+        }
+        return $sql;
+    }
+
+    /**
      * Create a new SQL fragment with all parameters renamed.
      *
      * Useful for APIs that accept only their own parameter names, such as report builder.
