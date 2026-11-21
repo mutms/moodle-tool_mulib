@@ -226,7 +226,7 @@ final class sql_test extends \advanced_testcase {
         );
         $this->assertEquals(2, $DB->get_field_sql($sql->sql, $sql->params));
 
-        $families = ['postgres' => 'a', 'mysql' => 'b', 'mssql' => 'a', 'oracle' => 'a'];
+        $families = ['postgres' => 'a', 'mysql' => 'b'];
         foreach ($families as $family => $expected) {
             $db = $this->createMock(\moodle_database::class);
             $db->method('get_dbfamily')->willReturn($family);

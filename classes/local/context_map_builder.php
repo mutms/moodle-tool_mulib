@@ -77,32 +77,23 @@ final class context_map_builder {
      */
     public static function analyze(): void {
         global $DB;
-        $dbfamily = $DB->get_dbfamily();
-        if ($dbfamily === 'postgres') {
-            $DB->execute("ANALYZE {tool_mulib_context_parent}, {tool_mulib_context_map}, {role_assignments}, {role_capabilities}");
-        } else if ($dbfamily === 'mysql') {
-            $DB->execute("ANALYZE TABLE {tool_mulib_context_parent}, {tool_mulib_context_map}, {role_assignments}, {role_capabilities}");
-        }
+
+        $sql = sql::for_db(
+            pgsql: "ANALYZE {tool_mulib_context_parent}, {tool_mulib_context_map}, {role_assignments}, {role_capabilities}",
+            mariadb: "ANALYZE TABLE {tool_mulib_context_parent}, {tool_mulib_context_map}, {role_assignments}, {role_capabilities}"
+        );
+        $DB->execute($sql->sql, $sql->params);
     }
 
     /**
      * Remove references to deleted contexts.
      */
     public static function parent_purge_deleted(): void {
-        global $DB;
-        $syscontextid = context_system::instance()->id;
-
-        // Remove all references to deleted contexts.
-        $sql = "DELETE
-                  FROM {tool_mulib_context_parent}
-                 WHERE contextid = $syscontextid OR NOT EXISTS (
-
-                         SELECT 'x'
-                           FROM {context} ctx
-                          WHERE ctx.id = {tool_mulib_context_parent}.contextid
-
-                 )";
-        $DB->execute($sql);
+        $sql = "SELECT p.contextid
+                  FROM {tool_mulib_context_parent} p
+             LEFT JOIN {context} ctx ON ctx.id = p.contextid
+                 WHERE p.contextid = :syscontextid OR ctx.id IS NULL";
+        self::delete_contexts('tool_mulib_context_parent', $sql, ['syscontextid' => context_system::instance()->id]);
     }
 
     /**
@@ -111,53 +102,28 @@ final class context_map_builder {
     public static function parent_user_fix(): void {
         global $DB;
 
-        $syscontextid = context_system::instance()->id;
-        $userlevel = context_user::LEVEL;
+        $params = ['syscontextid' => context_system::instance()->id, 'userlevel' => context_user::LEVEL];
 
-        // Remove parents for deleted users.
         $sql = "SELECT p.contextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$userlevel}
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :userlevel
                   JOIN {user} u ON u.id = ctx.instanceid
                  WHERE u.deleted = 1";
-        $deleteids = $DB->get_fieldset_sql($sql);
-        if ($deleteids) {
-            // This should not happen often, so only the select needs to be fast.
-            foreach (array_chunk($deleteids, 100) as $cids) {
-                $cids = implode(',', $cids);
-                $sql = "DELETE
-                          FROM {tool_mulib_context_parent}
-                         WHERE contextid in ({$cids})";
-                $DB->execute($sql);
-            }
-        }
+        self::delete_contexts('tool_mulib_context_parent', $sql, $params);
 
-        // Fix parents.
-        $sql = "SELECT p.contextid
+        $sql = "SELECT p.contextid, :syscontextid AS parentcontextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$userlevel}
-                 WHERE p.parentcontextid <> {$syscontextid}";
-        $fixids = $DB->get_fieldset_sql($sql);
-        if ($fixids) {
-            foreach (array_chunk($fixids, 100) as $cids) {
-                // This should not happen often, so only the select needs to be fast.
-                $cids = implode(',', $cids);
-                $sql = "UPDATE {tool_mulib_context_parent}
-                           SET parentcontextid = {$syscontextid}
-                         WHERE contextid in ({$cids})";
-                $DB->execute($sql);
-            }
-        }
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :userlevel
+                 WHERE p.parentcontextid <> :syscontextid2";
+        self::update_parents($sql, $params + ['syscontextid2' => $params['syscontextid']]);
 
-        // Add missing parent entries.
         $sql = "INSERT INTO {tool_mulib_context_parent} (contextid, parentcontextid)
-
-                SELECT ctx.id, {$syscontextid}
+                SELECT ctx.id, :syscontextid
                   FROM {context} ctx
-                  JOIN {user} u ON u.id = ctx.instanceid AND ctx.contextlevel = {$userlevel} AND u.deleted = 0
+                  JOIN {user} u ON u.id = ctx.instanceid AND u.deleted = 0
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = ctx.id
-                 WHERE p.contextid IS NULL";
-        $DB->execute($sql);
+                 WHERE ctx.contextlevel = :userlevel AND p.contextid IS NULL";
+        $DB->execute($sql, $params);
     }
 
     /**
@@ -166,32 +132,21 @@ final class context_map_builder {
     public static function parent_tenant_fix(): void {
         global $DB;
 
-        $syscontextid = context_system::instance()->id;
-        $tenantlevel = context_tenant::LEVEL;
+        $params = ['syscontextid' => context_system::instance()->id, 'tenantlevel' => context_tenant::LEVEL];
 
-        $sql = "SELECT p.contextid
+        $sql = "SELECT p.contextid, :syscontextid AS parentcontextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$tenantlevel}
-                 WHERE p.parentcontextid <> {$syscontextid}";
-        $fixids = $DB->get_fieldset_sql($sql);
-        if ($fixids) {
-            foreach (array_chunk($fixids, 100) as $cids) {
-                $cids = implode(',', $cids);
-                $sql = "UPDATE {tool_mulib_context_parent}
-                           SET parentcontextid = {$syscontextid}
-                         WHERE contextid IN ({$cids})";
-                $DB->execute($sql);
-            }
-        }
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :tenantlevel
+                 WHERE p.parentcontextid <> :syscontextid2";
+        self::update_parents($sql, $params + ['syscontextid2' => $params['syscontextid']]);
 
         $sql = "INSERT INTO {tool_mulib_context_parent} (contextid, parentcontextid)
-
-                SELECT ctx.id, {$syscontextid}
+                SELECT ctx.id, :syscontextid
                   FROM {context} ctx
-                  JOIN {tool_mutenancy_tenant} t ON t.id = ctx.instanceid AND ctx.contextlevel = {$tenantlevel}
+                  JOIN {tool_mutenancy_tenant} t ON t.id = ctx.instanceid
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = ctx.id
-                 WHERE p.contextid IS NULL";
-        $DB->execute($sql);
+                 WHERE ctx.contextlevel = :tenantlevel AND p.contextid IS NULL";
+        $DB->execute($sql, $params);
     }
 
     /**
@@ -200,70 +155,38 @@ final class context_map_builder {
     public static function parent_tenant_user_fix(): void {
         global $DB;
 
-        $syscontextid = context_system::instance()->id;
-        $userlevel = context_user::LEVEL;
-        $tenantlevel = context_tenant::LEVEL;
+        $params = [
+            'syscontextid' => context_system::instance()->id,
+            'userlevel' => context_user::LEVEL,
+            'tenantlevel' => context_tenant::LEVEL,
+        ];
+        $parent = "COALESCE(pctx.id, :syscontextid)";
+        $parentjoin = "LEFT JOIN {tool_mutenancy_tenant} t ON t.id = u.tenantid
+                       LEFT JOIN {context} pctx ON pctx.instanceid = t.id AND pctx.contextlevel = :tenantlevel";
 
-        // Remove parents for deleted users.
         $sql = "SELECT p.contextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$userlevel}
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :userlevel
                   JOIN {user} u ON u.id = ctx.instanceid
                  WHERE u.deleted = 1";
-        $deleteids = $DB->get_fieldset_sql($sql);
-        if ($deleteids) {
-            foreach (array_chunk($deleteids, 100) as $cids) {
-                $cids = implode(',', $cids);
-                $sql = "DELETE
-                          FROM {tool_mulib_context_parent}
-                         WHERE contextid in ({$cids})";
-                $DB->execute($sql);
-            }
-        }
+        self::delete_contexts('tool_mulib_context_parent', $sql, $params);
 
-        // Fix parents of global users.
-        $sql = "SELECT p.contextid
+        $sql = "SELECT p.contextid, $parent AS parentcontextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$userlevel}
-                  JOIN {user} u ON u.id = ctx.instanceid AND u.tenantid IS NULL
-                 WHERE p.parentcontextid <> {$syscontextid}";
-        $fixids = $DB->get_fieldset_sql($sql);
-        if ($fixids) {
-            // This should not happen, so only the select needs to be fast.
-            foreach (array_chunk($fixids, 100) as $cids) {
-                $cids = implode(',', $cids);
-                $sql = "UPDATE {tool_mulib_context_parent}
-                           SET parentcontextid = {$syscontextid}
-                         WHERE contextid IN ({$cids})";
-                $DB->execute($sql);
-            }
-        }
-
-        // Fix parents of tenant members.
-        $sql = "SELECT p.contextid, pctx.id AS parentcontextid
-                  FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$userlevel}
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :userlevel
                   JOIN {user} u ON u.id = ctx.instanceid
-                  JOIN {tool_mutenancy_tenant} t ON t.id = u.tenantid
-                  JOIN {context} pctx ON pctx.instanceid = t.id AND pctx.contextlevel = {$tenantlevel}
-                 WHERE p.parentcontextid <> pctx.id";
-        $rs = $DB->get_recordset_sql($sql);
-        foreach ($rs as $p) {
-            // This should not happen, so only the select needs to be fast.
-            $DB->set_field('tool_mulib_context_parent', 'parentcontextid', $p->parentcontextid, ['contextid' => $p->contextid]);
-        }
-        $rs->close();
+                  $parentjoin
+                 WHERE p.parentcontextid <> COALESCE(pctx.id, :syscontextid2)";
+        self::update_parents($sql, $params + ['syscontextid2' => $params['syscontextid']]);
 
         $sql = "INSERT INTO {tool_mulib_context_parent} (contextid, parentcontextid)
-
-                SELECT ctx.id, COALESCE(pctx.id, {$syscontextid})
+                SELECT ctx.id, $parent
                   FROM {context} ctx
-                  JOIN {user} u ON u.id = ctx.instanceid AND ctx.contextlevel = {$userlevel} AND u.deleted = 0
-             LEFT JOIN {tool_mutenancy_tenant} t ON t.id = u.tenantid
-             LEFT JOIN {context} pctx ON pctx.instanceid = t.id AND pctx.contextlevel = {$tenantlevel}
+                  JOIN {user} u ON u.id = ctx.instanceid AND u.deleted = 0
+                  $parentjoin
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = ctx.id
-                 WHERE p.contextid IS NULL";
-        $DB->execute($sql);
+                 WHERE ctx.contextlevel = :userlevel AND p.contextid IS NULL";
+        $DB->execute($sql, $params);
     }
 
     /**
@@ -272,33 +195,30 @@ final class context_map_builder {
     public static function parent_category_fix(): void {
         global $DB;
 
-        $syscontextid = context_system::instance()->id;
-        $categorylevel = context_coursecat::LEVEL;
+        $params = [
+            'syscontextid' => context_system::instance()->id,
+            'categorylevel' => context_coursecat::LEVEL,
+            'parentlevel' => context_coursecat::LEVEL,
+        ];
+        $parent = "COALESCE(pctx.id, :syscontextid)";
+        $parentjoin = "LEFT JOIN {context} pctx ON pctx.instanceid = cc.parent AND pctx.contextlevel = :parentlevel";
 
-        $sql = "SELECT p.contextid, COALESCE(pctx.id, {$syscontextid}) AS parentcontextid
+        $sql = "SELECT p.contextid, $parent AS parentcontextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$categorylevel}
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :categorylevel
                   JOIN {course_categories} cc ON cc.id = ctx.instanceid
-             LEFT JOIN {course_categories} ccp ON ccp.id = cc.parent
-             LEFT JOIN {context} pctx ON pctx.instanceid = ccp.id AND pctx.contextlevel = {$categorylevel}
-                 WHERE p.parentcontextid <> COALESCE(pctx.id, {$syscontextid})";
-        $rs = $DB->get_recordset_sql($sql);
-        foreach ($rs as $p) {
-            // This should not happen often, so only the select needs to be fast.
-            $DB->set_field('tool_mulib_context_parent', 'parentcontextid', $p->parentcontextid, ['contextid' => $p->contextid]);
-        }
-        $rs->close();
+                  $parentjoin
+                 WHERE p.parentcontextid <> COALESCE(pctx.id, :syscontextid2)";
+        self::update_parents($sql, $params + ['syscontextid2' => $params['syscontextid']]);
 
         $sql = "INSERT INTO {tool_mulib_context_parent} (contextid, parentcontextid)
-
-                SELECT ctx.id, COALESCE(pctx.id, {$syscontextid})
+                SELECT ctx.id, $parent
                   FROM {context} ctx
-                  JOIN {course_categories} cc ON cc.id = ctx.instanceid AND ctx.contextlevel = {$categorylevel}
-             LEFT JOIN {course_categories} ccp ON ccp.id = cc.parent
-             LEFT JOIN {context} pctx ON pctx.instanceid = ccp.id AND pctx.contextlevel = {$categorylevel}
+                  JOIN {course_categories} cc ON cc.id = ctx.instanceid
+                  $parentjoin
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = ctx.id
-                 WHERE p.contextid IS NULL";
-        $DB->execute($sql);
+                 WHERE ctx.contextlevel = :categorylevel AND p.contextid IS NULL";
+        $DB->execute($sql, $params);
     }
 
     /**
@@ -307,57 +227,41 @@ final class context_map_builder {
     public static function parent_course_fix(): void {
         global $DB;
 
-        $syscontextid = context_system::instance()->id;
-        $categorylevel = context_coursecat::LEVEL;
-        $courselevel = context_course::LEVEL;
+        $params = [
+            'syscontextid' => context_system::instance()->id,
+            'courselevel' => context_course::LEVEL,
+            'categorylevel' => context_coursecat::LEVEL,
+        ];
+        $parent = "COALESCE(pctx.id, :syscontextid)";
+        $parentjoin = "LEFT JOIN {context} pctx ON pctx.instanceid = cs.category AND pctx.contextlevel = :categorylevel";
 
-        $sql = "SELECT p.contextid, COALESCE(pctx.id, {$syscontextid}) AS parentcontextid
+        $sql = "SELECT p.contextid, $parent AS parentcontextid
                   FROM {tool_mulib_context_parent} p
-                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = {$courselevel}
+                  JOIN {context} ctx ON ctx.id = p.contextid AND ctx.contextlevel = :courselevel
                   JOIN {course} cs ON cs.id = ctx.instanceid
-             LEFT JOIN {course_categories} ccp ON ccp.id = cs.category
-             LEFT JOIN {context} pctx ON pctx.instanceid = ccp.id AND pctx.contextlevel = {$categorylevel}
-                 WHERE p.parentcontextid <> COALESCE(pctx.id, {$syscontextid})";
-        $rs = $DB->get_recordset_sql($sql);
-        foreach ($rs as $p) {
-            // This should not happen often, so only the select needs to be fast.
-            $DB->set_field('tool_mulib_context_parent', 'parentcontextid', $p->parentcontextid, ['contextid' => $p->contextid]);
-        }
-        $rs->close();
+                  $parentjoin
+                 WHERE p.parentcontextid <> COALESCE(pctx.id, :syscontextid2)";
+        self::update_parents($sql, $params + ['syscontextid2' => $params['syscontextid']]);
 
         $sql = "INSERT INTO {tool_mulib_context_parent} (contextid, parentcontextid)
-
-                SELECT ctx.id, COALESCE(pctx.id, {$syscontextid})
+                SELECT ctx.id, $parent
                   FROM {context} ctx
-                  JOIN {course} cs ON cs.id = ctx.instanceid AND ctx.contextlevel = {$courselevel}
-             LEFT JOIN {course_categories} ccp ON ccp.id = cs.category
-             LEFT JOIN {context} pctx ON pctx.instanceid = ccp.id AND pctx.contextlevel = {$categorylevel}
+                  JOIN {course} cs ON cs.id = ctx.instanceid
+                  $parentjoin
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = ctx.id
-                 WHERE p.contextid IS NULL";
-        $DB->execute($sql);
+                 WHERE ctx.contextlevel = :courselevel AND p.contextid IS NULL";
+        $DB->execute($sql, $params);
     }
 
     /**
      * Remove all entries not present in context parents cache.
      */
     public static function map_purge_deleted(): void {
-        global $DB;
-
-        $syscontextid = context_system::instance()->id;
-
         $sql = "SELECT DISTINCT map.contextid
                   FROM {tool_mulib_context_map} map
              LEFT JOIN {tool_mulib_context_parent} p ON p.contextid = map.contextid
-                 WHERE map.contextid <> $syscontextid AND p.contextid IS NULL";
-        $deleteids = $DB->get_fieldset_sql($sql);
-        foreach (array_chunk($deleteids, 100) as $cids) {
-            // This should not happen often.
-            $cids = implode(',', $cids);
-            $sql = "DELETE
-                      FROM {tool_mulib_context_map}
-                     WHERE contextid in ({$cids})";
-            $DB->execute($sql);
-        }
+                 WHERE map.contextid <> :syscontextid AND p.contextid IS NULL";
+        self::delete_contexts('tool_mulib_context_map', $sql, ['syscontextid' => context_system::instance()->id]);
     }
 
     /**
@@ -372,16 +276,15 @@ final class context_map_builder {
         $DB->execute($sql);
 
         $sql = "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid)
-
                 SELECT p.contextid, 0, p.contextid
                   FROM {tool_mulib_context_parent} p
              LEFT JOIN {tool_mulib_context_map} map ON map.contextid = p.contextid AND map.distance = 0
                  WHERE map.contextid IS NULL";
         $DB->execute($sql);
 
-        $syscontext = context_system::instance();
-        if (!$DB->record_exists('tool_mulib_context_map', ['contextid' => $syscontext->id, 'distance' => 0])) {
-            self::upsert_context_map($syscontext->id, [$syscontext->id]);
+        $syscontextid = context_system::instance()->id;
+        if (!$DB->record_exists('tool_mulib_context_map', ['contextid' => $syscontextid, 'distance' => 0])) {
+            self::upsert_context_map($syscontextid, [$syscontextid]);
         }
     }
 
@@ -391,24 +294,21 @@ final class context_map_builder {
     public static function map_distance_1(): void {
         global $DB;
 
-        if ($DB->get_dbfamily() === 'mysql') {
-            $sql = /** @lang=MySQL */
-                "UPDATE {tool_mulib_context_map} map, {tool_mulib_context_parent} p
-                       SET map.relatedcontextid = p.parentcontextid
-                     WHERE map.contextid = p.contextid AND map.distance = 1
-                           AND map.relatedcontextid <> p.parentcontextid";
-        } else {
-            $sql =
-                "UPDATE {tool_mulib_context_map}
-                    SET relatedcontextid = p.parentcontextid
-                   FROM {tool_mulib_context_parent} p
-                  WHERE {tool_mulib_context_map}.contextid = p.contextid AND {tool_mulib_context_map}.distance = 1
-                        AND {tool_mulib_context_map}.relatedcontextid <> p.parentcontextid";
-        }
-        $DB->execute($sql);
+        $sql = sql::for_db(
+            pgsql: "UPDATE {tool_mulib_context_map} map
+                       SET relatedcontextid = p.parentcontextid
+                      FROM {tool_mulib_context_parent} p
+                     WHERE p.contextid = map.contextid AND map.distance = 1
+                           AND map.relatedcontextid <> p.parentcontextid",
+            mariadb: /** @lang=MySQL */
+                    "UPDATE {tool_mulib_context_map} map
+                       JOIN {tool_mulib_context_parent} p ON p.contextid = map.contextid
+                        SET map.relatedcontextid = p.parentcontextid
+                      WHERE map.distance = 1 AND map.relatedcontextid <> p.parentcontextid"
+        );
+        $DB->execute($sql->sql, $sql->params);
 
         $sql = "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid)
-
                 SELECT p.contextid, 1, p.parentcontextid
                   FROM {tool_mulib_context_parent} p
              LEFT JOIN {tool_mulib_context_map} map ON map.contextid = p.contextid AND map.distance = 1
@@ -417,64 +317,63 @@ final class context_map_builder {
     }
 
     /**
-     * Fix parent of a parents.
-     * @param int $n
+     * Fix existing and add missing references to parents of parents.
+     *
+     * @param int $n distance, at least 2
      */
     public static function map_distance_n(int $n): void {
         global $DB;
+
         if ($n < 2) {
             throw new coding_exception('Distance of at least 2 is expected');
         }
-        $prev = $n - 1;
+        $params = ['distance' => $n, 'prevdistance' => $n - 1];
 
-        if ($DB->get_dbfamily() === 'mysql') {
-            $sql = /** @lang=MySQL */
-                "UPDATE {tool_mulib_context_map} map, (SELECT map.contextid, p.parentcontextid
-                                                         FROM {tool_mulib_context_map} map
-                                                         JOIN {tool_mulib_context_parent} p ON p.contextid = map.relatedcontextid
-                                                              AND map.distance = {$prev}) AS prevmap
-                   SET map.relatedcontextid = prevmap.parentcontextid
-                 WHERE map.contextid = prevmap.contextid AND map.distance = {$n}
-                       AND map.relatedcontextid <> prevmap.parentcontextid";
-        } else {
-            $sql =
-                "WITH prevmap AS (
-                        SELECT map.contextid, p.parentcontextid
-                          FROM {tool_mulib_context_map} map
-                          JOIN {tool_mulib_context_parent} p ON p.contextid = map.relatedcontextid
-                               AND map.distance = {$prev}
-                     )
-                UPDATE {tool_mulib_context_map}
-                   SET relatedcontextid = prevmap.parentcontextid
-                  FROM prevmap
-                 WHERE {tool_mulib_context_map}.contextid = prevmap.contextid AND {tool_mulib_context_map}.distance = {$n}
-                       AND {tool_mulib_context_map}.relatedcontextid <> prevmap.parentcontextid";
-        }
-        $DB->execute($sql);
+        $source = "SELECT pm.contextid, p.parentcontextid
+                     FROM {tool_mulib_context_map} pm
+                     JOIN {tool_mulib_context_parent} p ON p.contextid = pm.relatedcontextid
+                    WHERE pm.distance = :prevdistance";
+
+        $sql = sql::for_db(
+            pgsql: new sql(
+                "UPDATE {tool_mulib_context_map} map
+                    SET relatedcontextid = v.parentcontextid
+                   FROM ($source) v
+                  WHERE v.contextid = map.contextid AND map.distance = :distance
+                        AND map.relatedcontextid <> v.parentcontextid",
+                $params
+            ),
+            mariadb: new sql(
+                /** @lang=MySQL */
+                "UPDATE {tool_mulib_context_map} map
+                   JOIN ($source) v ON v.contextid = map.contextid
+                    SET map.relatedcontextid = v.parentcontextid
+                  WHERE map.distance = :distance AND map.relatedcontextid <> v.parentcontextid",
+                $params
+            )
+        );
+        $DB->execute($sql->sql, $sql->params);
 
         $sql = "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid)
-
-                SELECT map.contextid, {$n}, p.parentcontextid
-                  FROM {tool_mulib_context_parent} p
-                  JOIN {tool_mulib_context_map} map ON map.relatedcontextid = p.contextid AND map.distance = {$prev}
-             LEFT JOIN {tool_mulib_context_map} nextmap ON nextmap.contextid = map.contextid AND nextmap.distance = {$n}
-                 WHERE nextmap.contextid IS NULL";
-        $DB->execute($sql);
+                SELECT v.contextid, :distance, v.parentcontextid
+                  FROM ($source) v
+             LEFT JOIN {tool_mulib_context_map} map ON map.contextid = v.contextid AND map.distance = :distance2
+                 WHERE map.contextid IS NULL";
+        $DB->execute($sql, $params + ['distance2' => $n]);
     }
 
     /**
-     * Delete unsued distances higher than distance to the top.
+     * Delete unused distances higher than distance to the top.
      */
     public static function map_purge_above_system(): void {
         global $DB;
-        $syscontextid = context_system::instance()->id;
+
         $sql = "SELECT om.contextid, om.distance
                   FROM {tool_mulib_context_map} om
-                  JOIN {tool_mulib_context_map} map ON map.contextid = om.contextid AND map.relatedcontextid = $syscontextid
-                 WHERE (om.distance > map.distance OR om.distance < 0)";
-        $rs = $DB->get_recordset_sql($sql);
+                  JOIN {tool_mulib_context_map} map ON map.contextid = om.contextid AND map.relatedcontextid = :syscontextid
+                 WHERE om.distance > map.distance OR om.distance < 0";
+        $rs = $DB->get_recordset_sql($sql, ['syscontextid' => context_system::instance()->id]);
         foreach ($rs as $map) {
-            // This should not happen, so only the select needs to be fast.
             $DB->delete_records('tool_mulib_context_map', ['contextid' => $map->contextid, 'distance' => $map->distance]);
         }
         $rs->close();
@@ -487,21 +386,56 @@ final class context_map_builder {
     public static function map_check(): ?string {
         global $DB;
 
-        $syscontext = context_system::instance();
         $sql = "SELECT map.contextid
                   FROM {tool_mulib_context_map} map
                   JOIN (SELECT contextid, MAX(distance) AS maxdistance
                           FROM {tool_mulib_context_map}
                       GROUP BY contextid
-                        ) sysrel ON sysrel.contextid = map.contextid AND sysrel.maxdistance = map.distance
+                       ) sysrel ON sysrel.contextid = map.contextid AND sysrel.maxdistance = map.distance
                  WHERE map.relatedcontextid <> :syscontextid
               ORDER BY map.contextid ASC";
-        $cids = $DB->get_fieldset_sql($sql, ['syscontextid' => $syscontext->id]);
+        $cids = $DB->get_fieldset_sql($sql, ['syscontextid' => context_system::instance()->id]);
         if ($cids) {
             return 'Context map error - following contexts do not have system as top parent: ' . implode(', ', $cids);
         }
 
         return null;
+    }
+
+    /**
+     * Delete rows of contexts returned by a query.
+     *
+     * Rows are rarely deleted, the select is fast and does not lock anything.
+     *
+     * @param string $table tool_mulib_context_parent or tool_mulib_context_map
+     * @param string $sql query returning context ids
+     * @param array $params
+     */
+    private static function delete_contexts(string $table, string $sql, array $params): void {
+        global $DB;
+
+        $contextids = $DB->get_fieldset_sql($sql, $params);
+        foreach (array_chunk($contextids, 100) as $chunk) {
+            $DB->delete_records_list($table, 'contextid', $chunk);
+        }
+    }
+
+    /**
+     * Update parents returned by a query.
+     *
+     * Parents rarely change, the select is fast and does not lock anything.
+     *
+     * @param string $sql query returning contextid and parentcontextid
+     * @param array $params
+     */
+    private static function update_parents(string $sql, array $params): void {
+        global $DB;
+
+        $rs = $DB->get_recordset_sql($sql, $params);
+        foreach ($rs as $p) {
+            $DB->set_field('tool_mulib_context_parent', 'parentcontextid', $p->parentcontextid, ['contextid' => $p->contextid]);
+        }
+        $rs->close();
     }
 
     /**
@@ -564,40 +498,26 @@ final class context_map_builder {
             return;
         }
 
-        $dbfamily = $DB->get_dbfamily();
-        if ($dbfamily === 'postgres') {
-            $values = [];
-            foreach ($relations as $distance => $relatedcontextid) {
-                $values[] = '(' . $contextid . ',' . (int)$distance . ',' . (int)$relatedcontextid . ')';
-            }
-            $values = implode(', ', $values);
-            $sql = "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid) VALUES $values
-                    ON CONFLICT (contextid, distance) DO UPDATE SET relatedcontextid = excluded.relatedcontextid";
-            $DB->execute($sql);
-        } else if ($dbfamily === 'mysql') {
-            $values = [];
-            foreach ($relations as $distance => $relatedcontextid) {
-                $values[] = '(' . $contextid . ',' . (int)$distance . ',' . (int)$relatedcontextid . ')';
-            }
-            $values = implode(', ', $values);
-            $sql = "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid) VALUES $values
-                    ON DUPLICATE KEY UPDATE relatedcontextid = VALUES(relatedcontextid)";
-            $DB->execute($sql);
-        } else {
-            foreach ($relations as $distance => $relatedcontextid) {
-                $relation = ['contextid' => $contextid, 'distance' => $distance, 'relatedcontextid' => $relatedcontextid];
-                if ($DB->record_exists('tool_mulib_context_map', ['contextid' => $relation['contextid'], 'distance' => $relation['distance']])) {
-                    $DB->set_field('tool_mulib_context_map', 'relatedcontextid', $relatedcontextid, ['contextid' => $contextid, 'distance' => $distance]);
-                } else {
-                    try {
-                        $DB->insert_record('tool_mulib_context_map', $relation, false);
-                    } catch (\Exception $ex) {
-                        // Could be a concurrent insert.
-                        $DB->set_field('tool_mulib_context_map', 'relatedcontextid', $relatedcontextid, ['contextid' => $contextid, 'distance' => $distance]);
-                    }
-                }
-            }
+        $values = [];
+        $params = [];
+        foreach ($relations as $distance => $relatedcontextid) {
+            $values[] = '(?, ?, ?)';
+            array_push($params, $contextid, (int)$distance, (int)$relatedcontextid);
         }
+        $values = implode(', ', $values);
+        $sql = sql::for_db(
+            pgsql: new sql(
+                "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid) VALUES $values
+                 ON CONFLICT (contextid, distance) DO UPDATE SET relatedcontextid = EXCLUDED.relatedcontextid",
+                $params
+            ),
+            mariadb: new sql(
+                "INSERT INTO {tool_mulib_context_map} (contextid, distance, relatedcontextid) VALUES $values
+                 ON DUPLICATE KEY UPDATE relatedcontextid = VALUES(relatedcontextid)",
+                $params
+            )
+        );
+        $DB->execute($sql->sql, $sql->params);
 
         $DB->delete_records_select('tool_mulib_context_map', "contextid = ? AND distance > ?", [$contextid, $maxdistance]);
     }

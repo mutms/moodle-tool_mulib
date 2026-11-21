@@ -168,8 +168,6 @@ final class pdb {
             return 'pdo_pgsql';
         } else if ($dbfamily === 'mysql') {
             return 'pdo_mysql';
-        } else if ($dbfamily === 'mssql') {
-            return 'pdo_sqlsrv';
         } else {
             throw new \core\exception\coding_exception('Unknown db driver family: ' . $dbfamily);
         }
@@ -193,8 +191,6 @@ final class pdb {
             $dsn = "pgsql:host={$CFG->dbhost};dbname={$CFG->dbname}";
         } else if ($dbfamily === 'mysql') {
             $dsn = "mysql:host={$CFG->dbhost};dbname={$CFG->dbname};charset=utf8mb4";
-        } else if ($dbfamily === 'mssql') {
-            $dsn = "sqlsrv:server={$CFG->dbhost};database={$CFG->dbname}";
         } else {
             throw new \core\exception\coding_exception('Unknown db driver family: ' . $dbfamily);
         }

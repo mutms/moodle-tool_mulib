@@ -305,19 +305,25 @@ final class profilefield_cache {
         ];
 
         $pfwhere = $userid ? 'AND pf.userid = :pfuserid' : '';
-        if ($DB->get_dbfamily() === 'mysql') {
-            $sql = /** @lang=MySQL */
+        $updateparams = $params + ['pfuserid' => $userid];
+        $sql = sql::for_db(
+            pgsql: new sql(
+                "UPDATE {tool_mulib_profilefield} pf
+                    SET $column = v.cachedvalue
+                   FROM ($source) v
+                  WHERE v.userid = pf.userid AND pf.fieldid = :fieldid $pfwhere AND pf.$column <> v.cachedvalue",
+                $updateparams
+            ),
+            mariadb: new sql(
+                /** @lang=MySQL */
                 "UPDATE {tool_mulib_profilefield} pf
                    JOIN ($source) v ON v.userid = pf.userid
                     SET pf.$column = v.cachedvalue
-                  WHERE pf.fieldid = :fieldid $pfwhere AND pf.$column <> v.cachedvalue";
-        } else {
-            $sql = "UPDATE {tool_mulib_profilefield} pf
-                       SET $column = v.cachedvalue
-                      FROM ($source) v
-                     WHERE v.userid = pf.userid AND pf.fieldid = :fieldid $pfwhere AND pf.$column <> v.cachedvalue";
-        }
-        $DB->execute($sql, $params + ['pfuserid' => $userid]);
+                  WHERE pf.fieldid = :fieldid $pfwhere AND pf.$column <> v.cachedvalue",
+                $updateparams
+            )
+        );
+        $DB->execute($sql->sql, $sql->params);
 
         $sql = "INSERT INTO {tool_mulib_profilefield} (userid, fieldid, $column)
                 SELECT v.userid, :fieldid, v.cachedvalue

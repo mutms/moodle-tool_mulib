@@ -50,43 +50,33 @@ final class mudb {
 
         self::validate_upsert_record_arguments($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
 
-        if ($DB->get_dbfamily() === 'postgres') {
-            self::upsert_record_pgsql($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
-            return;
-        } else if ($DB->get_dbfamily() === 'mysql') {
-            self::upsert_record_mysql($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
-            return;
-        }
-
-        // NOTE: this is a fallback implementation for unsupported MS SQL Server.
-
-        $conditions = [];
-        foreach ($uniqueindexcolumns as $column) {
-            $conditions[$column] = $dataobject->$column;
-        }
-
-        $record = $DB->get_record($table, $conditions);
-        if ($record) {
-            $dataobject->id = $record->id;
-            $DB->update_record($table, $dataobject);
-        } else {
-            try {
-                if ($insertonlyfields) {
-                    $insertdata = (object)((array)$dataobject + $insertonlyfields);
-                } else {
-                    $insertdata = $dataobject;
-                }
-                $DB->insert_record($table, $insertdata);
-            } catch (dml_write_exception $e) {
-                // Could be a concurrent insert trouble.
-                $record = $DB->get_record($table, $conditions);
-                if (!$record) {
-                    throw $e;
-                }
-                $dataobject->id = $record->id;
-                $DB->update_record($table, $dataobject);
+        $fields = [];
+        $params = [];
+        $pgsqlupdates = [];
+        $mariadbupdates = [];
+        foreach ((array)$dataobject as $field => $value) {
+            $fields[] = $field;
+            $params[] = $value;
+            if (!in_array($field, $uniqueindexcolumns)) {
+                $pgsqlupdates[] = "$field = EXCLUDED.$field";
+                $mariadbupdates[] = "$field = VALUES($field)";
             }
         }
+        foreach ($insertonlyfields as $field => $value) {
+            $fields[] = $field;
+            $params[] = $value;
+        }
+        $insert = "INSERT INTO {{$table}} (" . implode(', ', $fields) . ")
+                   VALUES (" . implode(', ', array_fill(0, count($fields), '?')) . ")";
+
+        $sql = sql::for_db(
+            pgsql: new sql(
+                "$insert ON CONFLICT (" . implode(', ', $uniqueindexcolumns) . ") DO UPDATE SET " . implode(', ', $pgsqlupdates),
+                $params
+            ),
+            mariadb: new sql("$insert ON DUPLICATE KEY UPDATE " . implode(', ', $mariadbupdates), $params)
+        );
+        $DB->execute($sql->sql, $sql->params);
     }
 
     /**
@@ -165,81 +155,6 @@ final class mudb {
             return false;
         }
         return true;
-    }
-
-    /**
-     * PostgreSQL UPSERT.
-     *
-     * @param string $table
-     * @param stdClass $dataobject
-     * @param string[] $uniqueindexcolumns list of all columns in unique index
-     * @param array $insertonlyfields additional fields with values to be used only for inserts
-     */
-    protected static function upsert_record_pgsql(string $table, stdClass $dataobject, array $uniqueindexcolumns, array $insertonlyfields): void {
-        global $DB;
-
-        $values = [];
-        $fields = [];
-        $params = [];
-        $updates = [];
-        foreach ((array)$dataobject as $field => $value) {
-            $params[] = $value;
-            $values[] = '?';
-            $fields[] = $field;
-            if (!in_array($field, $uniqueindexcolumns)) {
-                $updates[] = "$field = EXCLUDED.$field";
-            }
-        }
-        foreach ($insertonlyfields as $field => $value) {
-            $params[] = $value;
-            $values[] = '?';
-            $fields[] = $field;
-        }
-        $values = implode(',', $values);
-        $fields = implode(',', $fields);
-        $constraint = implode(',', $uniqueindexcolumns);
-        $updates = implode(', ', $updates);
-
-        $sql = "INSERT INTO {{$table}} ($fields) VALUES ($values)
-                            ON CONFLICT ($constraint) DO UPDATE SET $updates";
-        $DB->execute($sql, $params);
-    }
-
-    /**
-     * MySQL UPSERT.
-     *
-     * @param string $table
-     * @param stdClass $dataobject
-     * @param string[] $uniqueindexcolumns list of all columns in unique index
-     * @param array $insertonlyfields additional fields with values to be used only for inserts
-     */
-    protected static function upsert_record_mysql(string $table, stdClass $dataobject, array $uniqueindexcolumns, array $insertonlyfields): void {
-        global $DB;
-
-        $values = [];
-        $fields = [];
-        $params = [];
-        $updates = [];
-        foreach ((array)$dataobject as $field => $value) {
-            $params[] = $value;
-            $values[] = '?';
-            $fields[] = $field;
-            if (!in_array($field, $uniqueindexcolumns)) {
-                $updates[] = "$field = VALUES($field)";
-            }
-        }
-        foreach ($insertonlyfields as $field => $value) {
-            $params[] = $value;
-            $values[] = '?';
-            $fields[] = $field;
-        }
-        $values = implode(',', $values);
-        $fields = implode(',', $fields);
-        $updates = implode(', ', $updates);
-
-        $sql = "INSERT INTO {{$table}} ($fields) VALUES ($values)
-                            ON DUPLICATE KEY UPDATE $updates";
-        $DB->execute($sql, $params);
     }
 
     /**

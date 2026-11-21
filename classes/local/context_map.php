@@ -49,41 +49,29 @@ final class context_map {
         sql $where,
         bool $doanything = true
     ): sql {
-        $sql = new sql(
+        $join = self::get_contexts_by_capability_join($capability, $userorid, 'ctx', $doanything, 'ctx_');
+
+        if ($join['where']->sql === '1=2') {
+            $where = $join['where'];
+        } else {
+            $where = sql::join(' AND ', [$join['where'], $where]);
+        }
+
+        return (new sql(
             "SELECT ctx.id
                FROM {context} ctx
                /* join */
-               /* where */
-               /* groupby */"
-        );
-
-        $join = self::get_contexts_by_capability_join($capability, $userorid, 'ctx', $doanything, 'ctx_');
-
-        $sql = $sql->replace_comment('join', $join['join']);
-        if ($join['join'] === '') {
-            $sql = $sql->replace_comment('groupby', "");
-        } else {
-            $sql = $sql->replace_comment('groupby', "GROUP BY ctx.id");
-        }
-
-        $wheres = [];
-        $wheres[] = $join['where'];
-        if ($join['where']->sql !== '1=2' && $where->sql !== '') {
-            $wheres[] = $where;
-        }
-        if ($wheres) {
-            $wheres = sql::join(' AND ', $wheres);
-            $sql = $sql->replace_comment('where', $wheres->wrap('WHERE ', ''));
-        } else {
-            $sql = $sql->replace_comment('where', "");
-        }
-
-        return $sql;
+              WHERE {$where->sql}
+              /* groupby */",
+            $where->params
+        ))
+            ->replace_comment('join', $join['join'])
+            ->replace_comment('groupby', $join['join']->sql === '' ? '' : 'GROUP BY ctx.id');
     }
 
     /**
      * Returns joins and where SQL fragments that reference contexts where user has given
-     * in contexts other than blocks and activity modules.
+     * capability in contexts other than blocks and activity modules.
      *
      * WARNING: these join may return duplicate rows!
      *
@@ -102,32 +90,27 @@ final class context_map {
         string $prefix = 'cbc_'
     ): array {
         global $CFG, $DB;
-        $p = $prefix; // To keep sql strings shorter.
+        $p = $prefix;
+        $c = $contextalias;
 
         $userid = is_object($userorid) ? $userorid->id : $userorid;
+        $nothing = ['join' => new sql(''), 'where' => new sql('1=2')];
 
         $capinfo = get_capability_info($capability);
         if (!$capinfo) {
             debugging('Capability "' . $capability . '" was not found! This has to be fixed in code.');
-            return ['join' => new sql(""), 'where' => new sql("1=2")];
+            return $nothing;
         }
 
         if (!$userid || isguestuser($userid)) {
             if ($capinfo->captype === 'write' || ($capinfo->riskbitmask & (RISK_XSS | RISK_CONFIG | RISK_DATALOSS))) {
-                return ['join' => new sql(""), 'where' => new sql("1=2")];
+                return $nothing;
             }
-            if (!$userid) {
-                $roleid = $CFG->notloggedinroleid ?? 0;
-                if (!$roleid) {
-                    return ['join' => new sql(""), 'where' => new sql("1=2")];
-                }
-                return self::get_contexts_by_capability_join_guest($capability, $roleid, $contextalias, $p);
-            }
-            $roleid = $CFG->guestroleid ?? 0;
+            $roleid = (int)($userid ? ($CFG->guestroleid ?? 0) : ($CFG->notloggedinroleid ?? 0));
             if (!$roleid) {
-                return ['join' => new sql(""), 'where' => new sql("1=2")];
+                return $nothing;
             }
-            return self::get_contexts_by_capability_join_guest($capability, $roleid, $contextalias, $p);
+            return self::get_contexts_by_capability_join_guest($capability, $roleid, $contextalias, $prefix);
         }
 
         $islocking = false;
@@ -138,85 +121,80 @@ final class context_map {
         }
 
         if (is_siteadmin($userid) && $doanything) {
+            $wheres = [new sql("$c.contextlevel <= :courselevel", ['courselevel' => CONTEXT_COURSE])];
             if ($islocking) {
-                return ['join' => "", 'where' => new sql("{$contextalias}.locked = 0 AND {$contextalias}.contextlevel <= 50")];
-            } else {
-                return ['join' => new sql(""), 'where' => new sql("{$contextalias}.contextlevel <= 50")];
+                $wheres[] = "$c.locked = 0";
             }
+            return ['join' => new sql(''), 'where' => sql::join(' AND ', $wheres)->wrap('(', ')')];
         }
 
         $usercontext = \context_user::instance($userid);
         self::add_default_role_hacks();
-        $magicdefaultuserid = self::MAGIC_DEFAULT_USER_ID;
-        $syscontextid = \context_system::instance()->id;
+
+        $userparams = ['userid' => $userid, 'defaultuserid' => self::MAGIC_DEFAULT_USER_ID];
 
         $hasprohibits = false;
         if ($DB->record_exists('role_capabilities', ['capability' => $capability, 'permission' => CAP_PROHIBIT])) {
-            $sql = new sql(
-                "SELECT 'x'
-                   FROM {role_assignments} ra
-                   JOIN {role_capabilities} rc ON rc.contextid = ra.contextid AND rc.roleid = ra.roleid
-                                                  AND rc.capability = :capability AND rc.permission = :prohibit
-                  WHERE ra.contextid = :syscontextid AND (ra.userid = :userid OR ra.userid = {$magicdefaultuserid})",
-                ['capability' => $capability, 'prohibit' => CAP_PROHIBIT, 'userid' => $userid, 'syscontextid' => $syscontextid]
-            );
-            if ($DB->record_exists_sql($sql->sql, $sql->params)) {
+            $sql = "SELECT 'x'
+                      FROM {role_assignments} ra
+                      JOIN {role_capabilities} rc ON rc.contextid = ra.contextid AND rc.roleid = ra.roleid
+                                                     AND rc.capability = :capability AND rc.permission = :prohibit
+                     WHERE ra.contextid = :syscontextid AND (ra.userid = :userid OR ra.userid = :defaultuserid)";
+            $params = $userparams + [
+                'capability' => $capability,
+                'prohibit' => CAP_PROHIBIT,
+                'syscontextid' => \context_system::instance()->id,
+            ];
+            if ($DB->record_exists_sql($sql, $params)) {
                 // System level role with prohibited system level capability means all contexts are prohibited.
-                return ['join' => new sql(""), 'where' => new sql("1=2")];
+                return $nothing;
             }
             $hasprohibits = true;
         }
 
-        $wheres = [];
         $join = new sql(
-            "JOIN {tool_mulib_context_map} {$p}map ON {$p}map.contextid = {$contextalias}.id
+            "JOIN {tool_mulib_context_map} {$p}map ON {$p}map.contextid = $c.id
              JOIN {role_assignments} {$p}ra ON {$p}ra.contextid = {$p}map.relatedcontextid
-                                               AND ({$p}ra.userid = :userid OR {$p}ra.userid = {$magicdefaultuserid})
-
-             JOIN {tool_mulib_context_map} {$p}mc ON {$p}mc.contextid = {$contextalias}.id
+                                               AND ({$p}ra.userid = :userid OR {$p}ra.userid = :defaultuserid)
+             JOIN {tool_mulib_context_map} {$p}mc ON {$p}mc.contextid = $c.id
              JOIN {role_capabilities} {$p}rc ON {$p}rc.roleid = {$p}ra.roleid AND {$p}rc.contextid = {$p}mc.relatedcontextid
                                                 AND {$p}rc.capability = :capability1 AND {$p}rc.permission = :allow
-        LEFT JOIN (
-              SELECT {$p}cm.contextid, {$p}cm.distance, {$p}rc.roleid
-                FROM {tool_mulib_context_map} {$p}cm
-                JOIN {role_capabilities} {$p}rc ON {$p}rc.contextid = {$p}cm.relatedcontextid
-                     AND {$p}rc.capability = :capability2 AND {$p}rc.permission = :prevent
-                   ) {$p}pvt ON {$p}pvt.contextid = {$contextalias}.id AND {$p}pvt.roleid = {$p}ra.roleid AND {$p}pvt.distance < {$p}mc.distance
-
-             /* prohibitjoin */
-           ",
-            ['capability1' => $capability, 'capability2' => $capability, 'userid' => $userid, 'allow' => CAP_ALLOW, 'prevent' => CAP_PREVENT]
+        LEFT JOIN (SELECT cm.contextid, cm.distance, rc.roleid
+                     FROM {tool_mulib_context_map} cm
+                     JOIN {role_capabilities} rc ON rc.contextid = cm.relatedcontextid
+                                                    AND rc.capability = :capability2 AND rc.permission = :prevent
+                  ) {$p}pvt ON {$p}pvt.contextid = $c.id AND {$p}pvt.roleid = {$p}ra.roleid AND {$p}pvt.distance < {$p}mc.distance
+             /* prohibitjoin */",
+            $userparams + ['capability1' => $capability, 'capability2' => $capability, 'allow' => CAP_ALLOW, 'prevent' => CAP_PREVENT]
         );
-        $wheres[] = "{$p}pvt.contextid IS NULL";
-        if ($islocking) {
-            $wheres[] = "{$contextalias}.locked = 0";
-        }
-
-        if (mulib::is_mutenancy_active() && $usercontext->tenantid) {
-            $wheres[] = "({$contextalias}.tenantid IS NULL OR {$contextalias}.tenantid = {$usercontext->tenantid})";
-        };
+        $wheres = ["{$p}pvt.contextid IS NULL"];
 
         if ($hasprohibits) {
-            // If there are any prohibits for given capability then the query will be much slower.
             $prohibitjoin = new sql(
-                "LEFT JOIN (
-                        SELECT map.contextid
-                          FROM {tool_mulib_context_map} map
-                          JOIN {role_assignments} ra ON ra.contextid = map.relatedcontextid
-                                                        AND (ra.userid = :userid OR ra.userid = {$magicdefaultuserid})
-                          JOIN {tool_mulib_context_map} mc ON mc.contextid = map.contextid
-                          JOIN {role_capabilities} rc ON rc.roleid = ra.roleid AND rc.contextid = mc.relatedcontextid
-                                                         AND rc.capability = :capability AND rc.permission = :prohibit
-                      ) AS {$p}pbt ON {$p}pbt.contextid = {$contextalias}.id",
-                ['capability' => $capability, 'userid' => $userid, 'prohibit' => CAP_PROHIBIT]
+                "LEFT JOIN (SELECT map.contextid
+                              FROM {tool_mulib_context_map} map
+                              JOIN {role_assignments} ra ON ra.contextid = map.relatedcontextid
+                                                            AND (ra.userid = :userid OR ra.userid = :defaultuserid)
+                              JOIN {tool_mulib_context_map} mc ON mc.contextid = map.contextid
+                              JOIN {role_capabilities} rc ON rc.roleid = ra.roleid AND rc.contextid = mc.relatedcontextid
+                                                             AND rc.capability = :capability AND rc.permission = :prohibit
+                           ) {$p}pbt ON {$p}pbt.contextid = $c.id",
+                $userparams + ['capability' => $capability, 'prohibit' => CAP_PROHIBIT]
             );
-            $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
             $wheres[] = "{$p}pbt.contextid IS NULL";
         } else {
-            $join = $join->replace_comment('prohibitjoin', "");
+            $prohibitjoin = '';
+        }
+        $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
+
+        if ($islocking) {
+            $wheres[] = "$c.locked = 0";
+        }
+        if (mulib::is_mutenancy_active() && $usercontext->tenantid) {
+            $wheres[] = new sql("($c.tenantid IS NULL OR $c.tenantid = :tenantid)", ['tenantid' => $usercontext->tenantid]);
         }
 
-        return ['join' => $join, 'where' => new sql('(' . implode(" AND ", $wheres) . ')')];
+        return ['join' => $join, 'where' => sql::join(' AND ', $wheres)->wrap('(', ')')];
     }
 
     /**
@@ -225,71 +203,65 @@ final class context_map {
      * @param string $capability
      * @param int $roleid guest or not-logged-in user role id
      * @param string $contextalias
-     * @param string $p prefix
-     * @return array{ join: sql, where: string }
+     * @param string $prefix join table alias prefix
+     * @return array{ join: sql, where: sql }
      */
-    protected static function get_contexts_by_capability_join_guest(string $capability, int $roleid, string $contextalias, string $p): array {
+    protected static function get_contexts_by_capability_join_guest(string $capability, int $roleid, string $contextalias, string $prefix): array {
         global $DB;
-
-        $syscontextid = \context_system::instance()->id;
+        $p = $prefix;
+        $c = $contextalias;
 
         $hasprohibits = false;
         if ($DB->record_exists('role_capabilities', ['capability' => $capability, 'permission' => CAP_PROHIBIT])) {
-            if (
-                $DB->record_exists(
-                    'role_capabilities',
-                    ['capability' => $capability, 'permission' => CAP_PROHIBIT, 'roleid' => $roleid, 'contextid' => $syscontextid]
-                )
-            ) {
+            $conditions = ['capability' => $capability, 'permission' => CAP_PROHIBIT, 'roleid' => $roleid, 'contextid' => \context_system::instance()->id];
+            if ($DB->record_exists('role_capabilities', $conditions)) {
                 // System level role with prohibited system level capability means all contexts are prohibited.
-                return ['join' => new sql(""), 'where' => new sql("1=2")];
+                return ['join' => new sql(''), 'where' => new sql('1=2')];
             }
             $hasprohibits = true;
         }
 
-        $wheres = [];
         $join = new sql(
-            "JOIN {tool_mulib_context_map} {$p}mc ON {$p}mc.contextid = {$contextalias}.id
-             JOIN {role_capabilities} {$p}rc ON {$p}rc.roleid = {$roleid} AND {$p}rc.contextid = {$p}mc.relatedcontextid
+            "JOIN {tool_mulib_context_map} {$p}mc ON {$p}mc.contextid = $c.id
+             JOIN {role_capabilities} {$p}rc ON {$p}rc.roleid = :roleid1 AND {$p}rc.contextid = {$p}mc.relatedcontextid
                                                 AND {$p}rc.capability = :capability1 AND {$p}rc.permission = :allow
-        LEFT JOIN (
-              SELECT {$p}cm.contextid, {$p}cm.distance
-                FROM {tool_mulib_context_map} {$p}cm
-                JOIN {role_capabilities} {$p}rc ON {$p}rc.contextid = {$p}cm.relatedcontextid AND {$p}rc.roleid = {$roleid}
-                     AND {$p}rc.capability = :capability2 AND {$p}rc.permission = :prevent
-                   ) {$p}pvt ON {$p}pvt.contextid = {$p}mc.contextid AND {$p}pvt.distance < {$p}mc.distance
-
-             /* prohibitjoin */
-             /* tenantjoin */
-           ",
-            ['capability1' => $capability, 'capability2' => $capability, 'allow' => CAP_ALLOW, 'prevent' => CAP_PREVENT]
+        LEFT JOIN (SELECT cm.contextid, cm.distance
+                     FROM {tool_mulib_context_map} cm
+                     JOIN {role_capabilities} rc ON rc.contextid = cm.relatedcontextid AND rc.roleid = :roleid2
+                                                    AND rc.capability = :capability2 AND rc.permission = :prevent
+                  ) {$p}pvt ON {$p}pvt.contextid = $c.id AND {$p}pvt.distance < {$p}mc.distance
+             /* prohibitjoin */",
+            [
+                'roleid1' => $roleid,
+                'roleid2' => $roleid,
+                'capability1' => $capability,
+                'capability2' => $capability,
+                'allow' => CAP_ALLOW,
+                'prevent' => CAP_PREVENT,
+            ]
         );
-        $wheres[] = "{$p}pvt.contextid IS NULL";
-
-        if (mulib::is_mutenancy_active()) {
-            if (!get_config('tool_mutenancy', 'allowguests')) {
-                $wheres[] = "{$contextalias}.tenantid IS NULL";
-            }
-        };
+        $wheres = ["{$p}pvt.contextid IS NULL"];
 
         if ($hasprohibits) {
-            // If there are any prohibits for given capability then the query will be much slower.
             $prohibitjoin = new sql(
-                "LEFT JOIN (
-                        SELECT map.contextid
-                          FROM {tool_mulib_context_map} map
-                          JOIN {role_capabilities} rc ON rc.roleid = {$roleid} AND rc.contextid = map.relatedcontextid
-                                                         AND rc.capability = :capability AND rc.permission = :prohibit
-                      ) AS {$p}pbt ON {$p}pbt.contextid = {$contextalias}.id",
-                ['capability' => $capability, 'prohibit' => CAP_PROHIBIT]
+                "LEFT JOIN (SELECT map.contextid
+                              FROM {tool_mulib_context_map} map
+                              JOIN {role_capabilities} rc ON rc.roleid = :roleid AND rc.contextid = map.relatedcontextid
+                                                             AND rc.capability = :capability AND rc.permission = :prohibit
+                           ) {$p}pbt ON {$p}pbt.contextid = $c.id",
+                ['roleid' => $roleid, 'capability' => $capability, 'prohibit' => CAP_PROHIBIT]
             );
-            $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
             $wheres[] = "{$p}pbt.contextid IS NULL";
         } else {
-            $join = $join->replace_comment('prohibitjoin', "");
+            $prohibitjoin = '';
+        }
+        $join = $join->replace_comment('prohibitjoin', $prohibitjoin);
+
+        if (mulib::is_mutenancy_active() && !get_config('tool_mutenancy', 'allowguests')) {
+            $wheres[] = "$c.tenantid IS NULL";
         }
 
-        return ['join' => $join, 'where' => new sql('(' . implode(" AND ", $wheres) . ')')];
+        return ['join' => $join, 'where' => sql::join(' AND ', $wheres)->wrap('(', ')')];
     }
 
     /**
