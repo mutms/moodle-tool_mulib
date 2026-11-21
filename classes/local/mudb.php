@@ -50,7 +50,7 @@ final class mudb {
 
         self::validate_upsert_record_arguments($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
 
-        if ($DB->get_dbfamily() === 'pgsql') {
+        if ($DB->get_dbfamily() === 'postgres') {
             self::upsert_record_pgsql($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
             return;
         } else if ($DB->get_dbfamily() === 'mysql') {
