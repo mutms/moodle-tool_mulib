@@ -33,4 +33,7 @@ function xmldb_tool_mulib_install(): void {
     \tool_mulib\local\mulib::purge_downloaded_translations();
 
     \tool_mulib\local\context_map_builder::build();
+
+    \tool_mulib\local\profilefield_cache::add_supported_fields();
+    \tool_mulib\local\profilefield_cache::populate_pending_fields(new \null_progress_trace());
 }

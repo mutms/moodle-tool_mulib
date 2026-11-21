@@ -44,6 +44,21 @@ $ADMIN->add('tool_mulib_extdb', new admin_externalpage(
     'tool/mulib:useextdb'
 ));
 
+$settings = new admin_settingpage('tool_mulib_profilefields', get_string('profilefields', 'tool_mulib'));
+$ADMIN->add('accounts', $settings);
+if ($ADMIN->fulltree) {
+    $setting = new admin_setting_configduration(
+        'tool_mulib/profilefieldlifetime',
+        get_string('profilefieldlifetime', 'tool_mulib'),
+        get_string('profilefieldlifetime_desc', 'tool_mulib'),
+        DAYSECS,
+        HOURSECS
+    );
+    $setting->set_min_duration(HOURSECS);
+    $settings->add($setting);
+    $settings->add(new \tool_mulib\local\setting\profilefields());
+}
+
 $settings = new admin_settingpage('tool_mulib_lang', get_string('lang_settings', 'tool_mulib'));
 $ADMIN->add('language', $settings);
 if ($ADMIN->fulltree) {

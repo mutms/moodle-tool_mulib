@@ -171,6 +171,16 @@ class behat_tool_mulib extends behat_base {
     }
 
     /**
+     * Add all supported custom profile fields to cache and populate them.
+     *
+     * @Given all custom profile fields are cached
+     */
+    public function cache_all_profile_fields(): void {
+        \tool_mulib\local\profilefield_cache::add_supported_fields();
+        \tool_mulib\local\profilefield_cache::populate_pending_fields(new \null_progress_trace());
+    }
+
+    /**
      * Admin bookmark takes way too much space on admin pages,
      * so get rid of it.
      *

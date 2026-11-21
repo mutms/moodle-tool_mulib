@@ -45,4 +45,13 @@ $tasks = [
         'dayofweek' => '*',
         'disabled' => 0,
     ],
+    [
+        'classname' => tool_mulib\task\profilefield_cron::class,
+        'minute' => 'R',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+        'disabled' => 0,
+    ],
 ];

@@ -79,4 +79,28 @@ $observers = [
         'eventname' => \core\event\course_deleted::class,
         'callback' => \tool_mulib\local\context_map_builder::class . '::callback_course_deleted',
     ],
+    [
+        'eventname' => \core\event\user_created::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_created',
+    ],
+    [
+        'eventname' => \core\event\user_updated::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_updated',
+    ],
+    [
+        'eventname' => \core\event\user_deleted::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_deleted',
+    ],
+    [
+        'eventname' => \core\event\user_info_field_created::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_info_field_created',
+    ],
+    [
+        'eventname' => \core\event\user_info_field_updated::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_info_field_updated',
+    ],
+    [
+        'eventname' => \core\event\user_info_field_deleted::class,
+        'callback' => \tool_mulib\local\profilefield_cache::class . '::callback_user_info_field_deleted',
+    ],
 ];

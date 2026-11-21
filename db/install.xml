@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mulib/db" VERSION="20260927" COMMENT="XMLDB file for tool_mulib"
+<XMLDB PATH="admin/tool/mulib/db" VERSION="20261121" COMMENT="XMLDB file for tool_mulib"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -124,6 +124,43 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated" COMMENT="Purge of old rows"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="tool_mulib_profilefield" COMMENT="Cache of custom profile field values of supported types, one row per non-deleted user and cached field, defaults included, ignores field visibility">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="charvalue" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Value of text-like fields, trimmed and truncated to 255 characters"/>
+        <FIELD NAME="intvalue" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Value of checkbox and datetime fields"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fieldid" TYPE="foreign" FIELDS="fieldid" REFTABLE="user_info_field" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid-fieldid" UNIQUE="true" FIELDS="userid, fieldid"/>
+        <INDEX NAME="fieldid-charvalue" UNIQUE="false" FIELDS="fieldid, charvalue"/>
+        <INDEX NAME="fieldid-intvalue" UNIQUE="false" FIELDS="fieldid, intvalue"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="tool_mulib_profilefield_reference" COMMENT="Persistent usage of cached profile fields, referenced fields cannot be removed from cache">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="fieldid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Component using the field"/>
+        <FIELD NAME="area" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Type of usage in component"/>
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Item using the field, 0 if not applicable"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fieldid" TYPE="foreign" FIELDS="fieldid" REFTABLE="user_info_field" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="fieldid-component-area-itemid" UNIQUE="true" FIELDS="fieldid, component, area, itemid"/>
+        <INDEX NAME="component-area-itemid" UNIQUE="false" FIELDS="component, area, itemid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

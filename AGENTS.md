@@ -100,6 +100,18 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
   walking the context tree: `get_contexts_by_capability_query()` (subquery of context ids, usually
   `wrap("JOIN (", ")capctx ON capctx.id = x.contextid")`) and `get_contexts_by_capability_join()`
   (`['join' => sql, 'where' => sql]`). Cache tables are rebuilt by `context_map_builder` (cron, events).
+  Activity and block contexts are never added to the map: speed is the whole point of it, and activities
+  hold most role overrides and prohibits.
+- `local\profilefield_cache` - cached custom profile field values (`tool_mulib_profilefield`: `charvalue`
+  for text and menu, trimmed and cut to 255 chars, `intvalue` for checkbox and datetime, defaults included,
+  visibility ignored). Use only fields that are ready (`is_ready()`), never read `user_info_data` for
+  filtering. Persistent usage must be recorded with `set_references(component, area, itemid, fieldids)`,
+  an empty list clears the item; referenced and identity fields cannot be removed from cache. Types come
+  from handlers in `local\profilefield\*` registered via `hook\profilefield_handlers`. Values are kept
+  current by observers and `task\profilefield_cron`; only profile field changes in admin UI queue adhoc
+  population (keeps UI fast), install, upgrade and CLI populate inline. Admin UI is settings page
+  `tool_mulib_profilefields` (Users > Accounts) with table setting `local\setting\profilefields`.
+  Generators do not trigger profile field events, Behat uses `all custom profile fields are cached`.
 - `local\mudb::upsert_record()` - concurrent-safe insert or update for tables with one unique index.
 - `local\mulib::is_<plugin>_available()` / `is_<plugin>_active()` - optional sibling plugins: muprog,
   mucertify, mutrain, murelatio, muhome, mutenancy, mucatalog.
@@ -163,7 +175,8 @@ and `initialise()`. See the program and certification pages in tool_muprog and t
 
 `tool_mulib_notification`, `tool_mulib_notification_user`, `tool_mulib_extdb_server`,
 `tool_mulib_extdb_query`, `tool_mulib_context_parent`, `tool_mulib_context_map` (caches),
-`tool_mulib_muform_wizard` (wizard state, rows older than a day are deleted).
+`tool_mulib_muform_wizard` (wizard state, rows older than a day are deleted),
+`tool_mulib_profilefield` (cache), `tool_mulib_profilefield_reference`.
 
 Capability: `tool/mulib:useextdb`.
 

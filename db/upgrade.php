@@ -155,5 +155,50 @@ function xmldb_tool_mulib_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092753, 'tool', 'mulib');
     }
 
+    if ($oldversion < 2026112053) {
+        $table = new xmldb_table('tool_mulib_profilefield');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('fieldid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('charvalue', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('intvalue', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('fieldid', XMLDB_KEY_FOREIGN, ['fieldid'], 'user_info_field', ['id']);
+        $table->add_index('userid-fieldid', XMLDB_INDEX_UNIQUE, ['userid', 'fieldid']);
+        $table->add_index('fieldid-charvalue', XMLDB_INDEX_NOTUNIQUE, ['fieldid', 'charvalue']);
+        $table->add_index('fieldid-intvalue', XMLDB_INDEX_NOTUNIQUE, ['fieldid', 'intvalue']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('tool_mulib_profilefield_reference');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('fieldid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('component', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('area', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('itemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fieldid', XMLDB_KEY_FOREIGN, ['fieldid'], 'user_info_field', ['id']);
+        $table->add_index('fieldid-component-area-itemid', XMLDB_INDEX_UNIQUE, ['fieldid', 'component', 'area', 'itemid']);
+        $table->add_index('component-area-itemid', XMLDB_INDEX_NOTUNIQUE, ['component', 'area', 'itemid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        \tool_mulib\local\profilefield_cache::add_supported_fields();
+
+        upgrade_plugin_savepoint(true, 2026112053, 'tool', 'mulib');
+
+        if (CLI_SCRIPT) {
+            $trace = new \core\output\progress_trace\text_progress_trace();
+        } else {
+            $trace = new \core\output\progress_trace\html_list_progress_trace();
+        }
+        \tool_mulib\local\profilefield_cache::populate_pending_fields($trace);
+        $trace->finished();
+    }
+
     return true;
 }

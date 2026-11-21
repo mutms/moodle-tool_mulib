@@ -97,10 +97,11 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $collection = provider::get_metadata(new \core_privacy\local\metadata\collection('tool_mulib'));
 
         $itemcollection = $collection->get_collection();
-        $this->assertCount(2, $itemcollection);
+        $this->assertCount(3, $itemcollection);
 
         $this->assertEquals('tool_mulib_notification_user', $itemcollection[0]->get_name());
         $this->assertEquals('tool_mulib_muform_wizard', $itemcollection[1]->get_name());
+        $this->assertEquals('tool_mulib_profilefield', $itemcollection[2]->get_name());
 
         // Make sure lang strings exist.
         foreach ($itemcollection as $table) {
@@ -146,6 +147,41 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         ]);
         provider::delete_data_for_all_users_in_context($syscontext);
         $this->assertSame(0, $DB->count_records('tool_mulib_muform_wizard', []));
+    }
+
+    public function test_profilefield_rows(): void {
+        global $DB;
+
+        $generator = $this->getDataGenerator();
+        $field = $generator->create_custom_profile_field(['datatype' => 'text', 'shortname' => 'dept', 'name' => 'Dept']);
+        $user1 = $generator->create_user(['profile_field_dept' => 'Sales']);
+        $user2 = $generator->create_user();
+        \tool_mulib\local\profilefield_cache::add_field((int)$field->id);
+        \tool_mulib\local\profilefield_cache::populate_field((int)$field->id, new \null_progress_trace());
+        $syscontext = \context_system::instance();
+
+        $subcontexts = [get_string('privacy:metadata:tool_mulib_profilefield:tableexplanation', 'tool_mulib')];
+        $writer = writer::with_context($syscontext);
+        $this->export_context_data_for_user($user1->id, $syscontext, 'tool_mulib');
+        $data = $writer->get_related_data($subcontexts, 'data');
+        $this->assertCount(1, $data);
+        $this->assertSame('Sales', $data[0]->charvalue);
+
+        $userlist = new \core_privacy\local\request\userlist($syscontext, 'tool_mulib');
+        provider::get_users_in_context($userlist);
+        $this->assertContains((int)$user1->id, array_map('intval', $userlist->get_userids()));
+
+        $contextlist = new \core_privacy\local\request\approved_contextlist($user1, 'tool_mulib', [$syscontext->id]);
+        provider::delete_data_for_user($contextlist);
+        $this->assertFalse($DB->record_exists('tool_mulib_profilefield', ['userid' => $user1->id]));
+
+        $userlist = new \core_privacy\local\request\approved_userlist($syscontext, 'tool_mulib', [$user2->id]);
+        provider::delete_data_for_users($userlist);
+        $this->assertFalse($DB->record_exists('tool_mulib_profilefield', ['userid' => $user2->id]));
+
+        \tool_mulib\local\profilefield_cache::populate_field((int)$field->id, new \null_progress_trace());
+        provider::delete_data_for_all_users_in_context($syscontext);
+        $this->assertSame(0, $DB->count_records('tool_mulib_profilefield', []));
     }
 
     public function test_get_contexts_for_userid(): void {
