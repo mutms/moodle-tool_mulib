@@ -47,6 +47,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - options::set_disabled() for options shown but not selectable, rendered disabled and rejected when submitted by checkboxes
 - element::set_reload_on_change() reloading the form in browser when the value changes, for definitions built from submitted values
 - set_min_column_width() of radiocards and checkboxcards for two columns of short cards in small dialogs too
+- user_util with account status rules (suspendable, unsuspendable) and suspend() / unsuspend() helpers
 
 ### Changed
 

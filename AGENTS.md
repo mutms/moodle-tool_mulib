@@ -123,6 +123,9 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
   tool_mucohort cohort types and are described in its README; web services must use `can_use()` like the forms.
 - `local\search_util` - search SQL for autocomplete sources (`get_search_query()`, cohort and user
   search), `get_tenant_related_users_where()`, `format_user_label()`.
+- `local\user_util` - account status rules (`is_suspendable()`, `is_unsuspendable()`) and `suspend()` / `unsuspend()`
+  through core APIs; no capability checks, callers check the capability that applies (site actions
+  `moodle/user:update` in user context, tenant actions their own).
 - `local\customfield_util::change_instances_context()` - move custom field data when an item moves.
 - `local\vendor_loader::register($vendordir)` - Composer libraries in plugin `vendor/` directories;
   never include a plugin's `vendor/autoload.php`.
