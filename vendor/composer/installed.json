@@ -2,17 +2,17 @@
     "packages": [
         {
             "name": "opis/json-schema",
-            "version": "2.6.0",
-            "version_normalized": "2.6.0.0",
+            "version": "2.6.2",
+            "version_normalized": "2.6.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opis/json-schema.git",
-                "reference": "8458763e0dd0b6baa310e04f1829fc73da4e8c8a"
+                "reference": "b87b424da3fbeaab09567910fda48dc88d9dcbd8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opis/json-schema/zipball/8458763e0dd0b6baa310e04f1829fc73da4e8c8a",
-                "reference": "8458763e0dd0b6baa310e04f1829fc73da4e8c8a",
+                "url": "https://api.github.com/repos/opis/json-schema/zipball/b87b424da3fbeaab09567910fda48dc88d9dcbd8",
+                "reference": "b87b424da3fbeaab09567910fda48dc88d9dcbd8",
                 "shasum": ""
             },
             "require": {
@@ -26,7 +26,8 @@
                 "ext-intl": "*",
                 "phpunit/phpunit": "^9.0"
             },
-            "time": "2025-10-17T12:46:48+00:00",
+            "time": "2026-11-08T08:09:42+00:00",
+            "published-time": "2026-11-11T10:35:41+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -64,7 +65,7 @@
             ],
             "support": {
                 "issues": "https://github.com/opis/json-schema/issues",
-                "source": "https://github.com/opis/json-schema/tree/2.6.0"
+                "source": "https://github.com/opis/json-schema/tree/2.6.2"
             },
             "install-path": "../opis/json-schema"
         },
@@ -92,6 +93,7 @@
                 "phpunit/phpunit": "^9.0"
             },
             "time": "2025-10-17T12:38:41+00:00",
+            "published-time": "2025-10-17T12:40:48+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -156,6 +158,7 @@
                 "phpunit/phpunit": "^9"
             },
             "time": "2021-05-22T15:57:08+00:00",
+            "published-time": "2021-05-22T16:01:15+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {

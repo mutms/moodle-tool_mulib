@@ -57,6 +57,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - mudb::upsert_record_pgsql() is protected, use mudb::upsert_record()
 - new forms library
 - new integration of vendor/ plugin dependencies
+- opis/json-schema upgraded to 2.6.2, vendor/ dependencies installed with Composer 2.11.2
 - cohort_util::get_use_sql() and cohort_util::can_use() decide which cohorts may be selected in MuTMS plugins: visible cohorts,
   cohorts with moodle/cohort:view capability and advanced cohorts with an access record that allows using of the cohort;
   they replace search_util::is_cohort_visible()
