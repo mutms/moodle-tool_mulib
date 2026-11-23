@@ -204,5 +204,10 @@ Capability: `tool/mulib:useextdb`.
   `php admin/cli/purge_caches.php` after adding classes, `behat-init` after adding steps, `behat-util --enable`
   after adding a feature file (each site has its own `-init` and `-util`); fail dumps in the behat dataroot
   `behat_faildump`; scenario line paths need absolute file paths; summaries say "1 scenario" in singular.
+- Behat diagnostics for AI agents and developers (steps in `behat_tool_mulib`), files go to `diag/` in
+  `$CFG->behat_faildump_path`: `I save diagnostic screenshot "name"`, `I save diagnostic page content "name"`,
+  `I save diagnostics of ".css, .selector" elements as "name"` (JSON with rects, main computed styles and the topmost
+  element at each centre, `covered` reveals z-index problems). Combine with core `I change viewport size to "1280x800"`.
+  Add the steps temporarily to a scenario to check a UI change visually, then remove them again.
 - Never change license headers or `@copyright` tags of existing files. New files get
   `@copyright 2026 Petr Skoda`. Petr bumps versions and commits.

@@ -739,4 +739,98 @@ JS;
 
         return new $helperclass($this, $wrapper);
     }
+
+    /**
+     * Returns file path for diagnostic output of AI agents and developers.
+     *
+     * @param string $name file name without extension
+     * @param string $extension
+     * @return string
+     */
+    protected function get_diagnostic_file(string $name, string $extension): string {
+        global $CFG;
+        $dir = (empty($CFG->behat_faildump_path) ? $CFG->behat_dataroot . '/behat_faildump' : $CFG->behat_faildump_path) . '/diag';
+        if (!is_dir($dir)) {
+            make_writable_directory($dir);
+        }
+        $name = clean_param($name, PARAM_FILE);
+        if ($name === '') {
+            throw new coding_exception('Invalid diagnostic file name');
+        }
+        return "$dir/$name.$extension";
+    }
+
+    /**
+     * Save screenshot of the browser window to diag directory of behat fail dumps, for AI agents and developers.
+     *
+     * Use "I change viewport size to ..." first to get a specific screen size.
+     *
+     * @When I save diagnostic screenshot :name
+     *
+     * @param string $name file name without extension
+     */
+    public function save_diagnostic_screenshot(string $name): void {
+        $this->require_javascript('Screenshots require a real browser');
+        file_put_contents($this->get_diagnostic_file($name, 'png'), $this->getSession()->getScreenshot());
+    }
+
+    /**
+     * Save current page HTML to diag directory of behat fail dumps, for AI agents and developers.
+     *
+     * @When I save diagnostic page content :name
+     *
+     * @param string $name file name without extension
+     */
+    public function save_diagnostic_page_content(string $name): void {
+        file_put_contents($this->get_diagnostic_file($name, 'html'), $this->getSession()->getPage()->getContent());
+    }
+
+    /**
+     * Save layout and style diagnostics of elements matching CSS selector to diag directory of behat fail dumps.
+     *
+     * JSON with position, size, main computed styles and the topmost element at the centre of each element,
+     * which tells whether the element is covered by something else (z-index problems).
+     *
+     * @When I save diagnostics of :selector elements as :name
+     *
+     * @param string $selector CSS selector
+     * @param string $name file name without extension
+     */
+    public function save_element_diagnostics(string $selector, string $name): void {
+        $this->require_javascript('Element diagnostics require a real browser');
+        $script = <<<'JS'
+(function(selector) {
+    const describe = (el) => el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')
+        + (el.classList.length ? '.' + [...el.classList].join('.') : '') : null;
+    const properties = ['display', 'visibility', 'position', 'z-index', 'opacity', 'overflow', 'color',
+        'background-color', 'border', 'border-radius', 'box-shadow', 'font-family', 'font-size', 'font-weight',
+        'line-height', 'padding', 'margin', 'width', 'height'];
+    const result = {selector: selector, viewport: {width: window.innerWidth, height: window.innerHeight,
+        scrollX: window.scrollX, scrollY: window.scrollY}, elements: []};
+    for (const el of [...document.querySelectorAll(selector)].slice(0, 20)) {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        const styles = {};
+        for (const property of properties) {
+            styles[property] = style.getPropertyValue(property);
+        }
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const top = (x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight)
+            ? document.elementFromPoint(x, y) : null;
+        result.elements.push({
+            element: describe(el),
+            text: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+            rect: {left: rect.left, top: rect.top, width: rect.width, height: rect.height},
+            styles: styles,
+            topmost: describe(top),
+            covered: top !== null && top !== el && !el.contains(top),
+        });
+    }
+    return JSON.stringify(result, null, 2);
+})
+JS;
+        $json = $this->evaluate_script($script . '(' . json_encode($selector) . ')');
+        file_put_contents($this->get_diagnostic_file($name, 'json'), $json);
+    }
 }
