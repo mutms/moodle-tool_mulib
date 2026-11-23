@@ -806,7 +806,7 @@ JS;
         'background-color', 'border', 'border-radius', 'box-shadow', 'font-family', 'font-size', 'font-weight',
         'line-height', 'padding', 'margin', 'width', 'height'];
     const result = {selector: selector, viewport: {width: window.innerWidth, height: window.innerHeight,
-        scrollX: window.scrollX, scrollY: window.scrollY}, elements: []};
+        scrollX: window.scrollX, scrollY: window.scrollY}, focused: describe(document.activeElement), elements: []};
     for (const el of [...document.querySelectorAll(selector)].slice(0, 20)) {
         const rect = el.getBoundingClientRect();
         const style = window.getComputedStyle(el);
