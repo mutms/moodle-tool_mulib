@@ -64,6 +64,8 @@ $handler->render($form);
   values that were not validated, valid data never skips a stage. Custom fields: the `customfields` element.
 - Sessions and events with start and end: one `datetimerange` element (text `2026-11-06 23:30 – 01:30 +1`,
   value `['start' => int, 'end' => int]`, at most 24 hours, `set_default_duration()`), not two `datetime` elements.
+- React code outside of muform forms uses `tool_mulib/muform/datetimeinput` (timestamp value, settings from
+  `calendar::get_picker_settings()`), never native date inputs.
 - Behat: `I set the following muform fields [in the "dialog[open]" "css_element"]:` and
   `the following muform fields [...] match:`, first column is the element name or its exact label.
 

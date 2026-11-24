@@ -38,9 +38,9 @@ import {
     useInteractions,
     useRole,
 } from '@floating-ui/react';
+import {getString} from '@moodle/lms/core/stringUtils';
 import {useEffect, useId, useRef, useState} from 'react';
-import {formatComponents, readComponents, type Components} from './datetimeapi';
-import {readEndComponents} from './datetimerangeapi';
+import {formatComponents, type Components} from './datetimeapi';
 
 /** Localised texts of the picker. */
 export interface PickerStrings {
@@ -54,6 +54,27 @@ export interface PickerStrings {
     monthnext: string;
     yearprev: string;
     yearnext: string;
+}
+
+/**
+ * Localised texts of the datetime picker.
+ *
+ * @returns strings
+ */
+export async function getPickerStrings(): Promise<PickerStrings> {
+    const [pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext] = await Promise.all([
+        getString('muform_pickdatetime', 'tool_mulib'),
+        getString('muform_today', 'tool_mulib'),
+        getString('muform_clear', 'tool_mulib'),
+        getString('muform_apply', 'tool_mulib'),
+        getString('muform_hour', 'tool_mulib'),
+        getString('muform_minute', 'tool_mulib'),
+        getString('muform_monthprev', 'tool_mulib'),
+        getString('muform_monthnext', 'tool_mulib'),
+        getString('muform_yearprev', 'tool_mulib'),
+        getString('muform_yearnext', 'tool_mulib'),
+    ]);
+    return {pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext};
 }
 
 /** Duration offered in range mode. */
@@ -74,8 +95,16 @@ export interface RangeOptions {
 
 /** Picker props. */
 export interface PickerProps {
-    /** The datetime text input carrying the current value in data attributes. */
-    input: HTMLInputElement;
+    /** Returns date parts of the current value, null when there is no value. */
+    getValue: () => Components | null;
+    /** Returns date parts of the current range end, range mode only. */
+    getEnd?: () => Components | null;
+    /** IANA timezone of the value. */
+    timezone: string;
+    /** Hour of empty values. */
+    defaultHour?: number;
+    /** Minute of empty values. */
+    defaultMinute?: number;
     /** Minute step of the minute select. */
     step: number;
     /** First day of week from Moodle, 0 is Sunday, null means the language default. */
@@ -88,8 +117,10 @@ export interface PickerProps {
     strings: PickerStrings;
     /** Sends text to the server, empty text clears the value. */
     apply: (text: string) => Promise<void>;
-    /** Range mode, the input carries the end in data attributes. */
+    /** Range mode, getEnd returns the end. */
     range?: RangeOptions | null;
+    /** Small picker button. */
+    small?: boolean;
 }
 
 /** Locale week information, not yet in the TypeScript DOM library. */
@@ -137,18 +168,15 @@ export function todayIn(timezone: string): Pick<Components, 'year' | 'month' | '
 }
 
 /**
- * Starting parts of an empty value: today with the default time of the element.
+ * Starting parts of an empty value: today with the default time.
  *
- * @param input the datetime text input
+ * @param timezone IANA timezone
+ * @param hour default hour
+ * @param minute default minute
  * @returns parts
  */
-function emptyParts(input: HTMLInputElement): Components {
-    return {
-        ...todayIn(input.dataset.muformDatetimeTimezone ?? ''),
-        hour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
-        minute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
-        second: 0,
-    };
+function emptyParts(timezone: string, hour: number, minute: number): Components {
+    return {...todayIn(timezone), hour, minute, second: 0};
 }
 
 /**
@@ -214,13 +242,12 @@ function dayOffset(start: Components, end: Components): number {
 /**
  * Wall clock minutes of the current range, the default duration for empty values.
  *
- * @param input the datetimerange text input
+ * @param end current end parts
  * @param start current start parts
  * @param range range options
  * @returns positive number of minutes
  */
-function rangeMinutes(input: HTMLInputElement, start: Components, range: RangeOptions): number {
-    const end = readEndComponents(input);
+function rangeMinutes(end: Components | null, start: Components, range: RangeOptions): number {
     if (end) {
         const minutes = wallMinutes(end) - wallMinutes(start);
         // Ranges are at most one day long.
@@ -232,25 +259,28 @@ function rangeMinutes(input: HTMLInputElement, start: Components, range: RangeOp
 }
 
 export default function DateTimePicker(
-    {input, step, firstDay: moodleFirstDay, hour12 = false, disabled, strings, apply, range = null}: PickerProps
+    {
+        getValue, getEnd, timezone, defaultHour = 0, defaultMinute = 0, step, firstDay: moodleFirstDay, hour12 = false,
+        disabled, strings, apply, range = null, small = false,
+    }: PickerProps
 ) {
     const lang = document.documentElement.lang || 'en';
-    const timezone = input.dataset.muformDatetimeTimezone ?? '';
+    const initial = (): Components => getValue() ?? emptyParts(timezone, defaultHour, defaultMinute);
     const [open, setOpen] = useState(false);
-    const [parts, setParts] = useState<Components>(() => readComponents(input) ?? emptyParts(input));
+    const [parts, setParts] = useState<Components>(initial);
     const [view, setView] = useState({year: parts.year, month: parts.month});
-    const [duration, setDuration] = useState<number>(() => (range ? rangeMinutes(input, parts, range) : 0));
+    const [duration, setDuration] = useState<number>(() => (range ? rangeMinutes(getEnd?.() ?? null, parts, range) : 0));
     const [focusDay, setFocusDay] = useState(false);
     const gridRef = useRef<HTMLTableElement>(null);
     const durationId = useId();
 
     const onOpenChange = (state: boolean): void => {
         if (state) {
-            const current = readComponents(input) ?? emptyParts(input);
+            const current = initial();
             setParts(current);
             setView({year: current.year, month: current.month});
             if (range) {
-                setDuration(rangeMinutes(input, current, range));
+                setDuration(rangeMinutes(getEnd?.() ?? null, current, range));
             }
         }
         setOpen(state);
@@ -393,7 +423,7 @@ export default function DateTimePicker(
         <>
             <button
                 type="button"
-                className="btn btn-outline-secondary"
+                className={`btn btn-outline-secondary${small ? ' btn-sm' : ''}`}
                 ref={refs.setReference}
                 aria-label={strings.pick}
                 title={strings.pick}

@@ -11,6 +11,10 @@
     "eject": "risky",
     "wrap": "risky"
   },
+  "muform/datetimeinput": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
   "muform/datetimepicker": {
     "eject": "risky",
     "wrap": "risky"

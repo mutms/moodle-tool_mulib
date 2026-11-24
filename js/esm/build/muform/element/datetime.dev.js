@@ -12,9 +12,8 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
-import { getString } from "@moodle/lms/core/stringUtils";
-import { normalise } from "../datetimeapi";
-import DateTimePicker from "../datetimepicker";
+import { normalise, readComponents } from "../datetimeapi";
+import DateTimePicker, { getPickerStrings } from "../datetimepicker";
 import NativeElement from "../native";
 class datetime_default extends NativeElement {
   static {
@@ -144,19 +143,7 @@ class datetime_default extends NativeElement {
     if (!span) {
       return;
     }
-    const [pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext] = await Promise.all([
-      getString("muform_pickdatetime", "tool_mulib"),
-      getString("muform_today", "tool_mulib"),
-      getString("muform_clear", "tool_mulib"),
-      getString("muform_apply", "tool_mulib"),
-      getString("muform_hour", "tool_mulib"),
-      getString("muform_minute", "tool_mulib"),
-      getString("muform_monthprev", "tool_mulib"),
-      getString("muform_monthnext", "tool_mulib"),
-      getString("muform_yearprev", "tool_mulib"),
-      getString("muform_yearnext", "tool_mulib")
-    ]);
-    this.strings = { pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext };
+    this.strings = await getPickerStrings();
     this.renderPicker();
   }
   /**
@@ -169,8 +156,12 @@ class datetime_default extends NativeElement {
     }
     this.unmountPicker?.();
     this.pickerDisabled = this.state.disabled;
+    const { input } = this;
     this.unmountPicker = mountReactApp(span, DateTimePicker, {
-      input: this.input,
+      getValue: /* @__PURE__ */ __name(() => readComponents(input), "getValue"),
+      timezone: input.dataset.muformDatetimeTimezone ?? "",
+      defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+      defaultMinute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
       step: Number(span.dataset.muformDatetimeStep) || 5,
       firstDay: span.dataset.muformDatetimeFirstday === void 0 ? null : Number(span.dataset.muformDatetimeFirstday),
       hour12: span.dataset.muformDatetimeHour12 === "1",

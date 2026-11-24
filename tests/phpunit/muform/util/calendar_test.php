@@ -277,6 +277,29 @@ final class calendar_test extends \advanced_testcase {
         $this->assertSame('H:i', calendar::get_time_format('cs'));
     }
 
+    public function test_get_date_format(): void {
+        $this->resetAfterTest();
+        $this->assertSame('Y-m-d', calendar::get_date_format('en'));
+        fake_langpack::install('en_us');
+        $this->assertSame('n/j/Y', calendar::get_date_format('en_us'));
+        lang_util::customise_string('en', 'tool_mulib', 'muform_datetimeformat', 'F j, Y, H:i');
+        $this->assertSame('F j, Y', calendar::get_date_format('en'));
+        lang_util::customise_string('en', 'tool_mulib', 'muform_datetimeformat', 'j. \h\o\d. n. Y');
+        $this->assertSame('j. \h\o\d. n. Y', calendar::get_date_format('en'));
+    }
+
+    public function test_get_picker_settings(): void {
+        $this->resetAfterTest();
+        $this->setTimezone('Europe/Prague');
+        $this->setAdminUser();
+        $settings = calendar::get_picker_settings();
+        $this->assertSame('Europe/Prague', $settings['timezone']);
+        $this->assertSame('en', $settings['lang']);
+        $this->assertSame('Y-m-d', $settings['dateformat']);
+        $this->assertSame(5, $settings['step']);
+        $this->assertFalse($settings['hour12']);
+    }
+
     public function test_parse_range(): void {
         $prague = new \DateTimeZone('Europe/Prague');
         $start = self::at('2026-11-06 11:30', $prague);

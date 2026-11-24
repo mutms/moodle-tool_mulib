@@ -27,7 +27,8 @@
 
 import {mountReactApp} from '@moodle/lms/core/mount';
 import {getString} from '@moodle/lms/core/stringUtils';
-import {normaliseRange} from '../datetimerangeapi';
+import {readComponents} from '../datetimeapi';
+import {normaliseRange, readEndComponents} from '../datetimerangeapi';
 import DateTimePicker, {type PickerDuration, type PickerStrings, type RangeOptions} from '../datetimepicker';
 import NativeElement from '../native';
 import type {FormApi, Value} from '../types';
@@ -274,8 +275,13 @@ export default class extends NativeElement {
         }
         this.unmountPicker?.();
         this.pickerDisabled = this.state.disabled;
+        const {input} = this;
         this.unmountPicker = mountReactApp(span, DateTimePicker, {
-            input: this.input,
+            getValue: () => readComponents(input),
+            getEnd: () => readEndComponents(input),
+            timezone: input.dataset.muformDatetimeTimezone ?? '',
+            defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+            defaultMinute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
             step: Number(span.dataset.muformDatetimeStep) || 5,
             firstDay: span.dataset.muformDatetimeFirstday === undefined ? null : Number(span.dataset.muformDatetimeFirstday),
             hour12: span.dataset.muformDatetimeHour12 === '1',

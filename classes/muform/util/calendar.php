@@ -173,6 +173,37 @@ final class calendar {
     }
 
     /**
+     * Date part of the display format, the time is expected at the end of the format.
+     *
+     * @param string $lang language code
+     * @return string
+     */
+    public static function get_date_format(string $lang): string {
+        $format = self::get_format($lang);
+        if (preg_match('/(?<!\\\\)[GHgh]/', $format, $matches, PREG_OFFSET_CAPTURE)) {
+            $format = rtrim(substr($format, 0, $matches[0][1]), " ,");
+        }
+        return $format === '' ? 'Y-m-d' : $format;
+    }
+
+    /**
+     * Settings of datetime inputs in React code, see tool_mulib/muform/datetimeinput.
+     *
+     * @return array timezone, lang, dateformat, step, firstday and hour12
+     */
+    public static function get_picker_settings(): array {
+        $lang = current_language();
+        return [
+            'timezone' => \core_date::get_user_timezone_object()->getName(),
+            'lang' => $lang,
+            'dateformat' => self::get_date_format($lang),
+            'step' => 5,
+            'firstday' => \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday(),
+            'hour12' => self::uses_12_hour_clock($lang),
+        ];
+    }
+
+    /**
      * Does the display format of the language use 12 hour clock with AM and PM?
      *
      * @param string $lang

@@ -13,7 +13,8 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
 import { getString } from "@moodle/lms/core/stringUtils";
-import { normaliseRange } from "../datetimerangeapi";
+import { readComponents } from "../datetimeapi";
+import { normaliseRange, readEndComponents } from "../datetimerangeapi";
 import DateTimePicker from "../datetimepicker";
 import NativeElement from "../native";
 class datetimerange_default extends NativeElement {
@@ -230,8 +231,13 @@ class datetimerange_default extends NativeElement {
     }
     this.unmountPicker?.();
     this.pickerDisabled = this.state.disabled;
+    const { input } = this;
     this.unmountPicker = mountReactApp(span, DateTimePicker, {
-      input: this.input,
+      getValue: /* @__PURE__ */ __name(() => readComponents(input), "getValue"),
+      getEnd: /* @__PURE__ */ __name(() => readEndComponents(input), "getEnd"),
+      timezone: input.dataset.muformDatetimeTimezone ?? "",
+      defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+      defaultMinute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
       step: Number(span.dataset.muformDatetimeStep) || 5,
       firstDay: span.dataset.muformDatetimeFirstday === void 0 ? null : Number(span.dataset.muformDatetimeFirstday),
       hour12: span.dataset.muformDatetimeHour12 === "1",
