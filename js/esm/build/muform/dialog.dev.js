@@ -12,6 +12,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @module     tool_mulib/muform/dialog
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+import config from "@moodle/lms/core/config";
 import Pending from "@moodle/lms/core/pending";
 import { requireAsync } from "@moodle/lms/core/amd";
 import { redirect } from "@moodle/lms/core/location";
@@ -113,7 +114,16 @@ class MuDialog {
     }).catch(() => void 0);
     document.body.append(this.dialog);
     this.dialog.showModal();
-    await this.request({ method: "GET" });
+    if (this.options.data) {
+      const body = new FormData();
+      for (const [name, value] of Object.entries(this.options.data)) {
+        body.append(name, value);
+      }
+      body.append("sesskey", String(config.sesskey ?? ""));
+      await this.request({ method: "POST", body });
+    } else {
+      await this.request({ method: "GET" });
+    }
   }
   /**
    * Fetch the handler and process the answer.
