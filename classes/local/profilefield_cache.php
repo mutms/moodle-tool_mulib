@@ -525,6 +525,7 @@ final class profilefield_cache {
      * @param \core\event\user_info_field_created $event
      */
     public static function callback_user_info_field_created(\core\event\user_info_field_created $event): void {
+        \core\di::set(profilefield\fields::class, new profilefield\fields());
         $fieldid = (int)$event->objectid;
         if (self::add_field($fieldid)) {
             self::queue_populate($fieldid);
@@ -537,6 +538,7 @@ final class profilefield_cache {
      * @param \core\event\user_info_field_updated $event
      */
     public static function callback_user_info_field_updated(\core\event\user_info_field_updated $event): void {
+        \core\di::set(profilefield\fields::class, new profilefield\fields());
         $fieldid = (int)$event->objectid;
         if (array_key_exists($fieldid, self::get_fields())) {
             self::queue_populate($fieldid);
@@ -550,6 +552,7 @@ final class profilefield_cache {
      */
     public static function callback_user_info_field_deleted(\core\event\user_info_field_deleted $event): void {
         global $DB;
+        \core\di::set(profilefield\fields::class, new profilefield\fields());
         $fieldid = (int)$event->objectid;
         self::purge_field($fieldid);
         $DB->delete_records('tool_mulib_profilefield_reference', ['fieldid' => $fieldid]);

@@ -29,6 +29,10 @@ searching (cohort rules now, reports later). Read this before using custom profi
 ## Using the cache
 
 - Read values only from `{tool_mulib_profilefield}`, never filter on `user_info_data`.
+- Code using profile fields many times in one request, such as reports, gets field records and handlers from
+  `\core\di::get(profilefield\fields::class)`, loaded once per DI container (reset in PHPUnit and Behat), never
+  from static properties; readiness still comes from `profilefield_cache::get_fields()`. The profile field
+  observers replace it with `\core\di::set()` after fields are created, updated or deleted.
 - Use only fields that are ready (`profilefield_cache::is_ready()`). Fail safe when a field is missing,
   not supported or not ready: wait, skip or report, never use partial data.
 - Record persistent usage with `set_references(component, area, itemid, fieldids)`, it replaces the set
