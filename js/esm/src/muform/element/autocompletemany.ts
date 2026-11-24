@@ -22,8 +22,10 @@
  */
 
 import {mountReactApp} from '@moodle/lms/core/mount';
-import {getString} from '@moodle/lms/core/stringUtils';
-import ManyPicker, {type ManyPickerStrings, type Selected} from '../autocompletemanypicker';
+import Fetch from '@moodle/lms/core/fetch';
+import ManyPicker, {
+    getManyPickerStrings, type ManyPickerStrings, type SearchAnswer, type Selected,
+} from '../autocompletemanypicker';
 import NativeElement from '../native';
 import type {FormApi, Value} from '../types';
 
@@ -143,14 +145,7 @@ export default class extends NativeElement {
      * Load strings, drop the fallback markup and mount.
      */
     private async mountPicker(): Promise<void> {
-        const [noresults, searching, toomanyresults, remove, close] = await Promise.all([
-            getString('muform_noresults', 'tool_mulib'),
-            getString('muform_searching', 'tool_mulib'),
-            getString('muform_toomanyresults', 'tool_mulib'),
-            getString('muform_remove', 'tool_mulib'),
-            getString('closebuttontitle', 'core'),
-        ]);
-        this.strings = {noresults, searching, toomanyresults, remove, close};
+        this.strings = await getManyPickerStrings();
         this.container?.replaceChildren();
         this.renderPicker();
     }
@@ -172,8 +167,11 @@ export default class extends NativeElement {
         this.unmountPicker?.();
         this.pickerDisabled = this.state.disabled;
         this.unmountPicker = mountReactApp(container, ManyPicker, {
-            url: container.dataset.muformAutocompleteUrl ?? '',
-            source,
+            search: async(query: string, exclude: string[]): Promise<SearchAnswer> => {
+                const body = {source: source.class, args: source.args, query, exclude};
+                const response = await Fetch.performPost('tool_mulib', 'muform/autocomplete', {body});
+                return await response.json() as SearchAnswer;
+            },
             initial: this.selected,
             name: this.fieldname,
             id: this.fieldid,

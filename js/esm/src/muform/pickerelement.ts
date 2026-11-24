@@ -159,16 +159,15 @@ export default class PickerElement extends NativeElement {
         }
         const nodes: HTMLElement[] = this.selected.map((item) => {
             const pill = document.createElement('span');
-            pill.className = 'badge d-inline-flex align-items-center gap-1 fs-6 text-wrap text-start '
-                + (item.error ? 'text-bg-danger' : 'bg-secondary text-dark fw-normal');
+            pill.className = item.error ? 'muform-chip muform-chip-error' : 'muform-chip';
             pill.dataset.pickerPill = item.value;
             if (item.error) {
                 pill.title = item.error;
             }
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.className = item.error ? 'btn-close btn-close-white' : 'btn-close';
-            remove.style.fontSize = '.6em';
+            remove.className = 'muform-chip-dismiss';
+            remove.innerHTML = '<i class="icon fa fa-xmark m-0" aria-hidden="true"></i>';
             remove.setAttribute('aria-label', strings.pickerRemove + ': ' + labelText(item.label));
             remove.title = strings.pickerRemove;
             remove.addEventListener('click', () => {
@@ -179,7 +178,7 @@ export default class PickerElement extends NativeElement {
             const label = document.createElement('span');
             // Labels are trusted html built by the server.
             label.innerHTML = item.label;
-            pill.append(remove, label);
+            pill.append(label, remove);
             return pill;
         });
 

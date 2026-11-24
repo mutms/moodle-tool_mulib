@@ -142,7 +142,7 @@ describe('tool_mulib/muform/pickerelement', () => {
         const pills = wrapper.querySelectorAll<HTMLElement>('[data-picker-pill]');
         expect(pills).toHaveLength(2);
         expect(pills[1].innerHTML).toContain('<b>Three</b>');
-        expect(pills[1].className).toContain('text-bg-danger');
+        expect(pills[1].className).toContain('muform-chip-error');
         expect(pills[1].title).toBe('Not allowed');
         expect(pills[1].querySelector('button')!.getAttribute('aria-label')).toBe('Remove: Three');
         expect(wrapper.querySelector('[data-picker-open]')!.textContent).toBe('+ Add');

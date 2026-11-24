@@ -8,8 +8,10 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
-import { getString } from "@moodle/lms/core/stringUtils";
-import ManyPicker from "../autocompletemanypicker";
+import Fetch from "@moodle/lms/core/fetch";
+import ManyPicker, {
+  getManyPickerStrings
+} from "../autocompletemanypicker";
 import NativeElement from "../native";
 class autocompletemany_default extends NativeElement {
   static {
@@ -114,14 +116,7 @@ class autocompletemany_default extends NativeElement {
    * Load strings, drop the fallback markup and mount.
    */
   async mountPicker() {
-    const [noresults, searching, toomanyresults, remove, close] = await Promise.all([
-      getString("muform_noresults", "tool_mulib"),
-      getString("muform_searching", "tool_mulib"),
-      getString("muform_toomanyresults", "tool_mulib"),
-      getString("muform_remove", "tool_mulib"),
-      getString("closebuttontitle", "core")
-    ]);
-    this.strings = { noresults, searching, toomanyresults, remove, close };
+    this.strings = await getManyPickerStrings();
     this.container?.replaceChildren();
     this.renderPicker();
   }
@@ -141,8 +136,11 @@ class autocompletemany_default extends NativeElement {
     this.unmountPicker?.();
     this.pickerDisabled = this.state.disabled;
     this.unmountPicker = mountReactApp(container, ManyPicker, {
-      url: container.dataset.muformAutocompleteUrl ?? "",
-      source,
+      search: /* @__PURE__ */ __name(async (query, exclude) => {
+        const body = { source: source.class, args: source.args, query, exclude };
+        const response = await Fetch.performPost("tool_mulib", "muform/autocomplete", { body });
+        return await response.json();
+      }, "search"),
       initial: this.selected,
       name: this.fieldname,
       id: this.fieldid,

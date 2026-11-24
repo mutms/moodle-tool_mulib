@@ -149,7 +149,7 @@ describe('tool_mulib/muform/element/tags', () => {
         expect(element.getValue()).toEqual(['Physics', 'Bad']);
         const pills = wrapper.querySelectorAll('[data-muform-tags-pill]');
         expect(pills.length).toBe(2);
-        expect(pills[1].classList.contains('text-bg-danger')).toBe(true);
+        expect(pills[1].classList.contains('muform-chip-error')).toBe(true);
     });
 
     it('adds typed tags on comma and Enter, ignores duplicates and removes with Backspace', async() => {

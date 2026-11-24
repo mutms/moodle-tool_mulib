@@ -16,9 +16,9 @@
 /**
  * Token field of the autocompletemany element, a React island.
  *
- * Selected values are pills before a combobox input, results come from the
- * tool_mulib autocompletemany endpoint. Written independently of the single
- * value picker on purpose, the two may diverge.
+ * Selected values are pills before a combobox input, results come from the search function,
+ * the autocompletemany element searches the tool_mulib autocomplete endpoint. Written independently
+ * of the single value picker on purpose, the two may diverge.
  *
  * @module     tool_mulib/muform/autocompletemanypicker
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -35,7 +35,7 @@ import {
     useListNavigation,
     useRole,
 } from '@floating-ui/react';
-import Fetch from '@moodle/lms/core/fetch';
+import {getString} from '@moodle/lms/core/stringUtils';
 import {useEffect, useRef, useState} from 'react';
 
 /** A selected value with its label html and an optional refusal. */
@@ -45,12 +45,14 @@ export interface Selected {
     error: string | null;
 }
 
-/** Search endpoint answer. */
-interface Answer {
+/** Search answer, null list or overflow means too many results. */
+export interface SearchAnswer {
     list: {value: string; label: string}[] | null;
     overflow: boolean;
-    maxitems: number;
 }
+
+/** Search function, excluded values are already selected. */
+export type Search = (query: string, exclude: string[]) => Promise<SearchAnswer>;
 
 /** Localised texts. */
 export interface ManyPickerStrings {
@@ -63,10 +65,10 @@ export interface ManyPickerStrings {
 
 /** Picker props. */
 export interface ManyPickerProps {
-    url: string;
-    source: {class: string; args: unknown[]};
+    search: Search;
     initial: Selected[];
-    name: string;
+    /** Name of hidden input with comma separated values, none when not set. */
+    name?: string;
     id: string;
     placeholder: string;
     disabled: boolean;
@@ -89,7 +91,23 @@ function labelText(html: string): string {
     return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
-export default function ManyPicker({url, source, initial, name, id, placeholder, disabled, strings, onChange}: ManyPickerProps) {
+/**
+ * Localised texts of the picker.
+ *
+ * @returns strings
+ */
+export async function getManyPickerStrings(): Promise<ManyPickerStrings> {
+    const [noresults, searching, toomanyresults, remove, close] = await Promise.all([
+        getString('muform_noresults', 'tool_mulib'),
+        getString('muform_searching', 'tool_mulib'),
+        getString('muform_toomanyresults', 'tool_mulib'),
+        getString('muform_remove', 'tool_mulib'),
+        getString('closebuttontitle', 'core'),
+    ]);
+    return {noresults, searching, toomanyresults, remove, close};
+}
+
+export default function ManyPicker({search, initial, name, id, placeholder, disabled, strings, onChange}: ManyPickerProps) {
     const [selected, setSelected] = useState<Selected[]>(initial);
     const [query, setQuery] = useState('');
     const [open, setOpen] = useState(false);
@@ -151,10 +169,8 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
         }
         setResults({kind: 'loading'});
         const timer = setTimeout(async() => {
-            const body = {source: source.class, args: source.args, query, exclude: selected.map((item) => item.value)};
             try {
-                const response = await Fetch.performPost('tool_mulib', 'muform/autocomplete', {body});
-                const answer = await response.json() as Answer;
+                const answer = await search(query, selected.map((item) => item.value));
                 if (answer.overflow || answer.list === null) {
                     setResults({kind: 'overflow'});
                 } else {
@@ -166,7 +182,7 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
             }
         }, 250);
         return () => clearTimeout(timer);
-    }, [open, query, selected, source, url]);
+    }, [open, query, selected, search]);
 
     const update = (next: Selected[]): void => {
         setSelected(next);
@@ -235,8 +251,6 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
 
     const items = results.kind === 'list' ? results.items : [];
     const fieldClass = disabled ? ' disabled' : '';
-    const pillClass = (item: Selected): string => (item.error ? 'text-bg-danger' : 'bg-secondary text-dark fw-normal');
-    const closeClass = (item: Selected): string => (item.error ? 'btn-close btn-close-white' : 'btn-close');
     const empty = results.kind === 'list' && items.length === 0;
 
     return (
@@ -244,19 +258,20 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
             <div className={`form-control d-flex flex-wrap align-items-center gap-1 muform-autocompletemany-field${fieldClass}`}
                 ref={fieldRef} onClick={() => inputRef.current?.focus()}>
                 {selected.map((item) => (
-                    <span key={item.value} className={`badge d-inline-flex align-items-center gap-1 ${pillClass(item)}`}
+                    <span key={item.value} className={`muform-chip${item.error ? ' muform-chip-error' : ''}`}
                         title={item.error ?? undefined} data-muform-autocomplete-pill={item.value}>
+                        <span dangerouslySetInnerHTML={{__html: item.label}}></span>
+                        {item.error && <span className="visually-hidden">{item.error}</span>}
                         {!disabled && (
-                            <button type="button" className={closeClass(item)} style={{fontSize: '.6em'}}
-                                data-bs-theme={item.error ? undefined : 'light'}
+                            <button type="button" className="muform-chip-dismiss"
                                 aria-label={strings.remove.replace('{$a}', labelText(item.label))}
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     remove(item.value, true);
-                                }}></button>
+                                }}>
+                                <i className="icon fa fa-xmark m-0" aria-hidden="true"></i>
+                            </button>
                         )}
-                        <span dangerouslySetInnerHTML={{__html: item.label}}></span>
-                        {item.error && <span className="visually-hidden">{item.error}</span>}
                     </span>
                 ))}
                 <input
@@ -296,7 +311,9 @@ export default function ManyPicker({url, source, initial, name, id, placeholder,
                             closeSearch();
                         }}></button>
                 )}
-                <input type="hidden" name={name} value={selected.map((item) => item.value).join(',')} disabled={disabled} />
+                {name !== undefined && (
+                    <input type="hidden" name={name} value={selected.map((item) => item.value).join(',')} disabled={disabled} />
+                )}
             </div>
             {open && (
                 <ul ref={refs.setFloating} style={floatingStyles}

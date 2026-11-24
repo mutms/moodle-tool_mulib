@@ -136,7 +136,7 @@ describe('tool_mulib/muform/element/autocompletemany', () => {
         const pills = wrapper.querySelectorAll('[data-muform-autocomplete-pill]');
         expect(pills.length).toBe(2);
         expect(pills[0].innerHTML).toContain('<b>Anna</b>');
-        expect(pills[1].classList.contains('text-bg-danger')).toBe(true);
+        expect(pills[1].classList.contains('muform-chip-error')).toBe(true);
         expect(pills[1].getAttribute('title')).toBe('Suspended user');
         expect(wrapper.querySelector('button[aria-label="Remove Anna"]')).not.toBeNull();
         expect(element.validate()).toEqual([]);

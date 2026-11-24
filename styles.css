@@ -385,9 +385,52 @@ dialog.muform-dialog .modal-body {
     background-color: var(--bs-body-bg, #fff);
 }
 
-/* muform: token field pills, larger than Bootstrap badges but still compact. */
-.muform-autocompletemany-field .badge {
+/* muform: token field chips like Bootstrap 6 combobox chips, light background, darker on hover,
+   corners half of the field radius, remove button at the end. */
+.muform-chip {
+    --muform-chip-bg: rgba(var(--bs-emphasis-color-rgb), 0.06);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 1.5rem;
+    padding-inline: 0.5rem 0.125rem;
     font-size: 0.875em;
+    line-height: 1.25;
+    color: var(--bs-body-color);
+    background-color: var(--muform-chip-bg);
+    border-radius: calc(var(--bs-border-radius) / 2);
+}
+.muform-chip:hover {
+    --muform-chip-bg: rgba(var(--bs-emphasis-color-rgb), 0.12);
+}
+.muform-chip.muform-chip-error {
+    --muform-chip-bg: var(--bs-danger-bg-subtle);
+    color: var(--bs-danger-text-emphasis);
+}
+.muform-chip.muform-chip-error:hover {
+    --muform-chip-bg: var(--bs-danger-border-subtle);
+}
+.muform-chip-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: calc(var(--bs-border-radius) / 2);
+    opacity: 0.65;
+}
+.muform-chip-dismiss:hover,
+.muform-chip-dismiss:focus-visible {
+    opacity: 1;
+}
+.muform-chip-dismiss .icon {
+    width: auto;
+    height: auto;
+    font-size: 0.75rem;
 }
 
 /* muform: token field search inputs keep some space around the typed text,
