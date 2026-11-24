@@ -34,7 +34,7 @@ import config from '@moodle/lms/core/config';
 import {mountReactApp} from '@moodle/lms/core/mount';
 import Pending from '@moodle/lms/core/pending';
 import {getStrings} from '@moodle/lms/core/stringUtils';
-import {normalise, type Answer} from '../muform/datetimeapi';
+import {normalise, readComponents, type Answer} from '../muform/datetimeapi';
 import DateTimePicker, {type PickerStrings} from '../muform/datetimepicker';
 
 /** Operator meaning "any value" in all supported filter types. */
@@ -1087,7 +1087,10 @@ class FilterBar {
             return;
         }
         this.popoverCleanup.push(mountReactApp(span, DateTimePicker, {
-            input,
+            getValue: () => readComponents(input),
+            timezone: input.dataset.muformDatetimeTimezone ?? '',
+            defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
+            defaultMinute: Number(input.dataset.muformDatetimeDefaultminute) || 0,
             step: 5,
             firstDay: this.datetime?.firstday ?? null,
             hour12: this.datetime?.hour12 ?? false,

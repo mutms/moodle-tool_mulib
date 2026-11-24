@@ -144,7 +144,7 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
     /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-2 p-3 border-bottom", children: [
       /* @__PURE__ */ jsxDEV("h2", { className: "h5 mb-0 flex-grow-1", children: strings.title }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 251,
+        lineNumber: 254,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV(
@@ -160,14 +160,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 252,
+          lineNumber: 255,
           columnNumber: 17
         },
         this
       )
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 250,
+      lineNumber: 253,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "p-3 border-bottom", children: [
@@ -193,7 +193,7 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 256,
+          lineNumber: 259,
           columnNumber: 17
         },
         this
@@ -210,14 +210,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 264,
+          lineNumber: 267,
           columnNumber: 17
         },
         this
       )
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 255,
+      lineNumber: 258,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "flex-grow-1 overflow-auto", "aria-busy": loading, children: [
@@ -238,32 +238,32 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-              lineNumber: 273,
+              lineNumber: 276,
               columnNumber: 37
             },
             this
           ) }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 272,
+            lineNumber: 275,
             columnNumber: 33
           }, this),
           /* @__PURE__ */ jsxDEV("th", { scope: "col", className: multiple ? "" : "ps-3", children: strings.name }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 278,
+            lineNumber: 281,
             columnNumber: 29
           }, this),
           columns.map((column) => /* @__PURE__ */ jsxDEV("th", { scope: "col", children: column.label }, column.name, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 279,
+            lineNumber: 282,
             columnNumber: 54
           }, this))
         ] }, void 0, true, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 270,
+          lineNumber: 273,
           columnNumber: 25
         }, this) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 269,
+          lineNumber: 272,
           columnNumber: 21
         }, this),
         /* @__PURE__ */ jsxDEV("tbody", { children: rows.map((user, index) => /* @__PURE__ */ jsxDEV(
@@ -289,27 +289,27 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
                 false,
                 {
                   fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                  lineNumber: 289,
+                  lineNumber: 292,
                   columnNumber: 41
                 },
                 this
               ) }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 288,
+                lineNumber: 291,
                 columnNumber: 37
               }, this),
               /* @__PURE__ */ jsxDEV("td", { className: multiple ? "" : "ps-3", children: multiple ? user.fullname : /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-link p-0 text-start", children: user.fullname }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 297,
+                lineNumber: 300,
                 columnNumber: 41
               }, this) }, void 0, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 295,
+                lineNumber: 298,
                 columnNumber: 33
               }, this),
               columns.map((column) => /* @__PURE__ */ jsxDEV("td", { "data-userpicker-field": column.name, children: user.fields[column.name] ?? "" }, column.name, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-                lineNumber: 301,
+                lineNumber: 304,
                 columnNumber: 37
               }, this))
             ]
@@ -318,34 +318,34 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           true,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 284,
+            lineNumber: 287,
             columnNumber: 29
           },
           this
         )) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 282,
+          lineNumber: 285,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 268,
+        lineNumber: 271,
         columnNumber: 17
       }, this),
       !rows.length && /* @__PURE__ */ jsxDEV("p", { className: "text-muted p-3 mb-0", "data-userpicker-empty": true, children: loading ? strings.searching : strings.noresults }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 308,
+        lineNumber: 311,
         columnNumber: 21
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 267,
+      lineNumber: 270,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "d-flex flex-wrap align-items-center gap-2 p-3 border-top", children: [
       /* @__PURE__ */ jsxDEV("span", { className: "text-muted small", "data-userpicker-total": answer ? answer.total : void 0, children: answer ? strings.found.replace("{$a}", String(answer.total)) : "" }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 312,
+        lineNumber: 315,
         columnNumber: 17
       }, this),
       pages > 1 && answer && /* @__PURE__ */ jsxDEV("span", { className: "d-inline-flex align-items-center gap-1", children: [
@@ -364,14 +364,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 317,
+            lineNumber: 320,
             columnNumber: 25
           },
           this
         ),
         /* @__PURE__ */ jsxDEV("span", { className: "small", children: strings.page.replace("{$a}", `${answer.page + 1} / ${pages}`) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 320,
+          lineNumber: 323,
           columnNumber: 25
         }, this),
         /* @__PURE__ */ jsxDEV(
@@ -389,14 +389,14 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 321,
+            lineNumber: 324,
             columnNumber: 25
           },
           this
         )
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 316,
+        lineNumber: 319,
         columnNumber: 21
       }, this),
       /* @__PURE__ */ jsxDEV("span", { className: "ms-auto d-inline-flex gap-2", children: [
@@ -414,29 +414,29 @@ function Panel({ source, multiple, selected, strings, onPick, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-            lineNumber: 328,
+            lineNumber: 331,
             columnNumber: 25
           },
           this
         ),
         /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-secondary", onClick: onClose, children: strings.close }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-          lineNumber: 333,
+          lineNumber: 336,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-        lineNumber: 326,
+        lineNumber: 329,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-      lineNumber: 311,
+      lineNumber: 314,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/muform/userpicker/panel.tsx",
-    lineNumber: 249,
+    lineNumber: 252,
     columnNumber: 9
   }, this);
 }

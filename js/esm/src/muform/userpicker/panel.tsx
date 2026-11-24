@@ -42,6 +42,9 @@ export interface Strings {
     filterremove: string;
     filterresetall: string;
     filterresetdefault: string;
+    filternoresults: string;
+    filtersearching: string;
+    filtertoomanyresults: string;
     found: string;
     name: string;
     next: string;
