@@ -62,6 +62,8 @@ final class user_util_test extends \advanced_testcase {
         $active = $generator->create_user();
         $suspended = $generator->create_user(['suspended' => 1]);
         $remote = $generator->create_user(['mnethostid' => 123]);
+        $generator->create_user(['confirmed' => 0]);
+        $generator->create_user(['confirmed' => 0, 'suspended' => 1]);
         $deleted = $generator->create_user();
         delete_user($deleted);
         $other = $generator->create_user();
@@ -75,7 +77,8 @@ final class user_util_test extends \advanced_testcase {
         $this->assertSame([(int)$active->id], $this->get_php_userids([user_util::class, 'is_suspendable']));
         $this->assertSame([(int)$suspended->id], $this->get_php_userids([user_util::class, 'is_unsuspendable']));
 
-        $fields = (object)['id' => $active->id, 'deleted' => '0', 'mnethostid' => $active->mnethostid, 'suspended' => '0'];
+        $fields = (object)['id' => $active->id, 'deleted' => '0', 'confirmed' => '1', 'mnethostid' => $active->mnethostid,
+            'suspended' => '0'];
         $this->assertTrue(user_util::is_suspendable($fields));
     }
 

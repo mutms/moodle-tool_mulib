@@ -31,14 +31,14 @@ use stdClass;
  */
 final class user_util {
     /**
-     * Is the account protected from status changes: deleted, guest, remote, site admin or current user?
+     * Is the account protected from status changes: deleted, unconfirmed, guest, remote, site admin or current user?
      *
-     * @param stdClass $user with id, deleted, mnethostid
+     * @param stdClass $user with id, deleted, confirmed, mnethostid
      * @return bool
      */
     private static function is_protected_account(stdClass $user): bool {
         global $CFG, $USER;
-        if ($user->deleted || isguestuser($user) || (int)$user->mnethostid !== (int)$CFG->mnet_localhost_id) {
+        if ($user->deleted || !$user->confirmed || isguestuser($user) || (int)$user->mnethostid !== (int)$CFG->mnet_localhost_id) {
             return true;
         }
         return (int)$user->id === (int)$USER->id || is_siteadmin($user);
@@ -47,7 +47,7 @@ final class user_util {
     /**
      * Is the account in a state that allows suspending?
      *
-     * @param stdClass $user with id, deleted, mnethostid, suspended
+     * @param stdClass $user with id, deleted, confirmed, mnethostid, suspended
      * @return bool
      */
     public static function is_suspendable(stdClass $user): bool {
@@ -71,7 +71,7 @@ final class user_util {
     /**
      * Is the account in a state that allows unsuspending?
      *
-     * @param stdClass $user with id, deleted, mnethostid, suspended
+     * @param stdClass $user with id, deleted, confirmed, mnethostid, suspended
      * @return bool
      */
     public static function is_unsuspendable(stdClass $user): bool {
