@@ -79,6 +79,8 @@ Each of these cost a debugging round when the plugins were migrated from moodlef
 - `$PAGE->url` must be the handler script itself with the parameters it reads, because muform posts to
   it. Legacy forms posted to `qualified_me()`, so wrong `set_url()` calls were harmless before. Check every
   converted page. With `admin_externalpage_setup()` pass the real URL as `$actualurl`.
+- Configure elements completely before `$form->add()`, it returns nothing on purpose: adding an element
+  to the form may block further changes of it.
 - Hidden `id` elements are not needed: take ids from the page parameters in the handler
   (`$data->id = $record->id;`), never from submitted data.
 - Option labels (`select`, `radios`, `checkboxes`) must be strings: convert `lang_string` with
