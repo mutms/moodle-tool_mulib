@@ -192,8 +192,9 @@ Capability: `tool/mulib:useextdb`.
 
 ## Development
 
-- In an mpd development VM (`/opt/mpd` exists) read `/opt/mpd/docs/moodle-agents.md` first: tools for
-  install, upgrade, backups, PHPUnit, Behat and code checks, and what `mpd reset` destroys.
+- In an mpd development VM (https://github.com/mutms/mpd, `/opt/mpd` exists) read
+  `/opt/mpd/docs/moodle-agents.md` first: tools for install, upgrade, backups, PHPUnit, Behat and code checks,
+  and what `mpd reset` destroys.
 - Namespaces: `tool_mulib\muform\` forms, `tool_mulib\local\` internal APIs, `tool_mulib\output\`
   renderables, `tool_mulib\route\` REST routes (muform endpoints are browser only).
 - JS lives in `js/esm/src` (TypeScript). Setup once in the Moodle root: `nvm install && npm install`.
