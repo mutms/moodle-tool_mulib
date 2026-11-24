@@ -46,6 +46,9 @@ final class fields_test extends \advanced_testcase {
         $this->assertNull($fields->get_field(-1));
         $this->assertSame([(int)$text->id], array_keys($fields->get_handlers()));
         $this->assertSame('a', $fields->get_handlers()[$text->id]->get_field()->shortname);
+        $this->assertSame((int)$text->id, (int)$fields->get_handler_by_shortname('a')->get_field()->id);
+        $this->assertNull($fields->get_handler_by_shortname('b'));
+        $this->assertNull($fields->get_handler_by_shortname('x'));
 
         $fields->get_field((int)$text->id)->shortname = 'x';
         $this->assertSame('a', $fields->get_field((int)$text->id)->shortname);

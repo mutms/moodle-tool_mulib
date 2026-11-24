@@ -35,6 +35,8 @@ final class fields {
     private array $fields = [];
     /** @var base[] handlers of supported fields, fieldid => handler, in profile display order */
     private array $handlers = [];
+    /** @var int[] ids of supported fields, shortname => fieldid */
+    private array $shortnames = [];
 
     /**
      * Constructor.
@@ -50,6 +52,7 @@ final class fields {
             $handler = profilefield_cache::get_handler($field);
             if ($handler) {
                 $this->handlers[$field->id] = $handler;
+                $this->shortnames[$field->shortname] = (int)$field->id;
             }
         }
     }
@@ -80,5 +83,16 @@ final class fields {
      */
     public function get_handlers(): array {
         return $this->handlers;
+    }
+
+    /**
+     * Returns handler of supported field.
+     *
+     * @param string $shortname
+     * @return base|null null if field does not exist or its type is not supported
+     */
+    public function get_handler_by_shortname(string $shortname): ?base {
+        $fieldid = $this->shortnames[$shortname] ?? null;
+        return $fieldid === null ? null : $this->handlers[$fieldid];
     }
 }
