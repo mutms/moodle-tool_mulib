@@ -21,7 +21,7 @@ namespace tool_mulib\muform\element;
 use core\output\core_renderer;
 use core\param;
 use tool_mulib\muform\element;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Date and time range element for sessions and events, the value is an array
@@ -156,7 +156,7 @@ final class datetimerange extends element {
             }
             $start = (int)$start;
             $end = (int)$end;
-            $limit = calendar::get_range_limit($start, $this->get_timezone());
+            $limit = date_util::get_range_limit($start, $this->get_timezone());
             if ($end > $limit) {
                 // Values from code, the element supports ranges up to 24 hours only.
                 debugging('Range of datetimerange element "' . $this->get_name() . '" is trimmed to 24 hours', DEBUG_DEVELOPER);
@@ -165,7 +165,7 @@ final class datetimerange extends element {
             $this->value = ['start' => $start, 'end' => $end];
         } else if (is_string($value) || is_int($value) || is_float($value)) {
             try {
-                $this->value = calendar::parse_range(
+                $this->value = date_util::parse_range(
                     (string)$value,
                     $this->get_timezone(),
                     current_language(),
@@ -189,7 +189,7 @@ final class datetimerange extends element {
                 $this->errors[] = get_string(
                     'muform_datetimerangetoolong',
                     'tool_mulib',
-                    calendar::get_duration_text($this->maxduration)
+                    date_util::get_duration_text($this->maxduration)
                 );
             }
         }
@@ -206,10 +206,10 @@ final class datetimerange extends element {
         $context = parent::get_template_data($output, $allerrors);
         $tz = $this->get_timezone();
         $lang = current_language();
-        $described = calendar::describe_range($this->value, $tz, $lang);
+        $described = date_util::describe_range($this->value, $tz, $lang);
 
         $context['value'] = ($this->invalidtext !== '') ? $this->invalidtext : $described['text'];
-        $context['valuehtml'] = calendar::format_range_html($this->value, $tz, $lang);
+        $context['valuehtml'] = date_util::format_range_html($this->value, $tz, $lang);
         $context['start'] = $described['start'] === null ? '' : (string)$described['start'];
         $context['end'] = $described['end'] === null ? '' : (string)$described['end'];
         $context['componentsjson'] = $described['startcomponents'] ? json_encode($described['startcomponents']) : '';
@@ -220,7 +220,7 @@ final class datetimerange extends element {
             // Users in site timezone do not need to be reminded on every date field.
             $context['timezonelabel'] = '';
         } else {
-            $tzname = calendar::get_timezone_name($tz->getName());
+            $tzname = date_util::get_timezone_name($tz->getName());
             $context['timezonelabel'] = clean_string(get_string('muform_timezone', 'tool_mulib', $tzname));
         }
         $context['lang'] = $lang;
@@ -229,7 +229,7 @@ final class datetimerange extends element {
         $context['defaultminute'] = $this->defaultminute;
         $context['defaultduration'] = $this->defaultduration ?? '';
         $context['durationsjson'] = json_encode($this->get_picker_durations());
-        $context['hour12'] = calendar::uses_12_hour_clock($lang);
+        $context['hour12'] = date_util::uses_12_hour_clock($lang);
         $context['firstday'] = \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday();
         return $context;
     }
@@ -251,7 +251,7 @@ final class datetimerange extends element {
         sort($durations);
         $result = [];
         foreach ($durations as $seconds) {
-            $result[] = ['seconds' => $seconds, 'label' => calendar::get_duration_text($seconds)];
+            $result[] = ['seconds' => $seconds, 'label' => date_util::get_duration_text($seconds)];
         }
         return $result;
     }

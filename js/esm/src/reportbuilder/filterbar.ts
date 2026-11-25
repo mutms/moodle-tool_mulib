@@ -34,8 +34,9 @@ import config from '@moodle/lms/core/config';
 import {mountReactApp} from '@moodle/lms/core/mount';
 import Pending from '@moodle/lms/core/pending';
 import {getStrings} from '@moodle/lms/core/stringUtils';
-import {normalise, readComponents, type Answer} from '../muform/datetimeapi';
-import DateTimePicker, {type PickerStrings} from '../muform/datetimepicker';
+import {normalise, readComponents, type Answer} from '../date/api';
+import DatePicker, {getPickerStrings, type PickerStrings} from '../date/panel';
+import {PANEL_CLASS} from '../picker/panel';
 
 /** Operator meaning "any value" in all supported filter types. */
 export const ANY_VALUE = 0;
@@ -486,7 +487,8 @@ class FilterBar {
         });
         document.addEventListener('click', (event) => {
             // The path is kept when the clicked element was removed, for example the date picker apply button.
-            if (this.popover && !event.composedPath().includes(this.root)) {
+            const inPanel = event.composedPath().some((item) => item instanceof Element && item.classList.contains(PANEL_CLASS));
+            if (this.popover && !event.composedPath().includes(this.root) && !inPanel) {
                 this.closePopover();
             }
         });
@@ -1077,16 +1079,12 @@ class FilterBar {
      */
     private async mountPicker(span: HTMLElement, input: HTMLInputElement, apply: (text: string) => Promise<void>): Promise<void> {
         if (!this.pickerStrings) {
-            const [pick, today, clear, applytext, hour, minute, monthprev, monthnext, yearprev, yearnext] = await getStrings(
-                ['pickdatetime', 'today', 'clear', 'apply', 'hour', 'minute', 'monthprev', 'monthnext', 'yearprev', 'yearnext']
-                    .map((key) => ({key: 'muform_' + key, component: 'tool_mulib'}))
-            );
-            this.pickerStrings = {pick, today, clear, apply: applytext, hour, minute, monthprev, monthnext, yearprev, yearnext};
+            this.pickerStrings = await getPickerStrings();
         }
         if (!span.isConnected) {
             return;
         }
-        this.popoverCleanup.push(mountReactApp(span, DateTimePicker, {
+        this.popoverCleanup.push(mountReactApp(span, DatePicker, {
             getValue: () => readComponents(input),
             timezone: input.dataset.muformDatetimeTimezone ?? '',
             defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,

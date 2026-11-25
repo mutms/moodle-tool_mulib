@@ -16,11 +16,11 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\phpunit\route\api\muform;
+namespace tool_mulib\phpunit\route\api\date;
 
 use core\tests\router\route_testcase;
 use GuzzleHttp\Psr7\Utils;
-use tool_mulib\route\api\muform\datetimerange;
+use tool_mulib\route\api\date\datetimerange;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -31,7 +31,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-#[CoversClass(\tool_mulib\route\api\muform\datetimerange::class)]
+#[CoversClass(\tool_mulib\route\api\date\datetimerange::class)]
 #[Group('MuTMS')]
 final class datetimerange_test extends route_testcase {
     #[\Override]
@@ -51,7 +51,7 @@ final class datetimerange_test extends route_testcase {
     private function post(array $body, int $status = 200): array {
         $response = $this->process_api_request(
             'POST',
-            '/muform/datetimerange',
+            '/date/datetimerange',
             ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
             Utils::streamFor(json_encode($body)),
         );

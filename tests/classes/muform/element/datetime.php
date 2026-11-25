@@ -19,7 +19,7 @@
 namespace tool_mulib\tests\muform\element;
 
 use Behat\Mink\Element\NodeElement;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Behat helper for datetime element.
@@ -38,7 +38,7 @@ final class datetime extends base {
         $value = trim($value);
         $input = $this->get_text_input();
         if (preg_match('/^-?\d+$/D', $value)) {
-            $value = calendar::describe((int)$value, $this->get_timezone($input), $this->get_lang($input))['text'];
+            $value = date_util::describe((int)$value, $this->get_timezone($input), $this->get_lang($input))['text'];
         }
         $input->setValue($value);
         $session = $this->context->getSession();
@@ -74,8 +74,8 @@ final class datetime extends base {
         $hour = (int)$input->getAttribute('data-muform-datetime-defaulthour');
         $minute = (int)$input->getAttribute('data-muform-datetime-defaultminute');
         try {
-            return calendar::parse($expected, $tz, $lang, $hour, $minute)
-                === calendar::parse($actual, $tz, $lang, $hour, $minute);
+            return date_util::parse($expected, $tz, $lang, $hour, $minute)
+                === date_util::parse($actual, $tz, $lang, $hour, $minute);
         } catch (\InvalidArgumentException $e) {
             return false;
         }

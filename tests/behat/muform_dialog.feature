@@ -134,14 +134,14 @@ Feature: muform works in router controllers, as a full page and in native dialog
     And I should see "Longlist User 45" in the "dialog[open] [data-muform-name='members']" "css_element"
 
   @javascript
-  Scenario: Calendar of a date element is not clipped by a small dialog
+  Scenario: Date panel opens over a small dialog
     Given I visit "/r.php/tool_mulib/muform/fixture"
     When I click on "Pick date" "button"
     And I click on "Choose date and time" "button" in the "dialog[open]" "css_element"
-    Then the open muform list should be fully visible
-    # Escape closes only the calendar, the dialog stays open.
+    Then ".tool_mulib-date-panel" "css_element" should exist
+    # Escape closes only the date panel, the dialog stays open.
     When I press the escape key
-    Then ".muform-datetime-panel" "css_element" should not exist
+    Then I wait until ".tool_mulib-date-panel" "css_element" does not exist
     And "dialog[open]" "css_element" should exist
     When I click on "Cancel" "button" in the "dialog[open]" "css_element"
     Then "dialog[open]" "css_element" should not exist

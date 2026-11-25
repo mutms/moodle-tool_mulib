@@ -19,13 +19,13 @@
  * The input carries the timezone, language, default time and default duration it was rendered
  * with as data attributes, the endpoint answers with both timestamps, the text and a hint.
  *
- * @module     tool_mulib/muform/datetimerangeapi
+ * @module     tool_mulib/date/rangeapi
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 import Fetch from '@moodle/lms/core/fetch';
 import Pending from '@moodle/lms/core/pending';
-import type {Components} from './datetimeapi';
+import type {Components} from './api';
 
 /** Answer of the endpoint. */
 export interface RangeAnswer {
@@ -50,7 +50,7 @@ export interface RangeAnswer {
  * @returns the answer
  */
 export async function normaliseRange(input: HTMLInputElement, text: string): Promise<RangeAnswer> {
-    const pending = new Pending('tool_mulib/muform:datetimerange');
+    const pending = new Pending('tool_mulib/date:datetimerange');
     try {
         const body: Record<string, string | number> = {
             text,
@@ -63,7 +63,7 @@ export async function normaliseRange(input: HTMLInputElement, text: string): Pro
         if (duration > 0) {
             body.defaultduration = duration;
         }
-        const response = await Fetch.performPost('tool_mulib', 'muform/datetimerange', {body});
+        const response = await Fetch.performPost('tool_mulib', 'date/datetimerange', {body});
         const answer = await response.json() as RangeAnswer;
         if (answer.valid) {
             input.dataset.muformDatetimerangeStart = answer.start === null ? '' : String(answer.start);

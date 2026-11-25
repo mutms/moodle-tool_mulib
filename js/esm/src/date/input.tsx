@@ -18,15 +18,15 @@
  *
  * The value is a timestamp, typed text is normalised by the server.
  *
- * @module     tool_mulib/muform/datetimeinput
+ * @module     tool_mulib/date/input
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 import {useEffect, useRef, useState, type ReactNode} from 'react';
-import {normaliseText, type Components} from './datetimeapi';
-import DateTimePicker, {getPickerStrings, type PickerStrings} from './datetimepicker';
+import {normaliseText, type Components} from './api';
+import DatePicker, {getPickerStrings, type PickerStrings} from './panel';
 
-/** User settings from the server, see tool_mulib\muform\util\calendar::get_picker_settings(). */
+/** User settings from the server, see tool_mulib\local\date_util::get_picker_settings(). */
 export interface DateTimeInputSettings {
     timezone: string;
     lang: string;
@@ -139,9 +139,10 @@ export default function DateTimeInput(props: DateTimeInputProps): ReactNode {
                     }
                 }} />
             {strings && (
-                <DateTimePicker getValue={() => components.current} timezone={settings.timezone}
+                <DatePicker getValue={() => components.current} timezone={settings.timezone}
                     defaultHour={defaultHour} defaultMinute={defaultMinute} step={settings.step} firstDay={settings.firstday}
-                    hour12={settings.hour12} disabled={false} strings={strings} small={small}
+                    hour12={settings.hour12} disabled={false} strings={strings} small={small} clearable={text !== ''}
+                    title={props.label}
                     apply={(picked: string) => commit(picked)} />
             )}
         </div>

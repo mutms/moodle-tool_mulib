@@ -19,7 +19,7 @@
 namespace tool_mulib\tests\muform\element;
 
 use Behat\Mink\Element\NodeElement;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Behat helper for datetimerange element.
@@ -42,7 +42,7 @@ final class datetimerange extends base {
         $input = $this->get_text_input();
         if (preg_match(self::TIMESTAMPS_REGEX, $value, $matches)) {
             $range = ['start' => (int)$matches[1], 'end' => (int)$matches[2]];
-            $value = calendar::describe_range($range, $this->get_timezone($input), $this->get_lang($input))['text'];
+            $value = date_util::describe_range($range, $this->get_timezone($input), $this->get_lang($input))['text'];
         }
         $input->setValue($value);
         $session = $this->context->getSession();
@@ -93,7 +93,7 @@ final class datetimerange extends base {
         $input = $this->get_text_input();
         $duration = (int)$input->getAttribute('data-muform-datetimerange-defaultduration');
         try {
-            return calendar::parse_range(
+            return date_util::parse_range(
                 $value,
                 $this->get_timezone($input),
                 $this->get_lang($input),

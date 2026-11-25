@@ -20,7 +20,7 @@ namespace tool_mulib\muform\element;
 use core\exception\coding_exception;
 use core\output\core_renderer;
 use tool_mulib\muform\element;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Date interval element, the value is an ISO 8601 duration string such as P1Y2M or P1W2DT3H, or null.
@@ -56,7 +56,7 @@ final class dateinterval extends element {
         parent::__construct($name);
         $this->label = $label;
 
-        $expected = array_values(array_intersect(calendar::UNITS, $units));
+        $expected = array_values(array_intersect(date_util::UNITS, $units));
         if (!$units || array_values($units) !== $expected) {
             throw new coding_exception('Invalid dateinterval units, expected a subset of y, m, w, d, h, i, s in that order');
         }
@@ -78,7 +78,7 @@ final class dateinterval extends element {
             $parts = [];
             $texts = [];
             $valid = true;
-            foreach (calendar::UNITS as $unit) {
+            foreach (date_util::UNITS as $unit) {
                 $part = $value[$unit] ?? '';
                 if (is_array($part) || is_bool($part)) {
                     $part = '';
@@ -101,18 +101,18 @@ final class dateinterval extends element {
                 $this->errors[] = $this->get_invalid_hint();
                 return;
             }
-            $this->value = calendar::build_interval($parts);
+            $this->value = date_util::build_interval($parts);
             return;
         }
 
-        $parts = is_string($value) ? calendar::parse_interval($value) : null;
+        $parts = is_string($value) ? date_util::parse_interval($value) : null;
         if ($parts === null) {
             $this->value = null;
             $this->errors[] = $this->get_invalid_hint();
             return;
         }
 
-        $this->value = calendar::build_interval($parts);
+        $this->value = date_util::build_interval($parts);
     }
 
     #[\Override]
@@ -126,9 +126,9 @@ final class dateinterval extends element {
         $context = parent::get_template_data($output, $allerrors);
         $context['nolabelfor'] = true;
 
-        $parts = $this->value === null ? [] : calendar::parse_interval($this->value);
+        $parts = $this->value === null ? [] : date_util::parse_interval($this->value);
         $context['units'] = [];
-        foreach (calendar::UNITS as $unit) {
+        foreach (date_util::UNITS as $unit) {
             $number = $parts[$unit] ?? 0;
             $text = $this->invalidparts[$unit] ?? ($number ? (string)$number : '');
             if ($text === '' && !in_array($unit, $this->units, true)) {
@@ -137,12 +137,12 @@ final class dateinterval extends element {
             $context['units'][] = [
                 'unit' => $unit,
                 'id' => $context['id'] . '_' . $unit,
-                'label' => clean_string(calendar::get_unit_label($unit)),
+                'label' => clean_string(date_util::get_unit_label($unit)),
                 'value' => $text,
             ];
         }
 
-        $context['value'] = $this->value === null ? get_string('muform_notset', 'tool_mulib') : calendar::to_text($parts);
+        $context['value'] = $this->value === null ? get_string('muform_notset', 'tool_mulib') : date_util::to_text($parts);
 
         return $context;
     }

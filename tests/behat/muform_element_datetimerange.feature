@@ -94,11 +94,11 @@ Feature: muform datetimerange element
   Scenario: The picker keeps the duration and sets the end time
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_element_datetimerange.php" with parameters "prefill=1"
     When I click on "Choose date and time range" "button" in the "[data-muform-name='session']" "css_element"
-    Then I should see "November 2026" in the ".muform-datetime-panel" "css_element"
-    And I should see "+1" in the ".muform-datetime-panel" "css_element"
-    When I click on "10" "button" in the ".muform-datetime-panel" "css_element"
+    Then I should see "November 2026" in the ".tool_mulib-date-panel" "css_element"
+    And I should see "+1" in the ".tool_mulib-date-panel" "css_element"
+    When I click on "10" "button" in the ".tool_mulib-date-panel" "css_element"
     And I set the field "Duration" to "3 hours"
-    And I click on "Apply" "button" in the ".muform-datetime-panel" "css_element"
+    And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
     Then the following muform fields match:
       | session | 2026-11-10 23:30 - 02:30 +1 |
     When I press "Save changes"

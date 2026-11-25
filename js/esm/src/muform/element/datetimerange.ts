@@ -27,9 +27,9 @@
 
 import {mountReactApp} from '@moodle/lms/core/mount';
 import {getString} from '@moodle/lms/core/stringUtils';
-import {readComponents} from '../datetimeapi';
-import {normaliseRange, readEndComponents} from '../datetimerangeapi';
-import DateTimePicker, {type PickerDuration, type PickerStrings, type RangeOptions} from '../datetimepicker';
+import {readComponents} from '../../date/api';
+import {normaliseRange, readEndComponents} from '../../date/rangeapi';
+import DatePicker, {getPickerStrings, type PickerDuration, type PickerStrings, type RangeOptions} from '../../date/panel';
 import NativeElement from '../native';
 import type {FormApi, Value} from '../types';
 
@@ -101,6 +101,7 @@ export default class extends NativeElement {
 
         // Until the server answers the raw text is submitted, the server parses it the same way.
         input.addEventListener('input', () => {
+            this.markEmpty();
             this.setCarriers('', '', input.value);
             this.invalid = false;
         });
@@ -108,6 +109,7 @@ export default class extends NativeElement {
             void this.applyText(input.value);
         });
 
+        this.markEmpty();
         void this.mountPicker();
     }
 
@@ -154,9 +156,17 @@ export default class extends NativeElement {
      */
     override syncUI(): void {
         super.syncUI();
+        this.markEmpty();
         if (this.strings && this.pickerDisabled !== this.state.disabled) {
             this.renderPicker();
         }
+    }
+
+    /**
+     * Mark empty values, the clear button is hidden for them.
+     */
+    private markEmpty(): void {
+        this.wrapper.querySelector('.muform-datetime')?.classList.toggle('muform-datetime-empty', !this.input?.value);
     }
 
     /**
@@ -199,6 +209,7 @@ export default class extends NativeElement {
             this.state.errors = errors;
             this.syncUI();
         }
+        this.markEmpty();
         this.emitChange();
     }
 
@@ -237,23 +248,14 @@ export default class extends NativeElement {
         if (!span || !this.input) {
             return;
         }
-        const [pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext, start, end, duration]
-            = await Promise.all([
-                getString('muform_pickdatetimerange', 'tool_mulib'),
-                getString('muform_today', 'tool_mulib'),
-                getString('muform_clear', 'tool_mulib'),
-                getString('muform_apply', 'tool_mulib'),
-                getString('muform_hour', 'tool_mulib'),
-                getString('muform_minute', 'tool_mulib'),
-                getString('muform_monthprev', 'tool_mulib'),
-                getString('muform_monthnext', 'tool_mulib'),
-                getString('muform_yearprev', 'tool_mulib'),
-                getString('muform_yearnext', 'tool_mulib'),
-                getString('muform_rangestart', 'tool_mulib'),
-                getString('muform_rangeend', 'tool_mulib'),
-                getString('muform_duration', 'tool_mulib'),
-            ]);
-        this.strings = {pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext};
+        const [strings, pick, start, end, duration] = await Promise.all([
+            getPickerStrings(),
+            getString('muform_pickdatetimerange', 'tool_mulib'),
+            getString('muform_rangestart', 'tool_mulib'),
+            getString('muform_rangeend', 'tool_mulib'),
+            getString('muform_duration', 'tool_mulib'),
+        ]);
+        this.strings = {...strings, pick};
         let durations: PickerDuration[] = [];
         try {
             durations = JSON.parse(span.dataset.muformDatetimerangeDurations || '[]') as PickerDuration[];
@@ -276,7 +278,7 @@ export default class extends NativeElement {
         this.unmountPicker?.();
         this.pickerDisabled = this.state.disabled;
         const {input} = this;
-        this.unmountPicker = mountReactApp(span, DateTimePicker, {
+        this.unmountPicker = mountReactApp(span, DatePicker, {
             getValue: () => readComponents(input),
             getEnd: () => readEndComponents(input),
             timezone: input.dataset.muformDatetimeTimezone ?? '',
@@ -288,6 +290,8 @@ export default class extends NativeElement {
             disabled: this.state.disabled,
             strings: this.strings,
             apply: (text: string) => this.applyText(text),
+            clearable: span.dataset.muformDatetimeClearable === '1',
+            title: this.wrapper.querySelector(`#${CSS.escape(input.id)}_label`)?.textContent?.trim() || undefined,
             range: this.range,
         }, {id: `muform-datetimerange-${this.name}`});
     }

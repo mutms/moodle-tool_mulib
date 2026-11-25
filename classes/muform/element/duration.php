@@ -20,7 +20,7 @@ namespace tool_mulib\muform\element;
 use core\exception\coding_exception;
 use core\output\core_renderer;
 use tool_mulib\muform\element;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Duration element, the value is a number of seconds, always a multiple of 60.
@@ -139,14 +139,14 @@ final class duration extends element {
             $context['units'][] = [
                 'unit' => $unit,
                 'id' => $context['id'] . '_' . $unit,
-                'label' => clean_string(calendar::get_unit_label($unit)),
+                'label' => clean_string(date_util::get_unit_label($unit)),
                 'value' => (string)$parts[$unit],
             ];
         }
 
-        $text = calendar::to_text($parts);
+        $text = date_util::to_text($parts);
         if ($text === '') {
-            $text = calendar::to_text([array_key_last($parts) => 0], true);
+            $text = date_util::to_text([array_key_last($parts) => 0], true);
         }
         $context['value'] = $text;
 

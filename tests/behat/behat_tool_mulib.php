@@ -625,7 +625,7 @@ class behat_tool_mulib extends behat_base {
     public function the_open_muform_list_should_be_fully_visible(): void {
         $js = <<<'JS'
 (() => {
-    const lists = Array.from(document.querySelectorAll('[role="listbox"], .muform-datetime-panel')).filter((l) => l.getClientRects().length);
+    const lists = Array.from(document.querySelectorAll('[role="listbox"]')).filter((l) => l.getClientRects().length);
     if (lists.length !== 1) {
         return 'expected one open list, found ' + lists.length;
     }

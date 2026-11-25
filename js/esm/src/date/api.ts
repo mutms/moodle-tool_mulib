@@ -19,7 +19,7 @@
  * The input carries the timezone, language and default time it was rendered with
  * as data attributes, the endpoint answers with the three representations of the date.
  *
- * @module     tool_mulib/muform/datetimeapi
+ * @module     tool_mulib/date/api
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -65,7 +65,7 @@ export interface DateTimeSettings {
  * @returns the answer
  */
 export async function normaliseText(text: string, settings: DateTimeSettings): Promise<Answer> {
-    const pending = new Pending('tool_mulib/muform:datetime');
+    const pending = new Pending('tool_mulib/date:datetime');
     try {
         const body = {
             text,
@@ -74,7 +74,7 @@ export async function normaliseText(text: string, settings: DateTimeSettings): P
             defaulthour: settings.defaultHour,
             defaultminute: settings.defaultMinute,
         };
-        const response = await Fetch.performPost('tool_mulib', 'muform/datetime', {body});
+        const response = await Fetch.performPost('tool_mulib', 'date/datetime', {body});
         return await response.json() as Answer;
     } finally {
         pending.resolve();
@@ -181,4 +181,23 @@ export function formatDate(timestamp: number, timezone: string, lang: string, fo
         }
     }
     return result;
+}
+
+/**
+ * Today's date in a timezone, the browser may be in a different one.
+ *
+ * @param timezone IANA timezone
+ * @returns year, month and day
+ */
+export function todayIn(timezone: string): Pick<Components, 'year' | 'month' | 'day'> {
+    const now = new Date();
+    try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric',
+        }).formatToParts(now);
+        const part = (type: string): number => Number(parts.find((item) => item.type === type)?.value);
+        return {year: part('year'), month: part('month'), day: part('day')};
+    } catch {
+        return {year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate()};
+    }
 }

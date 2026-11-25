@@ -130,12 +130,51 @@ async function choose(select: HTMLSelectElement, value: string): Promise<void> {
     });
 }
 
+// The jsdom environment has no modal dialogs.
+if (!HTMLDialogElement.prototype.showModal) {
+    HTMLDialogElement.prototype.showModal = function(this: HTMLDialogElement): void {
+        this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function(this: HTMLDialogElement): void {
+        this.open = false;
+        this.dispatchEvent(new Event('close'));
+    };
+}
+
+/**
+ * Open date panel.
+ *
+ * @returns panel content
+ */
+const panel = (): HTMLElement | null => document.querySelector<HTMLElement>('dialog[open] .tool_mulib-date-panel');
+
+/**
+ * Selected value of a time select in a group.
+ *
+ * @param group Start or End group
+ * @param list Hour or Minute
+ * @returns value
+ */
+const timeOf = (group: HTMLElement, list: string): string | null => group.querySelector<HTMLSelectElement>(
+    `select[aria-label="${list}"]`)?.value ?? null;
+
+/**
+ * Change a time select of a group.
+ *
+ * @param group Start or End group
+ * @param list Hour or Minute
+ * @param value
+ */
+async function pickTime(group: HTMLElement, list: string, value: string): Promise<void> {
+    await choose(group.querySelector<HTMLSelectElement>(`select[aria-label="${list}"]`)!, value);
+}
+
 beforeEach(() => {
     answers = [];
     bodies = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: object}) => {
         expect(component).toBe('tool_mulib');
-        expect(action).toBe('muform/datetimerange');
+        expect(action).toBe('date/datetimerange');
         bodies.push(body);
         const answer = answers.shift() ?? {valid: false, text: '', start: null, end: null, hint: '', timezone: 'Europe/Prague'};
         return {json: async() => answer};
@@ -144,9 +183,17 @@ beforeEach(() => {
         'muform_pickdatetimerange': 'Pick', 'muform_today': 'Today', 'muform_clear': 'Clear', 'muform_apply': 'Apply',
         'muform_hour': 'Hour', 'muform_minute': 'Minute', 'muform_monthprev': 'Prev', 'muform_monthnext': 'Next',
         'muform_yearprev': 'Prev year', 'muform_yearnext': 'Next year', 'muform_rangestart': 'Start',
-        'muform_rangeend': 'End', 'muform_duration': 'Duration',
+        'muform_rangeend': 'End', 'muform_duration': 'Duration', 'muform_pickdatetime': 'Pick',
     })) {
         mockString(key, 'tool_mulib', text);
+    }
+    mockString('closebuttontitle', 'core', 'Close');
+});
+
+afterEach(() => {
+    for (const dialog of document.querySelectorAll('dialog')) {
+        dialog.close();
+        dialog.remove();
     }
 });
 
@@ -214,58 +261,57 @@ describe('tool_mulib/muform/element/datetimerange', () => {
     it('picks start, end time and duration and applies them', async() => {
         const {wrapper} = await make(fixture('2026-11-06 23:30 – 01:30 +1', '1793917800', '1793925000', START, END));
         await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-        const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-        const startgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="Start"]')!;
-        const endgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
-        const duration = panel.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
-        expect(startgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('23');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('1');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('30');
+        const root = panel()!;
+        const startgroup = root.querySelector<HTMLElement>('[role="group"][aria-label="Start"]')!;
+        const endgroup = root.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
+        const duration = root.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
+        expect(timeOf(startgroup, 'Hour')).toBe('23');
+        expect(timeOf(endgroup, 'Hour')).toBe('1');
+        expect(timeOf(endgroup, 'Minute')).toBe('30');
         expect(endgroup.querySelector('[data-muform-datetimerange-dayoffset]')!.textContent).toBe('+1');
         expect(duration.value).toBe('120');
         expect(Array.from(duration.options).map((option) => option.textContent)).toEqual(['30 minutes', '1 hour', '2 hours']);
 
         // Changing the start keeps the duration.
-        await choose(startgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!, '10');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('12');
+        await pickTime(startgroup, 'Hour', '10');
+        expect(timeOf(endgroup, 'Hour')).toBe('12');
         expect(endgroup.querySelector('[data-muform-datetimerange-dayoffset]')).toBeNull();
 
         // End time sets the duration, earlier times mean the next day.
-        await choose(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!, '45');
+        await pickTime(endgroup, 'Minute', '45');
         expect(duration.value).toBe('135');
         expect(Array.from(duration.options).map((option) => option.textContent))
             .toEqual(['30 minutes', '1 hour', '2 hours', '2:15']);
-        await choose(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!, '9');
+        await pickTime(endgroup, 'Hour', '9');
         expect(duration.value).toBe(String(23 * 60 + 15));
         expect(endgroup.querySelector('[data-muform-datetimerange-dayoffset]')!.textContent).toBe('+1');
 
         await choose(duration, '60');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('11');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('30');
+        expect(timeOf(endgroup, 'Hour')).toBe('11');
+        expect(timeOf(endgroup, 'Minute')).toBe('30');
 
         answers.push({
             valid: true, text: '2026-11-06 10:30 – 11:30', start: 1793871000, end: 1793874600, duration: 3600,
             dayoffset: 0, startcomponents: null, endcomponents: null, endtext: '', hint: '1 hour', timezone: 'Europe/Prague',
         });
-        const apply = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Apply')!;
-        await fire(apply, new MouseEvent('click', {bubbles: true}));
+        await fire(root.querySelector('[data-tool-mulib-date-apply]')!, new MouseEvent('click', {bubbles: true}));
         expect(bodies.at(-1)).toMatchObject({text: '2026-11-06 10:30:00 – 2026-11-06 11:30:00'});
         expect(carrier(wrapper, 'start').value).toBe('1793871000');
-        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+        expect(panel()).toBeNull();
     });
 
     it('opens empty values with the default duration', async() => {
         const {wrapper} = await make(fixture('', '', '', '', '', '5400'));
         await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-        const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-        const duration = panel.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
+        const root = panel()!;
+        const duration = root.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
         expect(duration.value).toBe('90');
-        const endgroup = panel.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('1');
-        expect(endgroup.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('30');
+        const endgroup = root.querySelector<HTMLElement>('[role="group"][aria-label="End"]')!;
+        expect(timeOf(endgroup, 'Hour')).toBe('1');
+        expect(timeOf(endgroup, 'Minute')).toBe('30');
 
         // Double click applies the day with the duration.
-        await fire(panel.querySelector('[data-muform-datetime-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
+        await fire(root.querySelector('[data-tool-mulib-date-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
         expect((bodies.at(-1) as {text: string}).text).toMatch(/^\d{4}-\d{2}-10 00:00:00 – \d{4}-\d{2}-10 01:30:00$/);
     });
 

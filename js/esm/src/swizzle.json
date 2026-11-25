@@ -1,17 +1,17 @@
 {
+  "date/input": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
+  "date/panel": {
+    "eject": "risky",
+    "wrap": "risky"
+  },
   "muform/autocompletemanypicker": {
     "eject": "risky",
     "wrap": "risky"
   },
   "muform/autocompletepicker": {
-    "eject": "risky",
-    "wrap": "risky"
-  },
-  "muform/datetimeinput": {
-    "eject": "risky",
-    "wrap": "risky"
-  },
-  "muform/datetimepicker": {
     "eject": "risky",
     "wrap": "risky"
   },

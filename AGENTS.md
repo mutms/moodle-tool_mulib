@@ -68,8 +68,10 @@ $handler->render($form);
 - Forms opened with initial values: `dialog.open({..., data: {users: '1,2,3'}})` posts them with sesskey in the
   first request (not a submission), the script reads them with `muform\util\initial_values::get_ids($name, $max)`
   and uses them as element defaults; the form validates them again on submit. Dialog sizes sm, lg, xl, xxl.
-- React code outside of muform forms uses `tool_mulib/muform/datetimeinput` (timestamp value, settings from
-  `calendar::get_picker_settings()`), never native date inputs.
+- Dates (`local\date_util`, `tool_mulib/date/*`, independent of forms): typed text normalised by the server,
+  a calendar button opens the date panel over the right half of the screen (`openDatePanel()`: single date and
+  time, or a range of at most a day). React code outside of muform forms uses `tool_mulib/date/input`
+  (timestamp value, settings from `date_util::get_picker_settings()`), never native date inputs. See `docs/date.md`.
 - Behat: `I set the following muform fields [in the "dialog[open]" "css_element"]:` and
   `the following muform fields [...] match:`, first column is the element name or its exact label.
 

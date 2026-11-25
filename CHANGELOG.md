@@ -27,6 +27,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - checkboxes report builder filter matching any checked option, edited in report_filter_bar, replaces select filters without losing stored values
 - report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
+- date panel: calendar with hour and minute lists over the right half of the screen for datetime and
+  datetimerange elements and date inputs; date code moved
+  to `local\date_util` and `tool_mulib/date/*`, endpoints `/date/datetime` and `/date/datetimerange`
 - tool_mulib\picker: picker panels over the right half of the screen independent of forms, families with sources in
   `<component>\picker\<family>`, used by muform elements and reports
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen

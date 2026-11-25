@@ -138,12 +138,12 @@ Feature: muform datetime element
     When I set the following muform fields:
       | ends | 2026-12-01 09:30 |
     And I click on "Choose date and time" "button" in the "[data-muform-name='ends']" "css_element"
-    Then I should see "December 2026" in the ".muform-datetime-panel" "css_element"
-    When I click on "Next year" "button" in the ".muform-datetime-panel" "css_element"
-    Then I should see "December 2027" in the ".muform-datetime-panel" "css_element"
-    When I click on "Previous year" "button" in the ".muform-datetime-panel" "css_element"
-    And I click on "15" "button" in the ".muform-datetime-panel" "css_element"
-    And I click on "Apply" "button" in the ".muform-datetime-panel" "css_element"
+    Then I should see "December 2026" in the ".tool_mulib-date-panel" "css_element"
+    When I click on "Next year" "button" in the ".tool_mulib-date-panel" "css_element"
+    Then I should see "December 2027" in the ".tool_mulib-date-panel" "css_element"
+    When I click on "Previous year" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I click on "15" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
     Then the following muform fields match:
       | ends | 2026-12-15 09:30 |
     When I press "Save changes"
@@ -168,12 +168,12 @@ Feature: muform datetime element
       | starts | 4/11/2026 8:00 |
     Then the "value" attribute of "[data-muform-name='starts'] input[type='text']" "css_element" should contain "4. 11. 2026 08:00"
     When I click on "Vybrat datum a čas" "button" in the "[data-muform-name='ends']" "css_element"
-    Then I should see "listopad 2026" in the ".muform-datetime-panel" "css_element"
-    And I should see "po" in the ".muform-datetime-panel thead th:first-child" "css_element"
-    When I click on "Další měsíc" "button" in the ".muform-datetime-panel" "css_element"
-    Then I should see "prosinec 2026" in the ".muform-datetime-panel" "css_element"
-    When I click on "15" "button" in the ".muform-datetime-panel" "css_element"
-    And I click on "Použít" "button" in the ".muform-datetime-panel" "css_element"
+    Then I should see "listopad 2026" in the ".tool_mulib-date-panel" "css_element"
+    And I should see "po" in the ".tool_mulib-date-panel thead th:first-child" "css_element"
+    When I click on "Další měsíc" "button" in the ".tool_mulib-date-panel" "css_element"
+    Then I should see "prosinec 2026" in the ".tool_mulib-date-panel" "css_element"
+    When I click on "15" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I click on "Použít" "button" in the ".tool_mulib-date-panel" "css_element"
     Then the "value" attribute of "[data-muform-name='ends'] input[type='text']" "css_element" should contain "15. 12. 2026 23:59"
     When I press "Uložit změny"
     Then I should see "Form submitted" in the "#muform_state" "css_element"

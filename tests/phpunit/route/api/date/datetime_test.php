@@ -16,11 +16,11 @@
 
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
-namespace tool_mulib\phpunit\route\api\muform;
+namespace tool_mulib\phpunit\route\api\date;
 
 use core\tests\router\route_testcase;
 use GuzzleHttp\Psr7\Utils;
-use tool_mulib\route\api\muform\datetime;
+use tool_mulib\route\api\date\datetime;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -31,7 +31,7 @@ use PHPUnit\Framework\Attributes\Group;
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-#[CoversClass(\tool_mulib\route\api\muform\datetime::class)]
+#[CoversClass(\tool_mulib\route\api\date\datetime::class)]
 #[Group('MuTMS')]
 final class datetime_test extends route_testcase {
     #[\Override]
@@ -50,7 +50,7 @@ final class datetime_test extends route_testcase {
     private function post(array $body): array {
         $response = $this->process_api_request(
             'POST',
-            '/muform/datetime',
+            '/date/datetime',
             ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
             Utils::streamFor(json_encode($body)),
         );
@@ -116,7 +116,7 @@ final class datetime_test extends route_testcase {
     public function test_invalid_parameters(): void {
         $response = $this->process_api_request(
             'POST',
-            '/muform/datetime',
+            '/date/datetime',
             ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
             Utils::streamFor(json_encode(['text' => 'now', 'timezone' => 'Mars/Olympus', 'lang' => 'en'])),
         );
@@ -124,7 +124,7 @@ final class datetime_test extends route_testcase {
 
         $response = $this->process_api_request(
             'POST',
-            '/muform/datetime',
+            '/date/datetime',
             ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
             Utils::streamFor(json_encode(['text' => 'now', 'timezone' => 'UTC', 'lang' => 'xx'])),
         );
@@ -133,7 +133,7 @@ final class datetime_test extends route_testcase {
         foreach ([['defaulthour' => 24], ['defaulthour' => -1], ['defaultminute' => 60]] as $default) {
             $response = $this->process_api_request(
                 'POST',
-                '/muform/datetime',
+                '/date/datetime',
                 ['HTTP_ACCEPT' => 'application/json', 'Content-Type' => 'application/json'],
                 Utils::streamFor(json_encode(['text' => '26.9.2026', 'timezone' => 'UTC', 'lang' => 'en'] + $default)),
             );

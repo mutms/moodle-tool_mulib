@@ -12,8 +12,8 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
-import { normalise, readComponents } from "../datetimeapi";
-import DateTimePicker, { getPickerStrings } from "../datetimepicker";
+import { normalise, readComponents } from "../../date/api";
+import DatePicker, { getPickerStrings } from "../../date/panel";
 import NativeElement from "../native";
 class datetime_default extends NativeElement {
   static {
@@ -53,12 +53,14 @@ class datetime_default extends NativeElement {
     input.insertAdjacentElement("beforebegin", carrier);
     this.carrier = carrier;
     input.addEventListener("input", () => {
+      this.markEmpty();
       carrier.value = input.value;
       this.invalid = false;
     });
     input.addEventListener("change", () => {
       void this.applyText(input.value);
     });
+    this.markEmpty();
     void this.mountPicker();
   }
   /**
@@ -97,9 +99,16 @@ class datetime_default extends NativeElement {
    */
   syncUI() {
     super.syncUI();
+    this.markEmpty();
     if (this.strings && this.pickerDisabled !== this.state.disabled) {
       this.renderPicker();
     }
+  }
+  /**
+   * Mark empty values, the clear button is hidden for them.
+   */
+  markEmpty() {
+    this.wrapper.querySelector(".muform-datetime")?.classList.toggle("muform-datetime-empty", !this.input?.value);
   }
   /**
    * Unmount the picker.
@@ -133,6 +142,7 @@ class datetime_default extends NativeElement {
       this.state.errors = errors;
       this.syncUI();
     }
+    this.markEmpty();
     this.emitChange();
   }
   /**
@@ -157,7 +167,7 @@ class datetime_default extends NativeElement {
     this.unmountPicker?.();
     this.pickerDisabled = this.state.disabled;
     const { input } = this;
-    this.unmountPicker = mountReactApp(span, DateTimePicker, {
+    this.unmountPicker = mountReactApp(span, DatePicker, {
       getValue: /* @__PURE__ */ __name(() => readComponents(input), "getValue"),
       timezone: input.dataset.muformDatetimeTimezone ?? "",
       defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,
@@ -167,7 +177,9 @@ class datetime_default extends NativeElement {
       hour12: span.dataset.muformDatetimeHour12 === "1",
       disabled: this.state.disabled,
       strings: this.strings,
-      apply: /* @__PURE__ */ __name((text) => this.applyText(text), "apply")
+      apply: /* @__PURE__ */ __name((text) => this.applyText(text), "apply"),
+      clearable: span.dataset.muformDatetimeClearable === "1",
+      title: this.wrapper.querySelector(`#${CSS.escape(input.id)}_label`)?.textContent?.trim() || void 0
     }, { id: `muform-datetime-${this.name}` });
   }
 }

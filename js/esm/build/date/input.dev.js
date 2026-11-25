@@ -6,12 +6,12 @@ import { jsxDEV } from "react/jsx-dev-runtime";
  *
  * The value is a timestamp, typed text is normalised by the server.
  *
- * @module     tool_mulib/muform/datetimeinput
+ * @module     tool_mulib/date/input
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import { useEffect, useRef, useState } from "react";
-import { normaliseText } from "./datetimeapi";
-import DateTimePicker, { getPickerStrings } from "./datetimepicker";
+import { normaliseText } from "./api";
+import DatePicker, { getPickerStrings } from "./panel";
 let stringsPromise = null;
 function DateTimeInput(props) {
   const { value, settings, defaultHour = 0, defaultMinute = 0, small = false } = props;
@@ -96,14 +96,14 @@ function DateTimeInput(props) {
       void 0,
       false,
       {
-        fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimeinput.tsx",
+        fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
         lineNumber: 123,
         columnNumber: 13
       },
       this
     ),
     strings && /* @__PURE__ */ jsxDEV(
-      DateTimePicker,
+      DatePicker,
       {
         getValue: () => components.current,
         timezone: settings.timezone,
@@ -115,19 +115,21 @@ function DateTimeInput(props) {
         disabled: false,
         strings,
         small,
+        clearable: text !== "",
+        title: props.label,
         apply: (picked) => commit(picked)
       },
       void 0,
       false,
       {
-        fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimeinput.tsx",
+        fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
         lineNumber: 142,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
-    fileName: "public/admin/tool/mulib/js/esm/src/muform/datetimeinput.tsx",
+    fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
     lineNumber: 122,
     columnNumber: 9
   }, this);
@@ -136,4 +138,4 @@ __name(DateTimeInput, "DateTimeInput");
 export {
   DateTimeInput as default
 };
-//# sourceMappingURL=datetimeinput.dev.js.map
+//# sourceMappingURL=input.dev.js.map

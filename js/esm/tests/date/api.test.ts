@@ -1,4 +1,4 @@
-import {formatDate} from '../../src/muform/datetimeapi';
+import {formatDate} from '../../src/date/api';
 
 describe('tool_mulib/muform/datetimeapi', () => {
     it('formats dates in the timezone of the value', () => {

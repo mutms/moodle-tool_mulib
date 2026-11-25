@@ -288,7 +288,8 @@ nothing gets rounded. Required means more than zero.
 do not work. The value is an ISO 8601 duration like `P1Y6M`, or `null`. Nothing is converted, 14
 months stay `P14M`.
 
-The date and interval code lives in `tool_mulib\muform\util\calendar`.
+The date and interval code lives in `tool_mulib\local\date_util`, the calendar and time lists open in the
+date panel, see [Dates](date.md).
 
 ### Secrets and shared keys
 

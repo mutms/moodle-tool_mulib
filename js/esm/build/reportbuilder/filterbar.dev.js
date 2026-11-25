@@ -20,8 +20,9 @@ import config from "@moodle/lms/core/config";
 import { mountReactApp } from "@moodle/lms/core/mount";
 import Pending from "@moodle/lms/core/pending";
 import { getStrings } from "@moodle/lms/core/stringUtils";
-import { normalise, readComponents } from "../muform/datetimeapi";
-import DateTimePicker from "../muform/datetimepicker";
+import { normalise, readComponents } from "../date/api";
+import DatePicker, { getPickerStrings } from "../date/panel";
+import { PANEL_CLASS } from "../picker/panel";
 const ANY_VALUE = 0;
 const TEXT_CONTAINS = 1;
 const SELECT_EQUAL_TO = 1;
@@ -227,7 +228,8 @@ class FilterBar {
       }
     });
     document.addEventListener("click", (event) => {
-      if (this.popover && !event.composedPath().includes(this.root)) {
+      const inPanel = event.composedPath().some((item) => item instanceof Element && item.classList.contains(PANEL_CLASS));
+      if (this.popover && !event.composedPath().includes(this.root) && !inPanel) {
         this.closePopover();
       }
     });
@@ -767,15 +769,12 @@ class FilterBar {
    */
   async mountPicker(span, input, apply) {
     if (!this.pickerStrings) {
-      const [pick, today, clear, applytext, hour, minute, monthprev, monthnext, yearprev, yearnext] = await getStrings(
-        ["pickdatetime", "today", "clear", "apply", "hour", "minute", "monthprev", "monthnext", "yearprev", "yearnext"].map((key) => ({ key: "muform_" + key, component: "tool_mulib" }))
-      );
-      this.pickerStrings = { pick, today, clear, apply: applytext, hour, minute, monthprev, monthnext, yearprev, yearnext };
+      this.pickerStrings = await getPickerStrings();
     }
     if (!span.isConnected) {
       return;
     }
-    this.popoverCleanup.push(mountReactApp(span, DateTimePicker, {
+    this.popoverCleanup.push(mountReactApp(span, DatePicker, {
       getValue: /* @__PURE__ */ __name(() => readComponents(input), "getValue"),
       timezone: input.dataset.muformDatetimeTimezone ?? "",
       defaultHour: Number(input.dataset.muformDatetimeDefaulthour) || 0,

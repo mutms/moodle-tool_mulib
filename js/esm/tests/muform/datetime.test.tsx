@@ -26,6 +26,62 @@ jest.mock('@moodle/lms/core/fetch', () => ({
 
 (globalThis as unknown as {IS_REACT_ACT_ENVIRONMENT: boolean}).IS_REACT_ACT_ENVIRONMENT = true;
 
+// The jsdom environment has no modal dialogs.
+if (!HTMLDialogElement.prototype.showModal) {
+    HTMLDialogElement.prototype.showModal = function(this: HTMLDialogElement): void {
+        this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function(this: HTMLDialogElement): void {
+        this.open = false;
+        this.dispatchEvent(new Event('close'));
+    };
+}
+
+/**
+ * Open date panel.
+ *
+ * @returns panel content
+ */
+const panel = (): HTMLElement | null => document.querySelector<HTMLElement>('dialog[open] .tool_mulib-date-panel');
+
+/**
+ * Selected value of a time select.
+ *
+ * @param root panel
+ * @param label select label
+ * @returns value
+ */
+const listValue = (root: HTMLElement, label: string): string | null => root.querySelector<HTMLSelectElement>(
+    `select[aria-label="${label}"]`)?.value ?? null;
+
+/**
+ * Options of a time select.
+ *
+ * @param root panel
+ * @param label select label
+ * @returns values and labels
+ */
+const listOptions = (root: HTMLElement, label: string): {values: string[]; labels: string[]} => {
+    const options = Array.from(root.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!.options);
+    return {values: options.map((option) => option.value), labels: options.map((option) => option.textContent ?? '')};
+};
+
+/**
+ * Change a time select inside act().
+ *
+ * @param root panel
+ * @param label select label
+ * @param value
+ */
+async function pickTime(root: HTMLElement, label: string, value: string): Promise<void> {
+    await act(async() => {
+        const select = root.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
+        select.value = value;
+        select.dispatchEvent(new Event('change', {bubbles: true}));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+}
+
 /** Queued endpoint answers. */
 let answers: object[] = [];
 
@@ -46,10 +102,13 @@ const performPost = Fetch.performPost as jest.Mock;
  * @param options.firstday first day of week, 0 is Sunday
  * @param options.timezone timezone of the element
  * @param options.hour12 hours with AM and PM
+ * @param options.clearable optional element with clear button
  * @returns html
  */
 function fixture(value: string, timestamp: string, components: string,
-    {defaulthour = 0, defaultminute = 0, firstday = 1, timezone = 'Europe/Prague', hour12 = false} = {}): string {
+    {
+        defaulthour = 0, defaultminute = 0, firstday = 1, timezone = 'Europe/Prague', hour12 = false, clearable = false,
+    } = {}): string {
     return wrap('starts', 'datetime',
         '<div class="muform-datetime d-flex"><input type="text" class="form-control" id="id_starts" name="starts"'
         + ` value="${value}" data-muform-datetime-timestamp="${timestamp}"`
@@ -57,7 +116,7 @@ function fixture(value: string, timestamp: string, components: string,
         + ' data-muform-datetime-lang="en"'
         + ` data-muform-datetime-defaulthour="${defaulthour}" data-muform-datetime-defaultminute="${defaultminute}">`
         + `<span data-muform-datetime-picker data-muform-datetime-step="15" data-muform-datetime-firstday="${firstday}"`
-        + `${hour12 ? ' data-muform-datetime-hour12="1"' : ''}></span>`
+        + `${hour12 ? ' data-muform-datetime-hour12="1"' : ''}${clearable ? ' data-muform-datetime-clearable="1"' : ''}></span>`
         + '</div>');
 }
 
@@ -112,7 +171,7 @@ beforeEach(() => {
     bodies = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: object}) => {
         expect(component).toBe('tool_mulib');
-        expect(action).toBe('muform/datetime');
+        expect(action).toBe('date/datetime');
         bodies.push(body);
         const answer = answers.shift() ?? {valid: false, text: '', timestamp: null, components: null, timezone: 'Europe/Prague'};
         return {json: async() => answer};
@@ -123,6 +182,14 @@ beforeEach(() => {
         'muform_yearprev': 'Prev year', 'muform_yearnext': 'Next year',
     })) {
         mockString(key, 'tool_mulib', text);
+    }
+    mockString('closebuttontitle', 'core', 'Close');
+});
+
+afterEach(() => {
+    for (const dialog of document.querySelectorAll('dialog')) {
+        dialog.close();
+        dialog.remove();
     }
 });
 
@@ -186,66 +253,56 @@ describe('tool_mulib/muform/element/datetime', () => {
         const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;
 
         await fire(trigger, new MouseEvent('click', {bubbles: true}));
-        const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-        expect(panel).not.toBeNull();
-        expect(panel.querySelector('[aria-live]')!.textContent).toBe('September 2026');
-        expect(panel.querySelector('[data-muform-datetime-day="26"]')!.getAttribute('aria-pressed')).toBe('true');
-        expect(panel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('19');
-        const minute = panel.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!;
-        expect(minute.value).toBe('28');
-        expect(Array.from(minute.options).map((option) => option.value)).toEqual(['0', '15', '28', '30', '45']);
+        const root = panel()!;
+        expect(root).not.toBeNull();
+        expect(root.querySelector('.tool_mulib-date-calendar [aria-live]')!.textContent).toBe('September 2026');
+        expect(root.querySelector('[data-tool-mulib-date-day="26"]')!.getAttribute('aria-pressed')).toBe('true');
+        expect(listValue(root, 'Hour')).toBe('19');
+        expect(listValue(root, 'Minute')).toBe('28');
+        expect(listOptions(root, 'Minute').values).toEqual(['0', '15', '28', '30', '45']);
 
-        await fire(panel.querySelector('button[aria-label="Next"]')!, new MouseEvent('click', {bubbles: true}));
-        expect(panel.querySelector('[aria-live]')!.textContent).toBe('October 2026');
-        await fire(panel.querySelector('[data-muform-datetime-day="3"]')!, new MouseEvent('click', {bubbles: true}));
-        expect(panel.querySelector('[data-muform-datetime-day="3"]')!.getAttribute('aria-pressed')).toBe('true');
+        await fire(root.querySelector('button[aria-label="Next"]')!, new MouseEvent('click', {bubbles: true}));
+        expect(root.querySelector('.tool_mulib-date-calendar [aria-live]')!.textContent).toBe('October 2026');
+        await fire(root.querySelector('[data-tool-mulib-date-day="3"]')!, new MouseEvent('click', {bubbles: true}));
+        expect(root.querySelector('[data-tool-mulib-date-day="3"]')!.getAttribute('aria-pressed')).toBe('true');
 
-        await act(async() => {
-            const hour = panel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!;
-            hour.value = '8';
-            hour.dispatchEvent(new Event('change', {bubbles: true}));
-            minute.value = '15';
-            minute.dispatchEvent(new Event('change', {bubbles: true}));
-            await settle();
-        });
+        await pickTime(root, 'Hour', '8');
+        await pickTime(root, 'Minute', '15');
 
         answers.push({
             valid: true, text: '2026-10-03 08:15:43', timestamp: 1791008143,
             components: {year: 2026, month: 10, day: 3, hour: 8, minute: 15, second: 43}, timezone: 'Europe/Prague',
         });
-        const apply = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Apply')!;
-        await fire(apply, new MouseEvent('click', {bubbles: true}));
+        await fire(root.querySelector('[data-tool-mulib-date-apply]')!, new MouseEvent('click', {bubbles: true}));
         expect(bodies.at(-1)).toEqual({text: '2026-10-03 08:15:43', ...BODY});
         expect(text.value).toBe('2026-10-03 08:15:43');
         expect(wrapper.querySelector<HTMLInputElement>('input[type="hidden"]')!.value).toBe('1791008143');
-        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+        expect(panel()).toBeNull();
         expect(changes.at(-1)).toEqual({name: 'starts', value: '1791008143'});
     });
 
-    it('applies a double clicked day and closes only the calendar on Escape', async() => {
+    it('applies a double clicked day and closes without changes', async() => {
         const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS));
         const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
         const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;
 
         await fire(trigger, new MouseEvent('click', {bubbles: true}));
-        let panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-        const escape = new KeyboardEvent('keydown', {key: 'Escape', bubbles: true, cancelable: true});
-        await fire(panel.querySelector('[data-muform-datetime-day="26"]')!, escape);
-        // The default action would close a dialog around the form.
-        expect(escape.defaultPrevented).toBe(true);
-        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+        let root = panel()!;
+        await fire(root.querySelector('[data-tool-mulib-date-day="12"]')!, new MouseEvent('click', {bubbles: true}));
+        await fire(root.querySelector('button[aria-label="Close"]')!, new MouseEvent('click', {bubbles: true}));
+        expect(panel()).toBeNull();
         expect(text.value).toBe('2026-09-26 19:28:43');
 
         await fire(trigger, new MouseEvent('click', {bubbles: true}));
-        panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
+        root = panel()!;
         answers.push({
             valid: true, text: '2026-09-10 19:28:43', timestamp: 1789061323,
             components: {year: 2026, month: 9, day: 10, hour: 19, minute: 28, second: 43}, timezone: 'Europe/Prague',
         });
-        await fire(panel.querySelector('[data-muform-datetime-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
+        await fire(root.querySelector('[data-tool-mulib-date-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
         expect(bodies.at(-1)).toEqual({text: '2026-09-10 19:28:43', ...BODY});
         expect(text.value).toBe('2026-09-10 19:28:43');
-        expect(wrapper.querySelector('.muform-datetime-panel')).toBeNull();
+        expect(panel()).toBeNull();
     });
 
     it('keeps errors and disabling away from the picker controls', async() => {
@@ -259,10 +316,10 @@ describe('tool_mulib/muform/element/datetime', () => {
         });
         const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
         expect(text.classList.contains('is-invalid')).toBe(true);
-        for (const control of wrapper.querySelectorAll('.muform-datetime-panel select, .muform-datetime-panel button')) {
+        for (const control of panel()!.querySelectorAll('button, select')) {
             expect(control.classList.contains('is-invalid')).toBe(false);
             expect(control.hasAttribute('aria-invalid')).toBe(false);
-            expect((control as HTMLSelectElement).disabled).toBe(false);
+            expect(control.hasAttribute('disabled')).toBe(false);
         }
         expect(element.validate()).toEqual([]);
     });
@@ -271,9 +328,8 @@ describe('tool_mulib/muform/element/datetime', () => {
         const {element, wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS));
         const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;
         await fire(trigger, new MouseEvent('click', {bubbles: true}));
-        const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
         answers.push({valid: true, text: '', timestamp: null, components: null, timezone: 'Europe/Prague'});
-        const clear = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Clear')!;
+        const clear = Array.from(panel()!.querySelectorAll('button')).find((button) => button.textContent === 'Clear')!;
         await fire(clear, new MouseEvent('click', {bubbles: true}));
         expect(bodies.at(-1)).toMatchObject({text: ''});
         expect(wrapper.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('');
@@ -301,12 +357,32 @@ describe('tool_mulib/muform/element/datetime', () => {
         expect(wrapper.querySelector('button[aria-label="Pick"]')).toBeNull();
     });
 
+    it('clears optional values with the clear button', async() => {
+        const {element, wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS, {clearable: true}));
+        const box = wrapper.querySelector<HTMLElement>('.muform-datetime')!;
+        const clear = wrapper.querySelector<HTMLButtonElement>('button[data-muform-datetime-clear]')!;
+        expect(clear.getAttribute('aria-label')).toBe('Clear');
+        expect(box.classList.contains('muform-datetime-empty')).toBe(false);
+        answers.push({valid: true, text: '', timestamp: null, components: null, timezone: 'Europe/Prague'});
+        await fire(clear, new MouseEvent('click', {bubbles: true}));
+        expect(bodies.at(-1)).toMatchObject({text: ''});
+        expect(element.getValue()).toBeNull();
+        expect(box.classList.contains('muform-datetime-empty')).toBe(true);
+
+        const {wrapper: empty} = await make(fixture('', '', '', {clearable: true}));
+        expect(empty.querySelector('.muform-datetime')!.classList.contains('muform-datetime-empty')).toBe(true);
+
+        const {wrapper: required} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS));
+        expect(required.querySelector('button[data-muform-datetime-clear]')).toBeNull();
+    });
+
     it('starts the week on the day configured in Moodle', async() => {
         const weekdays = async(firstday: number): Promise<string[]> => {
             const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS, {firstday}));
             await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-            const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-            return Array.from(panel.querySelectorAll('thead th')).map((th) => th.textContent ?? '');
+            const weekdays = Array.from(panel()!.querySelectorAll('thead th')).map((th) => th.textContent ?? '');
+            panel()!.closest('dialog')!.close();
+            return weekdays;
         };
         expect(await weekdays(1)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
         expect(await weekdays(0)).toEqual(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
@@ -319,29 +395,27 @@ describe('tool_mulib/muform/element/datetime', () => {
         try {
             const {wrapper} = await make(fixture('', '', '', {defaulthour: 23, defaultminute: 59}));
             await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-            const panel = wrapper.querySelector<HTMLElement>('.muform-datetime-panel')!;
-            expect(panel.querySelector('[aria-live]')!.textContent).toBe('November 2026');
-            expect(panel.querySelector('[data-muform-datetime-day="5"]')!.getAttribute('aria-pressed')).toBe('true');
-            expect(panel.querySelector('[data-muform-datetime-day="5"]')!.getAttribute('aria-current')).toBe('date');
-            expect(panel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('23');
-            const minute = panel.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!;
-            expect(minute.value).toBe('59');
-            expect(Array.from(minute.options).map((option) => option.value)).toEqual(['0', '15', '30', '45', '59']);
+            const root = panel()!;
+            expect(root.querySelector('.tool_mulib-date-calendar [aria-live]')!.textContent).toBe('November 2026');
+            expect(root.querySelector('[data-tool-mulib-date-day="5"]')!.getAttribute('aria-pressed')).toBe('true');
+            expect(root.querySelector('[data-tool-mulib-date-day="5"]')!.getAttribute('aria-current')).toBe('date');
+            expect(listValue(root, 'Hour')).toBe('23');
+            expect(listValue(root, 'Minute')).toBe('59');
+            expect(listOptions(root, 'Minute').values).toEqual(['0', '15', '30', '45', '59']);
 
             answers.push({
                 valid: true, text: '2026-11-05 23:59:00', timestamp: 1793919540,
                 components: {year: 2026, month: 11, day: 5, hour: 23, minute: 59, second: 0}, timezone: 'Europe/Prague',
             });
-            const apply = Array.from(panel.querySelectorAll('button')).find((button) => button.textContent === 'Apply')!;
-            await fire(apply, new MouseEvent('click', {bubbles: true}));
+            await fire(root.querySelector('[data-tool-mulib-date-apply]')!, new MouseEvent('click', {bubbles: true}));
             expect(bodies.at(-1)).toEqual({...BODY, text: '2026-11-05 23:59:00', defaulthour: 23, defaultminute: 59});
 
             const {wrapper: ny} = await make(fixture('', '', '', {timezone: 'America/New_York'}));
             await fire(ny.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-            const nypanel = ny.querySelector<HTMLElement>('.muform-datetime-panel')!;
-            expect(nypanel.querySelector('[data-muform-datetime-day="4"]')!.getAttribute('aria-pressed')).toBe('true');
-            expect(nypanel.querySelector<HTMLSelectElement>('select[aria-label="Hour"]')!.value).toBe('0');
-            expect(nypanel.querySelector<HTMLSelectElement>('select[aria-label="Minute"]')!.value).toBe('0');
+            const nypanel = panel()!;
+            expect(nypanel.querySelector('[data-tool-mulib-date-day="4"]')!.getAttribute('aria-pressed')).toBe('true');
+            expect(listValue(nypanel, 'Hour')).toBe('0');
+            expect(listValue(nypanel, 'Minute')).toBe('0');
         } finally {
             jest.useRealTimers();
         }
@@ -351,9 +425,11 @@ describe('tool_mulib/muform/element/datetime', () => {
         const hours = async(hour12: boolean): Promise<string[]> => {
             const {wrapper} = await make(fixture('2026-09-26 19:28:43', '1790443723', COMPONENTS, {hour12}));
             await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
-            const select = wrapper.querySelector<HTMLSelectElement>('.muform-datetime-panel select[aria-label="Hour"]')!;
-            expect(select.value).toBe('19');
-            return Array.from(select.options).map((option) => option.textContent ?? '');
+            const root = panel()!;
+            expect(listValue(root, 'Hour')).toBe('19');
+            const labels = listOptions(root, 'Hour').labels;
+            root.closest('dialog')!.close();
+            return labels;
         };
         const twelve = await hours(true);
         expect(twelve).toHaveLength(24);

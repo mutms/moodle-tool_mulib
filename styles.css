@@ -335,22 +335,20 @@ dialog.muform-dialog .modal-body {
 .muform-datetime-picker {
     display: inline-flex;
 }
-.muform-datetime-panel {
-    z-index: 1060;
-    min-width: 18rem;
-    background-color: var(--bs-body-bg, #fff);
+.muform-datetime-empty [data-muform-datetime-clear] {
+    display: none;
 }
-.muform-datetime-panel table td,
-.muform-datetime-panel table th {
+.tool_mulib-date-calendar table td,
+.tool_mulib-date-calendar table th {
+    padding: 0.1rem;
+}
+.tool_mulib-date-calendar .tool_mulib-date-day {
+    width: 2.75rem;
+    height: 2.5rem;
     padding: 0;
 }
-.muform-datetime-panel .muform-datetime-day {
-    width: 2.4rem;
-    height: 2.2rem;
-    padding: 0;
-}
-.muform-datetime-panel .muform-datetime-rangelabel {
-    min-width: 4.5rem;
+.tool_mulib-date-timelabel {
+    min-width: 5rem;
 }
 
 /* muform: secrets and shared keys are masked text inputs, never password inputs. */

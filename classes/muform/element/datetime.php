@@ -21,7 +21,7 @@ namespace tool_mulib\muform\element;
 use core\output\core_renderer;
 use core\param;
 use tool_mulib\muform\element;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Date and time element, the value is a Unix timestamp or null.
@@ -96,7 +96,7 @@ final class datetime extends element {
             $this->value = (int)$this->value;
         } else {
             try {
-                $this->value = calendar::parse(
+                $this->value = date_util::parse(
                     (string)$this->value,
                     $this->get_timezone(),
                     current_language(),
@@ -126,7 +126,7 @@ final class datetime extends element {
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
         $tz = $this->get_timezone();
-        $described = calendar::describe($this->value, $tz, current_language());
+        $described = date_util::describe($this->value, $tz, current_language());
 
         $context['value'] = ($this->invalidtext !== '') ? $this->invalidtext : $described['text'];
         $context['timestamp'] = $described['timestamp'] === null ? '' : (string)$described['timestamp'];
@@ -136,14 +136,14 @@ final class datetime extends element {
             // Users in site timezone do not need to be reminded on every date field.
             $context['timezonelabel'] = '';
         } else {
-            $tzname = calendar::get_timezone_name($tz->getName());
+            $tzname = date_util::get_timezone_name($tz->getName());
             $context['timezonelabel'] = clean_string(get_string('muform_timezone', 'tool_mulib', $tzname));
         }
         $context['lang'] = current_language();
         $context['pickerstep'] = self::PICKER_STEP;
         $context['defaulthour'] = $this->defaulthour;
         $context['defaultminute'] = $this->defaultminute;
-        $context['hour12'] = calendar::uses_12_hour_clock(current_language());
+        $context['hour12'] = date_util::uses_12_hour_clock(current_language());
         $context['firstday'] = \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday();
         return $context;
     }

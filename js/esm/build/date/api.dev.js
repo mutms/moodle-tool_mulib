@@ -6,13 +6,13 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  * The input carries the timezone, language and default time it was rendered with
  * as data attributes, the endpoint answers with the three representations of the date.
  *
- * @module     tool_mulib/muform/datetimeapi
+ * @module     tool_mulib/date/api
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import Fetch from "@moodle/lms/core/fetch";
 import Pending from "@moodle/lms/core/pending";
 async function normaliseText(text, settings) {
-  const pending = new Pending("tool_mulib/muform:datetime");
+  const pending = new Pending("tool_mulib/date:datetime");
   try {
     const body = {
       text,
@@ -21,7 +21,7 @@ async function normaliseText(text, settings) {
       defaulthour: settings.defaultHour,
       defaultminute: settings.defaultMinute
     };
-    const response = await Fetch.performPost("tool_mulib", "muform/datetime", { body });
+    const response = await Fetch.performPost("tool_mulib", "date/datetime", { body });
     return await response.json();
   } finally {
     pending.resolve();
@@ -118,11 +118,28 @@ function formatDate(timestamp, timezone, lang, format) {
   return result;
 }
 __name(formatDate, "formatDate");
+function todayIn(timezone) {
+  const now = /* @__PURE__ */ new Date();
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric"
+    }).formatToParts(now);
+    const part = /* @__PURE__ */ __name((type) => Number(parts.find((item) => item.type === type)?.value), "part");
+    return { year: part("year"), month: part("month"), day: part("day") };
+  } catch {
+    return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+  }
+}
+__name(todayIn, "todayIn");
 export {
   formatComponents,
   formatDate,
   normalise,
   normaliseText,
-  readComponents
+  readComponents,
+  todayIn
 };
-//# sourceMappingURL=datetimeapi.dev.js.map
+//# sourceMappingURL=api.dev.js.map

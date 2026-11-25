@@ -13,9 +13,9 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
 import { getString } from "@moodle/lms/core/stringUtils";
-import { readComponents } from "../datetimeapi";
-import { normaliseRange, readEndComponents } from "../datetimerangeapi";
-import DateTimePicker from "../datetimepicker";
+import { readComponents } from "../../date/api";
+import { normaliseRange, readEndComponents } from "../../date/rangeapi";
+import DatePicker, { getPickerStrings } from "../../date/panel";
 import NativeElement from "../native";
 class datetimerange_default extends NativeElement {
   static {
@@ -70,12 +70,14 @@ class datetimerange_default extends NativeElement {
     };
     input.removeAttribute("name");
     input.addEventListener("input", () => {
+      this.markEmpty();
       this.setCarriers("", "", input.value);
       this.invalid = false;
     });
     input.addEventListener("change", () => {
       void this.applyText(input.value);
     });
+    this.markEmpty();
     void this.mountPicker();
   }
   /**
@@ -118,9 +120,16 @@ class datetimerange_default extends NativeElement {
    */
   syncUI() {
     super.syncUI();
+    this.markEmpty();
     if (this.strings && this.pickerDisabled !== this.state.disabled) {
       this.renderPicker();
     }
+  }
+  /**
+   * Mark empty values, the clear button is hidden for them.
+   */
+  markEmpty() {
+    this.wrapper.querySelector(".muform-datetime")?.classList.toggle("muform-datetime-empty", !this.input?.value);
   }
   /**
    * Unmount the picker.
@@ -160,6 +169,7 @@ class datetimerange_default extends NativeElement {
       this.state.errors = errors;
       this.syncUI();
     }
+    this.markEmpty();
     this.emitChange();
   }
   /**
@@ -195,22 +205,14 @@ class datetimerange_default extends NativeElement {
     if (!span || !this.input) {
       return;
     }
-    const [pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext, start, end, duration] = await Promise.all([
+    const [strings, pick, start, end, duration] = await Promise.all([
+      getPickerStrings(),
       getString("muform_pickdatetimerange", "tool_mulib"),
-      getString("muform_today", "tool_mulib"),
-      getString("muform_clear", "tool_mulib"),
-      getString("muform_apply", "tool_mulib"),
-      getString("muform_hour", "tool_mulib"),
-      getString("muform_minute", "tool_mulib"),
-      getString("muform_monthprev", "tool_mulib"),
-      getString("muform_monthnext", "tool_mulib"),
-      getString("muform_yearprev", "tool_mulib"),
-      getString("muform_yearnext", "tool_mulib"),
       getString("muform_rangestart", "tool_mulib"),
       getString("muform_rangeend", "tool_mulib"),
       getString("muform_duration", "tool_mulib")
     ]);
-    this.strings = { pick, today, clear, apply, hour, minute, monthprev, monthnext, yearprev, yearnext };
+    this.strings = { ...strings, pick };
     let durations = [];
     try {
       durations = JSON.parse(span.dataset.muformDatetimerangeDurations || "[]");
@@ -232,7 +234,7 @@ class datetimerange_default extends NativeElement {
     this.unmountPicker?.();
     this.pickerDisabled = this.state.disabled;
     const { input } = this;
-    this.unmountPicker = mountReactApp(span, DateTimePicker, {
+    this.unmountPicker = mountReactApp(span, DatePicker, {
       getValue: /* @__PURE__ */ __name(() => readComponents(input), "getValue"),
       getEnd: /* @__PURE__ */ __name(() => readEndComponents(input), "getEnd"),
       timezone: input.dataset.muformDatetimeTimezone ?? "",
@@ -244,6 +246,8 @@ class datetimerange_default extends NativeElement {
       disabled: this.state.disabled,
       strings: this.strings,
       apply: /* @__PURE__ */ __name((text) => this.applyText(text), "apply"),
+      clearable: span.dataset.muformDatetimeClearable === "1",
+      title: this.wrapper.querySelector(`#${CSS.escape(input.id)}_label`)?.textContent?.trim() || void 0,
       range: this.range
     }, { id: `muform-datetimerange-${this.name}` });
   }

@@ -19,7 +19,7 @@
 namespace tool_mulib\tests\muform\element;
 
 use Behat\Mink\Exception\ExpectationException;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 
 /**
  * Behat helper for dateinterval element.
@@ -35,7 +35,7 @@ final class dateinterval extends base {
     #[\Override]
     public function set_value(string $value): void {
         $value = trim($value);
-        $parts = ($value === '') ? [] : calendar::parse_interval($value);
+        $parts = ($value === '') ? [] : date_util::parse_interval($value);
         if ($parts === null) {
             throw new ExpectationException(
                 'Date interval value must be an ISO 8601 duration in muform element "' . $this->get_name() . '"',
@@ -71,15 +71,15 @@ final class dateinterval extends base {
             }
             $parts[$unit] = (int)$number;
         }
-        return (string)calendar::build_interval($parts);
+        return (string)date_util::build_interval($parts);
     }
 
     #[\Override]
     public function matches(string $expected): bool {
         $expected = trim($expected);
         if ($expected !== '') {
-            $parts = calendar::parse_interval($expected);
-            $expected = ($parts === null) ? $expected : (string)calendar::build_interval($parts);
+            $parts = date_util::parse_interval($expected);
+            $expected = ($parts === null) ? $expected : (string)date_util::build_interval($parts);
         }
         return $expected === $this->get_value();
     }

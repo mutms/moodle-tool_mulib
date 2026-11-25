@@ -25,7 +25,7 @@ use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\models\user_filter;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\system_report;
-use tool_mulib\muform\util\calendar;
+use tool_mulib\local\date_util;
 use tool_mulib\reportbuilder\local\filters\boolean_yes;
 use tool_mulib\reportbuilder\local\filters\checkboxes;
 
@@ -287,8 +287,8 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
 
         $this->datetime ??= $this->get_datetime_settings();
         $tz = new \DateTimeZone($this->datetime['timezone']);
-        $data['fromtext'] = $data['from'] ? calendar::describe($data['from'], $tz, $this->datetime['lang'])['text'] : '';
-        $data['totext'] = $data['to'] ? calendar::describe($data['to'], $tz, $this->datetime['lang'])['text'] : '';
+        $data['fromtext'] = $data['from'] ? date_util::describe($data['from'], $tz, $this->datetime['lang'])['text'] : '';
+        $data['totext'] = $data['to'] ? date_util::describe($data['to'], $tz, $this->datetime['lang'])['text'] : '';
 
         $operators = [];
         foreach (self::DATE_OPERATORS as $operator => $string) {
@@ -316,14 +316,14 @@ final class report_filter_bar implements \core\output\named_templatable, \core\o
             // Users in site timezone do not need to be reminded.
             $timezonelabel = '';
         } else {
-            $timezonelabel = get_string('muform_timezone', 'tool_mulib', calendar::get_timezone_name($timezone));
+            $timezonelabel = get_string('muform_timezone', 'tool_mulib', date_util::get_timezone_name($timezone));
         }
         return [
             'timezone' => $timezone,
             'timezonelabel' => $timezonelabel,
             'lang' => $lang,
             'firstday' => \core_calendar\type_factory::get_calendar_instance()->get_starting_weekday(),
-            'hour12' => calendar::uses_12_hour_clock($lang),
+            'hour12' => date_util::uses_12_hour_clock($lang),
             'units' => $units,
         ];
     }
