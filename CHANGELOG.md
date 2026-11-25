@@ -27,11 +27,13 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - checkboxes report builder filter matching any checked option, edited in report_filter_bar, replaces select filters without losing stored values
 - report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
+- tool_mulib\picker: picker panels over the right half of the screen independent of forms, families with sources in
+  `<component>\picker\<family>`, used by muform elements and reports
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen
 - Behat diagnostic steps for AI agents and developers: screenshots, page content and element layout and style dumps
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
-- picker\filter, picker\filter_set and the pickerfilters component: filters of picker panels with default values and pinned filters,
+- picker\filter, picker\filter_set and the picker/filters component: filters of picker panels with default values and pinned filters,
   pills like in report_filter_bar, reusable in all picker families
 - filters of the users picker panel, suspended users are hidden by the default value of the pinned "Active" filter
 - cohortpicker and cohortpickermany muform elements, cohorts picked in a panel with the tree of course categories

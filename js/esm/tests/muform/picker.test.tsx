@@ -15,7 +15,7 @@
 
 import {act} from 'react';
 import PickerElement, {setPanelLoader} from '../../src/muform/pickerelement';
-import {labelText, PANEL_CLASS, type PickerPanelProps} from '../../src/muform/pickerpanel';
+import {labelText, PANEL_CLASS, type PickerPanelProps} from '../../src/picker/panel';
 import type {ChangeDetail} from '../../src/muform/types';
 import {fakeForm, form, wrap} from './fixtures';
 
@@ -75,7 +75,7 @@ function fixture(type: string, selected: string, value: string): string {
     return wrap('items', type,
         `<input type="hidden" id="id_items" name="items" value="${value}">`
         + `<div class="muform-picker" data-picker-panel="tool_x/fake/panel"`
-        + ` data-picker-source='{"class":"tool_x\\\\muform\\\\picker\\\\fake","args":[1]}'`
+        + ` data-picker-source='{"class":"tool_x\\\\picker\\\\fake","args":[1]}'`
         + ` data-picker-selected='${selected}' data-picker-strings='${JSON.stringify(strings)}'`
         + (type === 'pickermany' ? ' data-picker-multiple="1"' : '') + '></div>');
 }
@@ -157,7 +157,7 @@ describe('tool_mulib/muform/pickerelement', () => {
         expect(loaded).toEqual(['@moodle/lms/tool_x/fake/panel']);
         expect(panel()!.getAttribute('aria-label')).toBe('Pick');
         expect(lastProps!.multiple).toBe(false);
-        expect(lastProps!.source).toEqual({'class': 'tool_x\\muform\\picker\\fake', args: [1]});
+        expect(lastProps!.source).toEqual({'class': 'tool_x\\picker\\fake', args: [1]});
         expect(lastProps!.selected).toEqual([]);
 
         await click(panel()!.querySelector('[data-pick="one"]'));

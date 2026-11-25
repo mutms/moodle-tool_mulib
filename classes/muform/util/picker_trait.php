@@ -20,7 +20,7 @@ namespace tool_mulib\muform\util;
 
 use core\exception\moodle_exception;
 use core\output\core_renderer;
-use tool_mulib\muform\picker\base;
+use tool_mulib\picker\base;
 
 /**
  * Shared code of picker, pickermany, userpicker and userpickermany elements.

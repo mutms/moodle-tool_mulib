@@ -31,7 +31,7 @@ use tool_mulib\muform\element\userpicker;
 use tool_mulib\muform\element\userpickermany;
 use tool_mulib\muform\element\submit;
 use tool_mulib\muform\form;
-use tool_mulib\muform\userpicker\site_users;
+use tool_mulib\picker\user\site_users;
 
 require(__DIR__ . '/../../../../../../config.php');
 

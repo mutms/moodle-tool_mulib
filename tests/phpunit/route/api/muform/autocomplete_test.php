@@ -94,7 +94,7 @@ final class autocomplete_test extends route_testcase {
         $bad = [
             // The removed namespace of the old multiple values sources.
             'tool_mulib\\muform\\autocompletemany\\site_users',
-            'tool_mulib\\muform\\userpicker\\site_users',
+            'tool_mulib\\picker\\user\\site_users',
             'tool_mulib\\muform\\autocomplete\\base',
             'tool_mulib\\muform\\autocomplete\\missing',
             'tool_nope\\muform\\autocomplete\\site_users',

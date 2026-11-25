@@ -94,7 +94,7 @@ final class userpicker_test extends muform_testcase {
         $html = $this->render($form);
         $this->assertStringContainsString('data-muform-element="userpicker"', $html);
         $this->assertStringContainsString('data-muform-element="userpickermany"', $html);
-        $this->assertStringContainsString('data-picker-panel="tool_mulib/muform/userpicker/panel"', $html);
+        $this->assertStringContainsString('data-picker-panel="tool_mulib/picker/user/panel"', $html);
         $this->assertStringContainsString('&quot;title&quot;:&quot;Select users&quot;', $html);
         $this->assertStringContainsString('&quot;title&quot;:&quot;Select user&quot;', $html);
         $this->assertStringContainsString('Admin User', $html);

@@ -12,7 +12,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
 import NativeElement from "./native";
-import { labelText, openPanel } from "./pickerpanel";
+import { labelText, openPanel } from "../picker/panel";
 let loadModule = /* @__PURE__ */ __name((specifier) => import(specifier), "loadModule");
 function setPanelLoader(loader) {
   loadModule = loader;

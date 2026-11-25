@@ -29,7 +29,7 @@ use tool_mulib\local\sql;
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class fake_user_source extends \tool_mulib\muform\userpicker\base {
+final class fake_user_source extends \tool_mulib\picker\user\base {
     /** @var int[] current users of the edited item */
     public array $currentuserids = [];
 

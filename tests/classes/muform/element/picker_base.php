@@ -20,10 +20,10 @@ namespace tool_mulib\tests\muform\element;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(__DIR__ . '/../picker/panel_base.php');
+require_once(__DIR__ . '/../../picker/panel_base.php');
 
 use Behat\Mink\Exception\ExpectationException;
-use tool_mulib\tests\muform\picker\panel_base;
+use tool_mulib\tests\picker\panel_base;
 
 /**
  * Behat helper base of picker and pickermany elements, JavaScript only.

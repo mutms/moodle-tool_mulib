@@ -19,6 +19,8 @@ Shared APIs used by all MuTMS plugins:
   queries on system, tenant, category and course levels, instead of checking records one by one in PHP
 * **[muform](docs/muform.md)** – forms library replacing moodleform: server-side validation and rendering,
   native dialogs, autocomplete, tags, custom fields, wizards and Behat steps
+* **[Pickers](docs/picker.md)** – panels over the right half of the screen for picking users, cohorts and other
+  values with columns, filters and paging, used by forms and reports
 * **SQL helpers** – immutable SQL fragments with parameters, search queries for autocompletes and
   concurrent-safe upserts
 * **External databases** – server connections and query types for synchronisation from other systems

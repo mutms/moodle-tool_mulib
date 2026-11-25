@@ -27,7 +27,7 @@
 import {mountReactApp} from '@moodle/lms/core/mount';
 import type {ComponentType} from 'react';
 import NativeElement from './native';
-import {labelText, openPanel, type PickerItem, type PickerPanelProps, type PickerSource} from './pickerpanel';
+import {labelText, openPanel, type PickerItem, type PickerPanelProps, type PickerSource} from '../picker/panel';
 import type {FormApi, Value} from './types';
 
 /** Selected value with label html and an optional refusal. */

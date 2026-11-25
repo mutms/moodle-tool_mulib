@@ -19,7 +19,7 @@
 namespace tool_mulib\muform\element;
 
 use tool_mulib\muform\element;
-use tool_mulib\muform\picker\base;
+use tool_mulib\picker\base;
 
 /**
  * Multiple value picker, the value is a list of strings.

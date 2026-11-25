@@ -25,7 +25,7 @@ namespace tool_mulib\phpunit\muform\fixtures;
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class fake_picker_family extends \tool_mulib\muform\picker\base {
+abstract class fake_picker_family extends \tool_mulib\picker\base {
     #[\Override]
     final public function get_panel(): string {
         return 'tool_mulib/fake/panel';

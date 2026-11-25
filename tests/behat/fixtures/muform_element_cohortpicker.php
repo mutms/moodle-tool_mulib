@@ -31,7 +31,7 @@ use tool_mulib\muform\element\cohortpicker;
 use tool_mulib\muform\element\cohortpickermany;
 use tool_mulib\muform\element\submit;
 use tool_mulib\muform\form;
-use tool_mulib\muform\cohortpicker\context_cohorts;
+use tool_mulib\picker\cohort\context_cohorts;
 
 require(__DIR__ . '/../../../../../../config.php');
 

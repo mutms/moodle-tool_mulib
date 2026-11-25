@@ -1,4 +1,4 @@
-import{mountReactApp as u}from"@moodle/lms/core/mount";import d from"./native";import{labelText as m,openPanel as h}from"./pickerpanel";/**
+import{mountReactApp as u}from"@moodle/lms/core/mount";import d from"./native";import{labelText as m,openPanel as h}from"../picker/panel";/**
  * Browser side of picker and pickermany elements.
  *
  * Selected values are pills with a remove button, the button after them opens the panel of the picker family

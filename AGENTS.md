@@ -40,20 +40,21 @@ $handler->render($form);
   `label_value()` and `validate()` or `validate_value()` decide what may be selected. Reuse the traits in
   `classes/muform/util/autocomplete/`: `user_trait`, `course_trait`, `category_context_trait`, and
   `local\search_util` for search SQL and user labels. Tags use a `<component>\muform\tagarea\*` class the same way.
-- Pickers (`picker`, `pickermany`): selected values are pills, a button opens a family panel (React) over the
-  right half of the screen. A family is an abstract `tool_mulib\muform\picker\base` subclass, a panel module
-  and the family's own endpoints (`base::require_browser_session()`, `<family base>::instantiate()`); values
-  are opaque strings like autocomplete values; `are_allowed($values)` of a source re-checks values in form
-  `validation()`. See "Picker" in `docs/muform.md`.
-- User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\muform\userpicker\*` extending
-  `tool_mulib\muform\userpicker\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
+- Pickers (`tool_mulib\picker`, independent of forms): a family panel (React) over the right half of the screen,
+  opened by muform elements (`picker`, `pickermany`: selected values are pills) or by any UI with `openPanel()` from
+  `tool_mulib/picker/panel` (report filters). A family is an abstract `tool_mulib\picker\base` subclass with sources
+  in `<component>\picker\<family>\*`, a panel module and the family's own endpoints
+  (`base::require_browser_session()`, `<family base>::instantiate()`); values are opaque strings like autocomplete
+  values; `are_allowed($values)` of a source re-checks values in form `validation()`. See `docs/picker.md`.
+- User pickers: `userpicker`/`userpickermany` elements with a source in `<component>\picker\user\*` extending
+  `tool_mulib\picker\user\base` (`get_context()`, optional `get_candidates_sql()`/`get_selected_sql()` on alias `u`,
   `allow_suspended_users()`); a panel with identity columns (`showuseridentity`) and paging, tenant rules apply.
   Filter pills above the list: pinned "Active: Yes" hides suspended users by default, "Cohort" filters by membership
   of cohorts whose members the user may list; sources add `picker\filter::boolean()`, `filter::select()` and
   `filter::autocomplete()` (values searched in an autocomplete source) with optional default values and `set_pinned()` in `get_filters()`;
-  other picker families reuse them with `picker\filter_set` and the `tool_mulib/muform/pickerfilters` component.
-- Cohort pickers: `cohortpicker`/`cohortpickermany` elements with a source in `<component>\muform\cohortpicker\*` extending
-  `tool_mulib\muform\cohortpicker\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`,
+  other picker families reuse them with `picker\filter_set` and the `tool_mulib/picker/filters` component.
+- Cohort pickers: `cohortpicker`/`cohortpickermany` elements with a source in `<component>\picker\cohort\*` extending
+  `tool_mulib\picker\cohort\base` (`get_context()`, optional `get_current_cohortids()`, `get_excluded_cohortids()`,
   `get_restriction_sql()`); the panel shows cohorts in the tree of course categories, a search keeps found cohorts
   in their branch. The base offers cohorts the user may use (`cohort_util::get_use_sql()`), tenant rules apply; forms
   that reveal members of picked cohorts add `cohort_util::get_view_members_sql()` in `get_restriction_sql()`.

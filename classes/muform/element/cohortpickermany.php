@@ -19,7 +19,7 @@
 namespace tool_mulib\muform\element;
 
 use tool_mulib\muform\element;
-use tool_mulib\muform\cohortpicker\base;
+use tool_mulib\picker\cohort\base;
 
 /**
  * Multiple cohorts picker, the value is a list of cohort id strings.

@@ -19,7 +19,7 @@
 namespace tool_mulib\muform\element;
 
 use tool_mulib\muform\element;
-use tool_mulib\muform\userpicker\base;
+use tool_mulib\picker\user\base;
 
 /**
  * Multiple users picker, the value is a list of user id strings.

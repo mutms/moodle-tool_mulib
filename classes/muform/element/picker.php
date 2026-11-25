@@ -19,7 +19,7 @@
 namespace tool_mulib\muform\element;
 
 use tool_mulib\muform\element;
-use tool_mulib\muform\picker\base;
+use tool_mulib\picker\base;
 
 /**
  * Single value picker, the value is a string or null.
