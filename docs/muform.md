@@ -487,7 +487,8 @@ takes `1`, `yes` or `Yes` and `0`, `no` or `No`, and an empty cell leaves the an
 
 Attributes are the usual HTML attributes of each element, like `maxlength`, `min`, `rows` or
 `placeholder`. Unknown ones are ignored with a debugging message. Text-like inputs also accept
-`width` with `small`, `medium` or `full`.
+`width` with `auto` (the browser default size), `small`, `medium` or `full`; text inputs and autocompletes
+are `medium` by default, URLs `full`.
 Buttons accept `primary`, and `link` with `small` for minor actions inside the form such as adding or
 removing a row.
 

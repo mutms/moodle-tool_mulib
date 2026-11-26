@@ -87,6 +87,8 @@ final class text_test extends muform_testcase {
 
     public function test_width(): void {
         $this->add_element([]);
+        $this->assertStringContainsString('class="form-control muform-width-medium"', $this->render($this->submit('x')));
+        $this->add_element(['width' => 'auto']);
         $this->assertStringContainsString('class="form-control"', $this->render($this->submit('x')));
         $this->add_element(['width' => 'full']);
         $html = $this->render($this->submit('x'));
@@ -131,7 +133,7 @@ final class text_test extends muform_testcase {
         $this->add_element(['type' => 'rawtext']);
         $this->assertSame('a <b>b</b>', $this->submit('a <b>b</b>')->get_data()->txt);
         $html = $this->render($this->submit('x'));
-        $this->assertStringContainsString('<input type="text" class="form-control" id="id_txt', $html);
+        $this->assertStringContainsString('<input type="text" class="form-control muform-width-medium" id="id_txt', $html);
         $this->assertStringNotContainsString('rawtext', $html);
     }
 
@@ -172,7 +174,7 @@ final class text_test extends muform_testcase {
         $html = $this->render($form);
         $suffix = $form->get_idsuffix();
         $this->assertStringContainsString(
-            '<input type="email" class="form-control" id="id_txt' . $suffix . '" name="txt" value=""'
+            '<input type="email" class="form-control muform-width-medium" id="id_txt' . $suffix . '" name="txt" value=""'
             . ' aria-describedby="id_error_txt' . $suffix . '">',
             $html
         );
@@ -190,7 +192,7 @@ final class text_test extends muform_testcase {
         $html = $this->render($form);
         $suffix = $form->get_idsuffix();
         $this->assertStringContainsString(
-            '<input type="text" class="form-control" id="id_txt' . $suffix . '" name="txt" value="a&quot;b"'
+            '<input type="text" class="form-control muform-width-medium" id="id_txt' . $suffix . '" name="txt" value="a&quot;b"'
             . ' aria-describedby="id_error_txt' . $suffix . '" maxlength="5" placeholder="P &quot;x&quot;" autocomplete="off">',
             $html
         );
@@ -200,7 +202,7 @@ final class text_test extends muform_testcase {
         $html = $this->render($form);
         $suffix = $form->get_idsuffix();
         $this->assertStringContainsString(
-            '<input type="text" class="form-control is-invalid" id="id_txt' . $suffix . '" name="txt" value=""'
+            '<input type="text" class="form-control muform-width-medium is-invalid" id="id_txt' . $suffix . '" name="txt" value=""'
             . ' aria-describedby="id_error_txt' . $suffix . '" required aria-required="true" aria-invalid="true">',
             $html
         );

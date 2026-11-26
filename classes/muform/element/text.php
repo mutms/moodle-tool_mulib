@@ -127,9 +127,8 @@ final class text extends element {
         $context = parent::get_template_data($output, $allerrors);
         $type = $this->get_attribute('type') ?? 'text';
         $context['inputtype'] = ($type === 'rawtext') ? 'text' : $type;
-        if ($type === 'url' && $context['widthclass'] === '') {
-            // There are no short URLs.
-            $context['widthclass'] = 'muform-width-full';
+        if ($this->get_attribute('width') === null) {
+            $context['widthclass'] = ($type === 'url') ? 'muform-width-full' : 'muform-width-medium';
         }
         return $context;
     }

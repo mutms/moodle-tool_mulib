@@ -346,7 +346,7 @@ final class form_test extends muform_testcase {
         $html = $this->render($form, 'reversed');
         // Variant exists only for the buttons row, everything else falls back to standard templates.
         $this->assertStringContainsString('felement d-flex flex-wrap flex-row-reverse justify-content-end gap-2">', $html);
-        $this->assertStringContainsString('<input type="text" class="form-control" id="id_name', $html);
+        $this->assertStringContainsString('<input type="text" class="form-control muform-width-medium" id="id_name', $html);
         $this->assertStringContainsString('<form id="', $html);
 
         $html = $this->render($form, 'nosuchvariant');

@@ -58,6 +58,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Changed
 
+- muform text inputs are medium width by default instead of the browser default size, URLs stay full width
 - remove mulib::clean_string(), standard clean_string() is used instead
 - remove duplicate mulib::upsert_record(), use mudb::upsert_record() instead
 - mudb::upsert_record_pgsql() is protected, use mudb::upsert_record()
