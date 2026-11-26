@@ -44,6 +44,7 @@ Feature: Test tool_mulib behat steps
     When I skip tests if "BEHAT_TEST" is defined and not empty
     Then I should see "never reached"
 
+  @javascript
   Scenario: tool_mulib behat step: List term definition assertion works
     Given I skip tests if "tool_mutenancy" is not installed
     When the following "tool_mutenancy > tenants" exist:
@@ -57,6 +58,7 @@ Feature: Test tool_mulib behat steps
   # Uncomment following to test a failure.
     #And I should see "Tenant 2" in the "Tenant name:" definition list item
 
+  @javascript
   Scenario: tool_mulib behat step: List term definition negative assertion works
     Given I skip tests if "tool_mutenancy" is not installed
     When the following "tool_mutenancy > tenants" exist:
