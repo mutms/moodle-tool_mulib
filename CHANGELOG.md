@@ -30,6 +30,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - date panel: calendar with hour and minute lists over the right half of the screen for datetime and
   datetimerange elements and date inputs; date code moved
   to `local\date_util` and `tool_mulib/date/*`, endpoints `/date/datetime` and `/date/datetimerange`
+- recently used dates and ranges of the browser tab in the date panel, click selects, double click applies
 - tool_mulib\picker: picker panels over the right half of the screen independent of forms, families with sources in
   `<component>\picker\<family>`, used by muform elements and reports
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen

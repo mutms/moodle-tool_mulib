@@ -13,6 +13,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
  */
 import { mountReactApp } from "@moodle/lms/core/mount";
 import { normalise, readComponents } from "../../date/api";
+import { rememberDate } from "../../date/recent";
 import DatePicker, { getPickerStrings } from "../../date/panel";
 import NativeElement from "../native";
 class datetime_default extends NativeElement {
@@ -132,6 +133,7 @@ class datetime_default extends NativeElement {
       input.value = answer.text;
       carrier.value = answer.timestamp === null ? "" : String(answer.timestamp);
       this.invalid = false;
+      rememberDate(answer.text, answer.components);
     } else {
       input.value = text;
       carrier.value = text;

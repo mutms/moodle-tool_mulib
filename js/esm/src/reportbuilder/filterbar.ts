@@ -35,6 +35,7 @@ import {mountReactApp} from '@moodle/lms/core/mount';
 import Pending from '@moodle/lms/core/pending';
 import {getStrings} from '@moodle/lms/core/stringUtils';
 import {normalise, readComponents, type Answer} from '../date/api';
+import {rememberDate} from '../date/recent';
 import DatePicker, {getPickerStrings, type PickerStrings} from '../date/panel';
 import {PANEL_CLASS} from '../picker/panel';
 
@@ -1062,6 +1063,7 @@ class FilterBar {
             }
             input.value = answer.text;
             setError('');
+            rememberDate(answer.text, answer.components);
             return answer;
         };
         input.addEventListener('change', () => void apply(input.value));

@@ -31,6 +31,7 @@ import {getString} from '@moodle/lms/core/stringUtils';
 import {useEffect, useId, useRef, useState, type ReactNode} from 'react';
 import {openPanel} from '../picker/panel';
 import {formatComponents, todayIn, type Components} from './api';
+import {isRecent, recentDates, type RecentDate} from './recent';
 
 /** Localised texts of the panel. */
 export interface PickerStrings {
@@ -45,6 +46,7 @@ export interface PickerStrings {
     monthnext: string;
     yearprev: string;
     yearnext: string;
+    recent: string;
 }
 
 /**
@@ -54,11 +56,11 @@ export interface PickerStrings {
  */
 export async function getPickerStrings(): Promise<PickerStrings> {
     const keys = ['pickdatetime', 'today', 'clear', 'apply', 'close', 'hour', 'minute', 'monthprev', 'monthnext', 'yearprev',
-        'yearnext'];
-    const [pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext] = await Promise.all(
+        'yearnext', 'recent'];
+    const [pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext, recent] = await Promise.all(
         keys.map((key) => (key === 'close' ? getString('closebuttontitle', 'core') : getString(`muform_${key}`, 'tool_mulib'))),
     );
-    return {pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext};
+    return {pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext, recent};
 }
 
 /** Duration offered in range mode. */
@@ -466,6 +468,39 @@ function Header({title, close, onClose}: {title: string; close: string; onClose:
 }
 
 /**
+ * Recently used values of the browser tab, click selects, double click applies.
+ *
+ * @param props
+ * @param props.entries
+ * @param props.title
+ * @param props.label
+ * @param props.current
+ * @param props.onSelect
+ * @param props.onActivate
+ * @returns element
+ */
+function RecentList({entries, title, label, current, onSelect, onActivate}: {
+    entries: RecentDate[]; title: string; label: (entry: RecentDate) => string; current: (entry: RecentDate) => boolean;
+    onSelect: (entry: RecentDate) => void; onActivate: (entry: RecentDate) => void;
+}): ReactNode {
+    const headingId = useId();
+    return (
+        <section className="tool_mulib-date-recent" aria-labelledby={headingId} data-tool-mulib-date-recent>
+            <h3 className="h6 mb-2" id={headingId}>{title}</h3>
+            <div className="list-group">
+                {entries.map((entry) => (
+                    <button key={entry.text} type="button" aria-pressed={current(entry)}
+                        className={`list-group-item list-group-item-action${current(entry) ? ' active' : ''}`}
+                        onClick={() => onSelect(entry)} onDoubleClick={() => onActivate(entry)}>
+                        {label(entry)}
+                    </button>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+/**
  * Panel of one date and time, or of a range of at most one day.
  *
  * @param props
@@ -481,12 +516,20 @@ function SinglePanel({options, onApply, onClose}: PanelProps): ReactNode {
     const durationId = useId();
     const firstDay = firstDayOfWeek(options.firstDay, lang);
 
-    const textOf = (start: Components): string => {
+    const recent = recentDates(!!range);
+    const textOf = (start: Components, minutes = duration): string => {
         if (!range) {
             return formatComponents(start);
         }
         // Full ISO end, the server shortens it to a time with +N days.
-        return formatComponents(start) + ' – ' + formatComponents(fromWallMinutes(wallMinutes(start) + duration, start.second));
+        return formatComponents(start) + ' – ' + formatComponents(fromWallMinutes(wallMinutes(start) + minutes, start.second));
+    };
+    const pickRecent = (entry: RecentDate): number => {
+        const minutes = range && entry.end ? wallMinutes(entry.end) - wallMinutes(entry.start) : duration;
+        setParts(entry.start);
+        setView({year: entry.start.year, month: entry.start.month});
+        setDuration(minutes);
+        return minutes;
     };
     const endParts = fromWallMinutes(wallMinutes(parts) + duration, parts.second);
     const setEndTime = (hour: number, minute: number): void => {
@@ -503,6 +546,14 @@ function SinglePanel({options, onApply, onClose}: PanelProps): ReactNode {
         durations.sort((a, b) => a.minutes - b.minutes);
     }
     const offset = dayNumber(endParts) - dayNumber(parts);
+    const recentLabel = (entry: RecentDate): string => {
+        if (!range || !entry.end) {
+            return entry.text;
+        }
+        const minutes = wallMinutes(entry.end) - wallMinutes(entry.start);
+        const known = range.durations.find((item) => Math.round(item.seconds / 60) === minutes);
+        return `${entry.text} · ${known ? known.label : `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`}`;
+    };
     const time = (label?: string): ReactNode => (
         <TimePicker hour={parts.hour} minute={parts.minute} step={options.step} hour12={!!options.hour12} lang={lang}
             strings={strings} label={label} onChange={(hour, minute) => setParts({...parts, hour, minute})} />
@@ -538,6 +589,12 @@ function SinglePanel({options, onApply, onClose}: PanelProps): ReactNode {
                         </div>
                     )}
                 </div>
+                {recent.length > 0 && (
+                    <RecentList entries={recent} title={strings.recent} label={recentLabel}
+                        current={(entry) => isRecent(entry, parts, range ? endParts : null)}
+                        onSelect={pickRecent}
+                        onActivate={(entry) => onApply({text: textOf(entry.start, pickRecent(entry))})} />
+                )}
             </div>
             <Footer strings={strings} onClose={onClose} onClear={() => onApply({text: ''})}
                 onToday={() => {

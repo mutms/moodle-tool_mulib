@@ -11,6 +11,7 @@ import { jsxDEV } from "react/jsx-dev-runtime";
  */
 import { useEffect, useRef, useState } from "react";
 import { normaliseText } from "./api";
+import { rememberDate } from "./recent";
 import DatePicker, { getPickerStrings } from "./panel";
 let stringsPromise = null;
 function DateTimeInput(props) {
@@ -59,6 +60,7 @@ function DateTimeInput(props) {
     components.current = answer.components;
     committed.current = answer.text;
     known.current = answer.timestamp;
+    rememberDate(answer.text, answer.components);
     setText(answer.text);
     setInvalid(false);
     if (answer.timestamp !== value) {
@@ -97,7 +99,7 @@ function DateTimeInput(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
-        lineNumber: 123,
+        lineNumber: 125,
         columnNumber: 13
       },
       this
@@ -123,14 +125,14 @@ function DateTimeInput(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
-        lineNumber: 142,
+        lineNumber: 144,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/input.tsx",
-    lineNumber: 122,
+    lineNumber: 124,
     columnNumber: 9
   }, this);
 }

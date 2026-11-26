@@ -50,6 +50,10 @@ Everything is explicit (timezone, language), so the stateless endpoints `/date/d
   - hours `12 AM … 11 PM` when the display format uses AM/PM;
   - empty values start at the default time of the input;
   - the range mode has Start and End rows and a Duration dropdown.
+- **Recently used:** values committed in date inputs of the browser tab, typed or picked, are listed below the
+  time, latest first, without repeats, at most 10 (`tool_mulib/date/recent`, `sessionStorage`). Ranges have their
+  own list, with durations. Click selects the value, double click applies it. The footer stays visible and the body
+  scrolls.
 - **Closing:** Escape and the backdrop close only the panel, so a dialog below stays open. Apply returns the
   text; Clear returns empty text.
 

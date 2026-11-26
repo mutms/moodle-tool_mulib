@@ -347,6 +347,11 @@ dialog.muform-dialog .modal-body {
     height: 2.5rem;
     padding: 0;
 }
+.tool_mulib-date-recent {
+    width: 100%;
+    max-width: 20rem;
+}
+
 .tool_mulib-date-timelabel {
     min-width: 5rem;
 }

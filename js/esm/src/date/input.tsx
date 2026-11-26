@@ -24,6 +24,7 @@
 
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {normaliseText, type Components} from './api';
+import {rememberDate} from './recent';
 import DatePicker, {getPickerStrings, type PickerStrings} from './panel';
 
 /** User settings from the server, see tool_mulib\local\date_util::get_picker_settings(). */
@@ -111,6 +112,7 @@ export default function DateTimeInput(props: DateTimeInputProps): ReactNode {
         components.current = answer.components;
         committed.current = answer.text;
         known.current = answer.timestamp;
+        rememberDate(answer.text, answer.components);
         setText(answer.text);
         setInvalid(false);
         if (answer.timestamp !== value) {

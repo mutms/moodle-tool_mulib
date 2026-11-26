@@ -172,6 +172,7 @@ async function pickTime(group: HTMLElement, list: string, value: string): Promis
 beforeEach(() => {
     answers = [];
     bodies = [];
+    window.sessionStorage.clear();
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: object}) => {
         expect(component).toBe('tool_mulib');
         expect(action).toBe('date/datetimerange');
@@ -184,6 +185,7 @@ beforeEach(() => {
         'muform_hour': 'Hour', 'muform_minute': 'Minute', 'muform_monthprev': 'Prev', 'muform_monthnext': 'Next',
         'muform_yearprev': 'Prev year', 'muform_yearnext': 'Next year', 'muform_rangestart': 'Start',
         'muform_rangeend': 'End', 'muform_duration': 'Duration', 'muform_pickdatetime': 'Pick',
+        'muform_recent': 'Recently used',
     })) {
         mockString(key, 'tool_mulib', text);
     }
@@ -297,6 +299,45 @@ describe('tool_mulib/muform/element/datetimerange', () => {
         await fire(root.querySelector('[data-tool-mulib-date-apply]')!, new MouseEvent('click', {bubbles: true}));
         expect(bodies.at(-1)).toMatchObject({text: '2026-11-06 10:30:00 – 2026-11-06 11:30:00'});
         expect(carrier(wrapper, 'start').value).toBe('1793871000');
+        expect(panel()).toBeNull();
+    });
+
+    it('offers recently used ranges with durations, click selects start and duration', async() => {
+        const {wrapper} = await make(fixture('', '', '', '', '', '3600'));
+        const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
+        answers.push({
+            valid: true, text: '2026-11-06 23:30 – 01:30 +1', start: 1793917800, end: 1793925000, duration: 7200,
+            dayoffset: 1, startcomponents: JSON.parse(START), endcomponents: JSON.parse(END),
+            endtext: '2026-11-07 01:30', hint: '', timezone: 'Europe/Prague',
+        });
+        text.value = '2026-11-06 23:30 - 1:30';
+        await fire(text, new Event('change', {bubbles: true}));
+        answers.push({valid: true, text: '', start: null, end: null, hint: '', timezone: 'Europe/Prague'});
+        text.value = '';
+        await fire(text, new Event('change', {bubbles: true}));
+
+        await fire(wrapper.querySelector('button[aria-label="Pick"]')!, new MouseEvent('click', {bubbles: true}));
+        const root = panel()!;
+        const startgroup = root.querySelector<HTMLElement>('[role="group"][aria-label="Start"]')!;
+        const duration = root.querySelector<HTMLSelectElement>('select[data-muform-datetimerange-duration]')!;
+        expect(duration.value).toBe('60');
+        const entries = [...root.querySelectorAll<HTMLButtonElement>('[data-tool-mulib-date-recent] button')];
+        expect(entries.map((button) => button.textContent)).toEqual(['2026-11-06 23:30 – 01:30 +1 · 2 hours']);
+
+        await fire(entries[0], new MouseEvent('click', {bubbles: true}));
+        expect(timeOf(startgroup, 'Hour')).toBe('23');
+        expect(timeOf(startgroup, 'Minute')).toBe('30');
+        expect(duration.value).toBe('120');
+        expect(root.querySelector('[data-tool-mulib-date-day="6"]')!.getAttribute('aria-pressed')).toBe('true');
+        expect(entries[0].getAttribute('aria-pressed')).toBe('true');
+
+        answers.push({
+            valid: true, text: '2026-11-06 23:30 – 01:30 +1', start: 1793917800, end: 1793925000, duration: 7200,
+            dayoffset: 1, startcomponents: JSON.parse(START), endcomponents: JSON.parse(END),
+            endtext: '2026-11-07 01:30', hint: '', timezone: 'Europe/Prague',
+        });
+        await fire(entries[0], new MouseEvent('dblclick', {bubbles: true}));
+        expect(bodies.at(-1)).toMatchObject({text: '2026-11-06 23:30:00 – 2026-11-07 01:30:00'});
         expect(panel()).toBeNull();
     });
 

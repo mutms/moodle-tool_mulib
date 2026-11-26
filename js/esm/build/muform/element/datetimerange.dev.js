@@ -15,6 +15,7 @@ import { mountReactApp } from "@moodle/lms/core/mount";
 import { getString } from "@moodle/lms/core/stringUtils";
 import { readComponents } from "../../date/api";
 import { normaliseRange, readEndComponents } from "../../date/rangeapi";
+import { rememberRange } from "../../date/recent";
 import DatePicker, { getPickerStrings } from "../../date/panel";
 import NativeElement from "../native";
 class datetimerange_default extends NativeElement {
@@ -158,6 +159,7 @@ class datetimerange_default extends NativeElement {
       }
       this.setHint(answer.hint);
       this.invalid = false;
+      rememberRange(answer.text, answer.startcomponents, answer.endcomponents);
     } else {
       input.value = text;
       this.setCarriers("", "", text);

@@ -118,6 +118,7 @@ $string['muform_picker_remove'] = 'Odebrat';
 $string['muform_picker_select'] = 'Vybrat';
 $string['muform_rangeend'] = 'Konec';
 $string['muform_rangestart'] = 'Začátek';
+$string['muform_recent'] = 'Naposledy použité';
 $string['muform_remove'] = 'Odebrat: {$a}';
 $string['muform_search'] = 'Hledat...';
 $string['muform_searching'] = 'Hledání...';

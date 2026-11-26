@@ -18,6 +18,7 @@ import { getString } from "@moodle/lms/core/stringUtils";
 import { useEffect, useId, useRef, useState } from "react";
 import { openPanel } from "../picker/panel";
 import { formatComponents, todayIn } from "./api";
+import { isRecent, recentDates } from "./recent";
 async function getPickerStrings() {
   const keys = [
     "pickdatetime",
@@ -30,12 +31,13 @@ async function getPickerStrings() {
     "monthprev",
     "monthnext",
     "yearprev",
-    "yearnext"
+    "yearnext",
+    "recent"
   ];
-  const [pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext] = await Promise.all(
+  const [pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext, recent] = await Promise.all(
     keys.map((key) => key === "close" ? getString("closebuttontitle", "core") : getString(`muform_${key}`, "tool_mulib"))
   );
-  return { pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext };
+  return { pick, today, clear, apply, close, hour, minute, monthprev, monthnext, yearprev, yearnext, recent };
 }
 __name(getPickerStrings, "getPickerStrings");
 function firstDayOfWeek(moodle, lang) {
@@ -152,11 +154,11 @@ function Calendar(props) {
   const focusInView = focus.year === view.year && focus.month === view.month;
   const navButton = /* @__PURE__ */ __name((label, icon, delta) => /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-light", "aria-label": label, title: label, onClick: () => moveMonth(delta), children: /* @__PURE__ */ jsxDEV("i", { className: `fa ${icon}`, "aria-hidden": "true" }, void 0, false, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 307,
+    lineNumber: 309,
     columnNumber: 13
   }, this) }, void 0, false, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 306,
+    lineNumber: 308,
     columnNumber: 9
   }, this), "navButton");
   return /* @__PURE__ */ jsxDEV("div", { className: "tool_mulib-date-calendar", children: [
@@ -166,12 +168,12 @@ function Calendar(props) {
         navButton(strings.monthprev, "fa-chevron-left", -1)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 314,
+        lineNumber: 316,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV("span", { className: "fw-bold", "aria-live": "polite", children: monthName }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 318,
+        lineNumber: 320,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV("span", { className: "d-flex gap-1", children: [
@@ -179,33 +181,33 @@ function Calendar(props) {
         navButton(strings.yearnext, "fa-angles-right", 12)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 319,
+        lineNumber: 321,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 313,
+      lineNumber: 315,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("table", { className: "table table-borderless text-center mb-0", ref: gridRef, role: "grid", onKeyDown, children: [
       /* @__PURE__ */ jsxDEV("thead", { children: /* @__PURE__ */ jsxDEV("tr", { children: weekdays.map((name) => /* @__PURE__ */ jsxDEV("th", { scope: "col", className: "small fw-normal", children: name }, name, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 326,
+        lineNumber: 328,
         columnNumber: 49
       }, this)) }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 326,
+        lineNumber: 328,
         columnNumber: 21
       }, this) }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 325,
+        lineNumber: 327,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV("tbody", { children: rows.map((row, r) => /* @__PURE__ */ jsxDEV("tr", { children: row.map((number, c) => {
         if (number === null) {
           return /* @__PURE__ */ jsxDEV("td", {}, c, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-            lineNumber: 333,
+            lineNumber: 335,
             columnNumber: 44
           }, this);
         }
@@ -238,32 +240,32 @@ function Calendar(props) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-            lineNumber: 342,
+            lineNumber: 344,
             columnNumber: 41
           },
           this
         ) }, c, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 341,
+          lineNumber: 343,
           columnNumber: 37
         }, this);
       }) }, r, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 330,
+        lineNumber: 332,
         columnNumber: 25
       }, this)) }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 328,
+        lineNumber: 330,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 324,
+      lineNumber: 326,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 312,
+    lineNumber: 314,
     columnNumber: 9
   }, this);
 }
@@ -283,7 +285,7 @@ function TimePicker(props) {
   return /* @__PURE__ */ jsxDEV("div", { role: "group", "aria-label": props.label, className: "d-flex align-items-center gap-2 tool_mulib-date-time", children: [
     props.label && /* @__PURE__ */ jsxDEV("span", { className: "tool_mulib-date-timelabel", "aria-hidden": "true", children: props.label }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 400,
+      lineNumber: 402,
       columnNumber: 29
     }, this),
     /* @__PURE__ */ jsxDEV(
@@ -295,7 +297,7 @@ function TimePicker(props) {
         onChange: (event) => props.onChange(Number(event.target.value), minute),
         children: Array.from({ length: 24 }, (_, i) => i).map((item) => /* @__PURE__ */ jsxDEV("option", { value: item, children: hourLabel(item) }, item, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 403,
+          lineNumber: 405,
           columnNumber: 70
         }, this))
       },
@@ -303,14 +305,14 @@ function TimePicker(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 401,
+        lineNumber: 403,
         columnNumber: 13
       },
       this
     ),
     /* @__PURE__ */ jsxDEV("span", { "aria-hidden": "true", children: ":" }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 405,
+      lineNumber: 407,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV(
@@ -322,7 +324,7 @@ function TimePicker(props) {
         onChange: (event) => props.onChange(hour, Number(event.target.value)),
         children: minutes.map((item) => /* @__PURE__ */ jsxDEV("option", { value: item, children: String(item).padStart(2, "0") }, item, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 408,
+          lineNumber: 410,
           columnNumber: 40
         }, this))
       },
@@ -330,7 +332,7 @@ function TimePicker(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 406,
+        lineNumber: 408,
         columnNumber: 13
       },
       this
@@ -338,7 +340,7 @@ function TimePicker(props) {
     props.children
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 399,
+    lineNumber: 401,
     columnNumber: 9
   }, this);
 }
@@ -347,33 +349,33 @@ function Footer({ strings, onToday, onClear, onApply, onClose }) {
   return /* @__PURE__ */ jsxDEV("div", { className: "d-flex flex-wrap align-items-center gap-2 p-3 border-top", children: [
     /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-light", onClick: onToday, children: strings.today }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 438,
+      lineNumber: 440,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-light", onClick: onClear, children: strings.clear }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 439,
+      lineNumber: 441,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("span", { className: "ms-auto d-inline-flex gap-2", children: [
       /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-primary", "data-tool-mulib-date-apply": true, onClick: onApply, children: strings.apply }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 441,
+        lineNumber: 443,
         columnNumber: 17
       }, this),
       /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn btn-secondary", onClick: onClose, children: strings.close }, void 0, false, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 444,
+        lineNumber: 446,
         columnNumber: 17
       }, this)
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 440,
+      lineNumber: 442,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 437,
+    lineNumber: 439,
     columnNumber: 9
   }, this);
 }
@@ -382,21 +384,59 @@ function Header({ title, close, onClose }) {
   return /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-2 p-3 border-bottom", children: [
     /* @__PURE__ */ jsxDEV("h2", { className: "h5 mb-0 flex-grow-1", children: title }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 462,
+      lineNumber: 464,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { type: "button", className: "btn-close", "aria-label": close, title: close, onClick: onClose }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 463,
+      lineNumber: 465,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 461,
+    lineNumber: 463,
     columnNumber: 9
   }, this);
 }
 __name(Header, "Header");
+function RecentList({ entries, title, label, current, onSelect, onActivate }) {
+  const headingId = useId();
+  return /* @__PURE__ */ jsxDEV("section", { className: "tool_mulib-date-recent", "aria-labelledby": headingId, "data-tool-mulib-date-recent": true, children: [
+    /* @__PURE__ */ jsxDEV("h3", { className: "h6 mb-2", id: headingId, children: title }, void 0, false, {
+      fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
+      lineNumber: 489,
+      columnNumber: 13
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "list-group", children: entries.map((entry) => /* @__PURE__ */ jsxDEV(
+      "button",
+      {
+        type: "button",
+        "aria-pressed": current(entry),
+        className: `list-group-item list-group-item-action${current(entry) ? " active" : ""}`,
+        onClick: () => onSelect(entry),
+        onDoubleClick: () => onActivate(entry),
+        children: label(entry)
+      },
+      entry.text,
+      false,
+      {
+        fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
+        lineNumber: 492,
+        columnNumber: 21
+      },
+      this
+    )) }, void 0, false, {
+      fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
+      lineNumber: 490,
+      columnNumber: 13
+    }, this)
+  ] }, void 0, true, {
+    fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
+    lineNumber: 488,
+    columnNumber: 9
+  }, this);
+}
+__name(RecentList, "RecentList");
 function SinglePanel({ options, onApply, onClose }) {
   const lang = document.documentElement.lang || "en";
   const { strings, range } = options;
@@ -406,12 +446,20 @@ function SinglePanel({ options, onApply, onClose }) {
   const [duration, setDuration] = useState(() => range ? rangeMinutes(options.end ?? null, parts, range) : 0);
   const durationId = useId();
   const firstDay = firstDayOfWeek(options.firstDay, lang);
-  const textOf = /* @__PURE__ */ __name((start) => {
+  const recent = recentDates(!!range);
+  const textOf = /* @__PURE__ */ __name((start, minutes = duration) => {
     if (!range) {
       return formatComponents(start);
     }
-    return formatComponents(start) + " \u2013 " + formatComponents(fromWallMinutes(wallMinutes(start) + duration, start.second));
+    return formatComponents(start) + " \u2013 " + formatComponents(fromWallMinutes(wallMinutes(start) + minutes, start.second));
   }, "textOf");
+  const pickRecent = /* @__PURE__ */ __name((entry) => {
+    const minutes = range && entry.end ? wallMinutes(entry.end) - wallMinutes(entry.start) : duration;
+    setParts(entry.start);
+    setView({ year: entry.start.year, month: entry.start.month });
+    setDuration(minutes);
+    return minutes;
+  }, "pickRecent");
   const endParts = fromWallMinutes(wallMinutes(parts) + duration, parts.second);
   const setEndTime = /* @__PURE__ */ __name((hour, minute) => {
     let minutes = wallMinutes({ ...parts, hour, minute }) - wallMinutes(parts);
@@ -426,6 +474,14 @@ function SinglePanel({ options, onApply, onClose }) {
     durations.sort((a, b) => a.minutes - b.minutes);
   }
   const offset = dayNumber(endParts) - dayNumber(parts);
+  const recentLabel = /* @__PURE__ */ __name((entry) => {
+    if (!range || !entry.end) {
+      return entry.text;
+    }
+    const minutes = wallMinutes(entry.end) - wallMinutes(entry.start);
+    const known = range.durations.find((item) => Math.round(item.seconds / 60) === minutes);
+    return `${entry.text} \xB7 ${known ? known.label : `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`}`;
+  }, "recentLabel");
   const time = /* @__PURE__ */ __name((label) => /* @__PURE__ */ jsxDEV(
     TimePicker,
     {
@@ -442,7 +498,7 @@ function SinglePanel({ options, onApply, onClose }) {
     false,
     {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 507,
+      lineNumber: 558,
       columnNumber: 9
     },
     this
@@ -450,7 +506,7 @@ function SinglePanel({ options, onApply, onClose }) {
   return /* @__PURE__ */ jsxDEV("div", { className: "d-flex flex-column h-100 tool_mulib-date-panel", "data-tool-mulib-date-panel": options.mode, children: [
     /* @__PURE__ */ jsxDEV(Header, { title: options.title || strings.pick, close: strings.close, onClose }, void 0, false, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 513,
+      lineNumber: 564,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("div", { className: "flex-grow-1 overflow-auto p-3 d-flex flex-column align-items-center gap-3", children: [
@@ -473,7 +529,7 @@ function SinglePanel({ options, onApply, onClose }) {
         false,
         {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 515,
+          lineNumber: 566,
           columnNumber: 17
         },
         this
@@ -496,7 +552,7 @@ function SinglePanel({ options, onApply, onClose }) {
               offset
             ] }, void 0, true, {
               fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-              lineNumber: 527,
+              lineNumber: 578,
               columnNumber: 48
             }, this)
           },
@@ -504,19 +560,19 @@ function SinglePanel({ options, onApply, onClose }) {
           false,
           {
             fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-            lineNumber: 524,
+            lineNumber: 575,
             columnNumber: 29
           },
           this
         ) }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 523,
+          lineNumber: 574,
           columnNumber: 25
         }, this),
         range && /* @__PURE__ */ jsxDEV("div", { className: "d-flex align-items-center gap-2", children: [
           /* @__PURE__ */ jsxDEV("label", { className: "tool_mulib-date-timelabel mb-0", htmlFor: durationId, children: range.strings.duration }, void 0, false, {
             fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-            lineNumber: 533,
+            lineNumber: 584,
             columnNumber: 29
           }, this),
           /* @__PURE__ */ jsxDEV(
@@ -529,7 +585,7 @@ function SinglePanel({ options, onApply, onClose }) {
               onChange: (event) => setDuration(Number(event.target.value)),
               children: durations.map((item) => /* @__PURE__ */ jsxDEV("option", { value: item.minutes, children: item.label }, item.minutes, false, {
                 fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-                lineNumber: 536,
+                lineNumber: 587,
                 columnNumber: 58
               }, this))
             },
@@ -537,24 +593,43 @@ function SinglePanel({ options, onApply, onClose }) {
             false,
             {
               fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-              lineNumber: 534,
+              lineNumber: 585,
               columnNumber: 29
             },
             this
           )
         ] }, void 0, true, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 532,
+          lineNumber: 583,
           columnNumber: 25
         }, this)
       ] }, void 0, true, {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 520,
+        lineNumber: 571,
         columnNumber: 17
-      }, this)
+      }, this),
+      recent.length > 0 && /* @__PURE__ */ jsxDEV(
+        RecentList,
+        {
+          entries: recent,
+          title: strings.recent,
+          label: recentLabel,
+          current: (entry) => isRecent(entry, parts, range ? endParts : null),
+          onSelect: pickRecent,
+          onActivate: (entry) => onApply({ text: textOf(entry.start, pickRecent(entry)) })
+        },
+        void 0,
+        false,
+        {
+          fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
+          lineNumber: 593,
+          columnNumber: 21
+        },
+        this
+      )
     ] }, void 0, true, {
       fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-      lineNumber: 514,
+      lineNumber: 565,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV(
@@ -574,14 +649,14 @@ function SinglePanel({ options, onApply, onClose }) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 542,
+        lineNumber: 599,
         columnNumber: 13
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 512,
+    lineNumber: 563,
     columnNumber: 9
   }, this);
 }
@@ -655,7 +730,7 @@ function DatePicker(props) {
         },
         children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-calendar", "aria-hidden": "true" }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 645,
+          lineNumber: 702,
           columnNumber: 17
         }, this)
       },
@@ -663,7 +738,7 @@ function DatePicker(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 641,
+        lineNumber: 698,
         columnNumber: 13
       },
       this
@@ -681,7 +756,7 @@ function DatePicker(props) {
         },
         children: /* @__PURE__ */ jsxDEV("i", { className: "fa fa-xmark", "aria-hidden": "true" }, void 0, false, {
           fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-          lineNumber: 652,
+          lineNumber: 709,
           columnNumber: 21
         }, this)
       },
@@ -689,14 +764,14 @@ function DatePicker(props) {
       false,
       {
         fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-        lineNumber: 648,
+        lineNumber: 705,
         columnNumber: 17
       },
       this
     )
   ] }, void 0, true, {
     fileName: "public/admin/tool/mulib/js/esm/src/date/panel.tsx",
-    lineNumber: 640,
+    lineNumber: 697,
     columnNumber: 9
   }, this);
 }

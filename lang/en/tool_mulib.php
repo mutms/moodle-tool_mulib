@@ -118,6 +118,7 @@ $string['muform_picker_remove'] = 'Remove';
 $string['muform_picker_select'] = 'Select';
 $string['muform_rangeend'] = 'End';
 $string['muform_rangestart'] = 'Start';
+$string['muform_recent'] = 'Recently used';
 $string['muform_remove'] = 'Remove {$a}';
 $string['muform_search'] = 'Search...';
 $string['muform_searching'] = 'Searching...';

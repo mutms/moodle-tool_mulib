@@ -122,6 +122,7 @@ $string['muform_picker_remove'] = 'Entfernen';
 $string['muform_picker_select'] = 'Auswählen';
 $string['muform_rangeend'] = 'Ende';
 $string['muform_rangestart'] = 'Beginn';
+$string['muform_recent'] = 'Zuletzt verwendet';
 $string['muform_remove'] = '{$a} entfernen';
 $string['muform_search'] = 'Suchen ...';
 $string['muform_searching'] = 'Suche läuft ...';

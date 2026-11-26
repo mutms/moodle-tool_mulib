@@ -198,3 +198,23 @@ Feature: muform datetime element
     And the following muform fields match:
       | starts | 2026-06-11 14:30 |
       | ends   | 2026-11-06 23:59 |
+
+  @javascript
+  Scenario: Recently used dates are offered in the date panel
+    Given I change viewport size to "1280x500"
+    And I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_element_datetime.php"
+    When I set the following muform fields:
+      | starts | 2026-11-04 08:00 |
+      | ends   | 2026-12-24 18:00 |
+    And I set the following muform fields:
+      | starts | 2026-11-05 09:30 |
+    And I click on "Choose date and time" "button" in the "[data-muform-name='ends']" "css_element"
+    Then I should see "Recently used" in the ".tool_mulib-date-panel" "css_element"
+    And I save diagnostic screenshot "date_recent"
+    When I click on "2026-11-04 08:00" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
+    Then the "value" attribute of "[data-muform-name='ends'] input[type='text']" "css_element" should contain "2026-11-04 08:00"
+    When I click on "Choose date and time" "button" in the "[data-muform-name='starts']" "css_element"
+    And I click on "2026-12-24 18:00" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
+    And the "value" attribute of "[data-muform-name='starts'] input[type='text']" "css_element" should contain "2026-12-24 18:00"

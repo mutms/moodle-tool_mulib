@@ -27,6 +27,7 @@
 
 import {mountReactApp} from '@moodle/lms/core/mount';
 import {normalise, readComponents} from '../../date/api';
+import {rememberDate} from '../../date/recent';
 import DatePicker, {getPickerStrings, type PickerStrings} from '../../date/panel';
 import NativeElement from '../native';
 import type {FormApi, Value} from '../types';
@@ -162,6 +163,7 @@ export default class extends NativeElement {
             input.value = answer.text;
             carrier.value = answer.timestamp === null ? '' : String(answer.timestamp);
             this.invalid = false;
+            rememberDate(answer.text, answer.components);
         } else {
             input.value = text;
             carrier.value = text;

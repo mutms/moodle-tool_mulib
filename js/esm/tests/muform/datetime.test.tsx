@@ -167,6 +167,7 @@ async function fire(target: EventTarget, event: Event): Promise<void> {
 }
 
 beforeEach(() => {
+    window.sessionStorage.clear();
     answers = [];
     bodies = [];
     performPost.mockImplementation(async(component: string, action: string, {body}: {body: object}) => {
@@ -179,7 +180,7 @@ beforeEach(() => {
     for (const [key, text] of Object.entries({
         'muform_pickdatetime': 'Pick', 'muform_today': 'Today', 'muform_clear': 'Clear', 'muform_apply': 'Apply',
         'muform_hour': 'Hour', 'muform_minute': 'Minute', 'muform_monthprev': 'Prev', 'muform_monthnext': 'Next',
-        'muform_yearprev': 'Prev year', 'muform_yearnext': 'Next year',
+        'muform_yearprev': 'Prev year', 'muform_yearnext': 'Next year', 'muform_recent': 'Recently used',
     })) {
         mockString(key, 'tool_mulib', text);
     }
@@ -302,6 +303,53 @@ describe('tool_mulib/muform/element/datetime', () => {
         await fire(root.querySelector('[data-tool-mulib-date-day="10"]')!, new MouseEvent('dblclick', {bubbles: true}));
         expect(bodies.at(-1)).toEqual({text: '2026-09-10 19:28:43', ...BODY});
         expect(text.value).toBe('2026-09-10 19:28:43');
+        expect(panel()).toBeNull();
+    });
+
+    it('offers recently used dates, click selects and double click applies', async() => {
+        const {wrapper} = await make(fixture('', '', ''));
+        const text = wrapper.querySelector<HTMLInputElement>('input[type="text"]')!;
+        const trigger = wrapper.querySelector<HTMLButtonElement>('button[aria-label="Pick"]')!;
+        const type = async(value: string, components: object): Promise<void> => {
+            answers.push({valid: true, text: value, timestamp: 1, components, timezone: 'Europe/Prague'});
+            text.value = value;
+            await fire(text, new Event('change', {bubbles: true}));
+        };
+
+        await fire(trigger, new MouseEvent('click', {bubbles: true}));
+        expect(panel()!.querySelector('[data-tool-mulib-date-recent]')).toBeNull();
+        await fire(panel()!.querySelector('button[aria-label="Close"]')!, new MouseEvent('click', {bubbles: true}));
+
+        await type('2026-09-27 10:00', {year: 2026, month: 9, day: 27, hour: 10, minute: 0, second: 0});
+        await type('2026-10-05 08:30', {year: 2026, month: 10, day: 5, hour: 8, minute: 30, second: 0});
+        await type('2026-09-27 10:00', {year: 2026, month: 9, day: 27, hour: 10, minute: 0, second: 0});
+        answers.push({valid: false, text: '', timestamp: null, components: null, timezone: 'Europe/Prague'});
+        text.value = 'nonsense';
+        await fire(text, new Event('change', {bubbles: true}));
+
+        await fire(trigger, new MouseEvent('click', {bubbles: true}));
+        const root = panel()!;
+        const entries = (): HTMLButtonElement[] => [
+            ...root.querySelectorAll<HTMLButtonElement>('[data-tool-mulib-date-recent] button'),
+        ];
+        expect(root.querySelector('[data-tool-mulib-date-recent] h3')!.textContent).toBe('Recently used');
+        expect(entries().map((button) => button.textContent)).toEqual(['2026-09-27 10:00', '2026-10-05 08:30']);
+
+        await fire(entries()[1], new MouseEvent('click', {bubbles: true}));
+        expect(root.querySelector('.tool_mulib-date-calendar [aria-live]')!.textContent).toBe('October 2026');
+        expect(root.querySelector('[data-tool-mulib-date-day="5"]')!.getAttribute('aria-pressed')).toBe('true');
+        expect(listValue(root, 'Hour')).toBe('8');
+        expect(listValue(root, 'Minute')).toBe('30');
+        expect(entries()[1].getAttribute('aria-pressed')).toBe('true');
+        expect(panel()).not.toBeNull();
+
+        answers.push({
+            valid: true, text: '2026-09-27 10:00', timestamp: 1790496000,
+            components: {year: 2026, month: 9, day: 27, hour: 10, minute: 0, second: 0}, timezone: 'Europe/Prague',
+        });
+        await fire(entries()[0], new MouseEvent('dblclick', {bubbles: true}));
+        expect(bodies.at(-1)).toEqual({text: '2026-09-27 10:00:00', ...BODY});
+        expect(text.value).toBe('2026-09-27 10:00');
         expect(panel()).toBeNull();
     });
 

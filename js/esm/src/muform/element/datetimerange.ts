@@ -29,6 +29,7 @@ import {mountReactApp} from '@moodle/lms/core/mount';
 import {getString} from '@moodle/lms/core/stringUtils';
 import {readComponents} from '../../date/api';
 import {normaliseRange, readEndComponents} from '../../date/rangeapi';
+import {rememberRange} from '../../date/recent';
 import DatePicker, {getPickerStrings, type PickerDuration, type PickerStrings, type RangeOptions} from '../../date/panel';
 import NativeElement from '../native';
 import type {FormApi, Value} from '../types';
@@ -197,6 +198,7 @@ export default class extends NativeElement {
             }
             this.setHint(answer.hint);
             this.invalid = false;
+            rememberRange(answer.text, answer.startcomponents, answer.endcomponents);
         } else {
             input.value = text;
             this.setCarriers('', '', text);
