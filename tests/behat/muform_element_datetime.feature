@@ -215,6 +215,6 @@ Feature: muform datetime element
     And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
     Then the "value" attribute of "[data-muform-name='ends'] input[type='text']" "css_element" should contain "2026-11-04 08:00"
     When I click on "Choose date and time" "button" in the "[data-muform-name='starts']" "css_element"
-    And I click on "2026-12-24 18:00" "button" in the ".tool_mulib-date-panel" "css_element"
-    And I click on "Apply" "button" in the ".tool_mulib-date-panel" "css_element"
+    And I double-click on "2026-12-24 18:00" "button" in the ".tool_mulib-date-panel" "css_element"
+    Then "dialog.tool_mulib-picker-panel[open]" "css_element" should not exist
     And the "value" attribute of "[data-muform-name='starts'] input[type='text']" "css_element" should contain "2026-12-24 18:00"

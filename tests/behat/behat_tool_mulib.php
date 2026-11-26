@@ -761,6 +761,33 @@ JS;
     }
 
     /**
+     * Double click on an element, for example a day in the date panel or a saved report filter.
+     *
+     * @When I double-click on :element :selectortype
+     * @param string $element
+     * @param string $selectortype
+     */
+    public function i_double_click_on(string $element, string $selectortype): void {
+        $this->require_javascript();
+        $this->get_selected_node($selectortype, $element)->doubleClick();
+    }
+
+    /**
+     * Double click on an element inside a container.
+     *
+     * @When I double-click on :element :selectortype in the :nodeelement :nodeselectortype
+     * @param string $element
+     * @param string $selectortype
+     * @param string $nodeelement
+     * @param string $nodeselectortype
+     */
+    public function i_double_click_on_in_the(string $element, string $selectortype, string $nodeelement,
+            string $nodeselectortype): void {
+        $this->require_javascript();
+        $this->get_node_in_container($selectortype, $element, $nodeselectortype, $nodeelement)->doubleClick();
+    }
+
+    /**
      * Save screenshot of the browser window to diag directory of behat fail dumps, for AI agents and developers.
      *
      * Use "I change viewport size to ..." first to get a specific screen size.
