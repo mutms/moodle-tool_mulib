@@ -37,13 +37,12 @@ Feature: Test external database queries management
       | contextid | Cat 1                  |
       | note      | Some note              |
     And I click on "Add query" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
       | Test query 2 | Cat 1    | Test server 2            | SELECT * FROM m_course | Some note |
 
-    When I click on "Actions" "link_or_button" in the "Test query 2" "table_row"
-    And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Edit" "link" in the "Test query 2" "table_row"
     And the following muform fields in the "dialog[open]" "css_element" match:
       | serverid  | Test server 2          |
       | name      | Test query 2           |
@@ -57,25 +56,23 @@ Feature: Test external database queries management
       | contextid | Cat 3                  |
       | note      | Note 3                 |
     And I click on "Update query" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
       | Test query 3 | Cat 3    | Test server 1            | SELECT * FROM m_cours3 | Note 3    |
 
-    When I click on "Actions" "link_or_button" in the "Test query 3" "table_row"
-    And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Edit" "link" in the "Test query 3" "table_row"
     And I set the following muform fields in the "dialog[open]" "css_element":
       | contextid | System |
     And I click on "Update query" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
       | Test query 3 | System   | Test server 1            | SELECT * FROM m_cours3 | Note 3    |
 
-    When I click on "Actions" "link_or_button" in the "Test query 3" "table_row"
-    And I click on "Delete" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Delete" "link" in the "Test query 3" "table_row"
     And I click on "Delete query" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
     And I should not see "Test query 3"
@@ -105,6 +102,6 @@ Feature: Test external database queries management
 
     When I log in as "manager1"
     And I navigate to "Server > External databases > External database queries" in site administration
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |

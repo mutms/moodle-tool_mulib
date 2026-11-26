@@ -33,13 +33,12 @@ Feature: Test external database servers management
       | name      | Test server 2 |
       | dboptions | {"3":2}       |
     When I click on "Add server" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-servers" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |
       | Test server 2 | pgsql:host=127.0.0.2;dbname=edb | root          | {"3":2}            | Some note |
 
-    When I click on "Actions" "link_or_button" in the "Test server 2" "table_row"
-    And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Edit" "link" in the "Test server 2" "table_row"
     Then the following muform fields in the "dialog[open]" "css_element" match:
       | name      | Test server 2                   |
       | dsn       | pgsql:host=127.0.0.2;dbname=edb |
@@ -59,13 +58,12 @@ Feature: Test external database servers management
     And the following muform fields in the "dialog[open]" "css_element" match:
       | name | Test server 3 |
     When I click on "Update server" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-servers" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |
       | Test server 3 | pgsql:host=127.0.0.3;dbname=edb | root3         | {"3":3}            | Note 3    |
 
-    When I click on "Actions" "link_or_button" in the "Test server 3" "table_row"
-    And I click on "Edit" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Edit" "link" in the "Test server 3" "table_row"
     And I set the following muform fields in the "dialog[open]" "css_element":
       | dboptions | not json |
     And I click on "Update server" "button" in the "dialog[open]" "css_element"
@@ -73,15 +71,14 @@ Feature: Test external database servers management
     When I set the following muform fields in the "dialog[open]" "css_element":
       | dboptions | |
     And I click on "Update server" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-servers" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 3 | pgsql:host=127.0.0.3;dbname=edb | root3         |                    | Note 3    |
 
-    When I click on "Actions" "link_or_button" in the "Test server 3" "table_row"
-    And I click on "Delete" "link" in the ".dropdown-menu.show" "css_element"
+    When I click on "Delete" "link" in the "Test server 3" "table_row"
     Then I should see "Test server 3" in the "dialog[open]" "css_element"
     When I click on "Delete server" "button" in the "dialog[open]" "css_element"
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-servers" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 | pgsql:host=127.0.0.1;dbname=edb | root          |                    |           |
     And I should not see "Test server 3"

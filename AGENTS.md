@@ -166,15 +166,6 @@ if ($actions->has_items()) {
   with tags or 100 and more characters, using their beginning as the short text; shorter plain text, also as one
   editor paragraph, is printed whole. `expandable_text::is_empty($html)` detects editor content without text and media
   (empty paragraphs, `&nbsp;`) - use it when storing descriptions as NULL.
-- `output\report_filter_bar` + `output\report_pager` - filter bar with pinned filters above and pager with record
-  count and download menu below system reports. Read `docs/reportbuilder.md` before adding a report, changing its
-  filters or writing Behat for it.
-
-```php
-echo $OUTPUT->render(new report_filter_bar($report, pinned: ['program:fullname' => null, 'program:archived' => null]));
-echo $report->output();
-echo $OUTPUT->render(new report_pager($report));
-```
 
 ### Entity tabs (secondary navigation)
 

@@ -48,14 +48,6 @@ $PAGE->add_header_action($OUTPUT->render($button));
 
 echo $OUTPUT->header();
 
-$report = \core_reportbuilder\system_report_factory::create(
-    \tool_mulib\reportbuilder\local\systemreports\servers::class,
-    context_system::instance()
-);
-echo $OUTPUT->render(new \tool_mulib\output\report_filter_bar($report, pinned: [
-    'server:name' => null,
-]));
-echo $report->output();
-echo $OUTPUT->render(new \tool_mulib\output\report_pager($report));
+echo \tool_mulib\local\extdb\management::render_table(\tool_mulib\local\extdb\management::get_servers_table());
 
 echo $OUTPUT->footer();

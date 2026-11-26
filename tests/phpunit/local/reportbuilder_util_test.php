@@ -44,19 +44,4 @@ final class reportbuilder_util_test extends \advanced_testcase {
 
         $SCRIPT = $oldscript;
     }
-
-    public function test_format_badge(): void {
-        global $SCRIPT;
-        $oldscript = $SCRIPT;
-
-        $SCRIPT = '/admin/index.php';
-        $this->assertSame(
-            '<span class="badge rounded-pill text-bg-danger">A &amp; B</span>',
-            reportbuilder_util::format_badge('A & B', 'text-bg-danger')
-        );
-        $SCRIPT = '/reportbuilder/download.php';
-        $this->assertSame('A & B', reportbuilder_util::format_badge('A & B', 'text-bg-danger'));
-
-        $SCRIPT = $oldscript;
-    }
 }

@@ -13,19 +13,13 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - sql::for_db() selecting MariaDB/MySQL or PostgreSQL (all other databases) variant of SQL fragment, optionally for an external database
 - mulib::is_mutms_plugin() and mulib::MUTMS_PLUGINS list of all MuTMS plugin components
 - Cache of custom profile field values with references of persistent usage, moved from tool_mucohort
-- reportbuilder_util::is_downloading() and reportbuilder_util::format_badge() helpers for report builder reports
+- reportbuilder_util::is_downloading() helper for report builder reports
 - import_util for parsing of uploaded or pasted CSV data with automatic delimiter detection
 - mulib::is_mucohort_available() and cohort_util with links to cohort management
 - mulib::uuid7() generator of time ordered UUIDs
 - mulib::json_encode() for consistent encoding of stored JSON data
 - course_trait with course search helpers for autocomplete sources
 - mulib::TRANSLATIONS list of languages shipped by all MuTMS plugins, with a test for missing strings and docs/translations.md
-- report_filter_bar, always visible filter bar of system reports with text, select, boolean and date filters
-- pinned filters of report_filter_bar that stay visible with "Any" when they do not filter
-- default filter values of report_filter_bar, stored for users without stored filters and after "Reset all"
-- boolean_yes report builder filter that filters only when set to "Yes"
-- checkboxes report builder filter matching any checked option, edited in report_filter_bar, replaces select filters without losing stored values
-- report_pager, footer of system reports with the number of records, page size, download menu and compact page numbers
 - expandable_text, descriptions collapsed to one line of text that expand to the full text
 - date panel: calendar with hour and minute lists over the right half of the screen for datetime and
   datetimerange elements and date inputs; date code moved
@@ -38,7 +32,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say
 - picker\filter, picker\filter_set and the picker/filters component: filters of picker panels with default values and pinned filters,
-  pills like in report_filter_bar, reusable in all picker families
+  filter pills, reusable in all picker families
 - filters of the users picker panel, suspended users are hidden by the default value of the pinned "Active" filter
 - cohortpicker and cohortpickermany muform elements, cohorts picked in a panel with the tree of course categories
 - get_restriction_sql() hook of cohort picker sources for extra conditions of cohorts that may be picked
@@ -58,6 +52,7 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 ### Changed
 
+- external database servers and queries are plain tables instead of report builder system reports
 - muform text inputs are medium width by default instead of the browser default size, URLs stay full width
 - remove mulib::clean_string(), standard clean_string() is used instead
 - remove duplicate mulib::upsert_record(), use mudb::upsert_record() instead

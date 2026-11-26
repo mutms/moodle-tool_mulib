@@ -39,18 +39,4 @@ final class reportbuilder_util {
         global $SCRIPT;
         return $SCRIPT === '/reportbuilder/download.php';
     }
-
-    /**
-     * Format text as a badge pill, plain text when downloading.
-     *
-     * @param string $text plain text
-     * @param string $class Bootstrap colour classes, for example 'text-bg-success'
-     * @return string html
-     */
-    public static function format_badge(string $text, string $class): string {
-        if (self::is_downloading()) {
-            return $text;
-        }
-        return \html_writer::span(s($text), 'badge rounded-pill ' . $class);
-    }
 }

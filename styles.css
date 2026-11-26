@@ -541,39 +541,6 @@ body.behat-site dialog.muform-dialog .muform-buttons-sticky {
     min-height: calc(1.5em + 0.75rem + 2px);
 }
 
-/* Report filter bar: core filters button is moved into the bar by JavaScript, hide it until then. */
-.tool_mulib-report-filter-bar ~ .reportbuilder-report #dropdownFiltersButton {
-    visibility: hidden;
-}
-
-/* Report filter bar: core filters dropdown is outside of .reportbuilder-wrapper after moving into the bar. */
-.tool_mulib-report-filter-bar .filters-dropdown {
-    width: 32rem;
-    max-width: calc(100vw - 2rem);
-    padding: 0;
-}
-
-/* Form buttons stay visible at the bottom of the scrolled list without covering the last filter. */
-.tool_mulib-report-filter-bar .reportbuilder-filters-sidebar .fitem[data-groupname="buttonar"] {
-    position: sticky;
-    bottom: 0;
-    height: auto;
-    margin: 0;
-    padding: 0.75rem 0;
-    background-color: var(--bs-dropdown-bg, #fff);
-}
-
-.tool_mulib-report-filter-bar .reportbuilder-filters-sidebar {
-    max-height: 60vh;
-}
-
-/* Report pager: it replaces the core paging bar, the "Show all" link and the download form of the report table. */
-.tool_mulib-report-pager-active nav.pagination,
-.tool_mulib-report-pager-active [data-action="showcount"],
-.tool_mulib-report-pager-download .dataformatselector {
-    display: none;
-}
-
 /* Collapsible form sections, see tool_mulib\muform\element\collapsible - Bootstrap accordion on details/summary. */
 .muform .muform-collapsible > summary {
     list-style: none;
@@ -651,4 +618,39 @@ dialog.tool_mulib-picker-panel::backdrop {
 
 dialog.tool_mulib-picker-panel thead th {
     background: var(--bs-body-bg);
+}
+
+/* Plain data tables in a flat card, the same look as mureport tables: grey header band, small text, Moodle greys. */
+.tool_mulib-table-card {
+    --bs-card-border-color: var(--mds-border-subtle, var(--bs-border-color-translucent));
+    overflow: hidden;
+}
+.tool_mulib-table.table {
+    --bs-table-color: var(--mds-text-default, var(--bs-body-color));
+    --bs-table-bg: var(--mds-bg-surface-default, var(--bs-card-bg, var(--bs-white)));
+    --bs-table-hover-bg: var(--mds-bg-surface-subtle, var(--bs-tertiary-bg));
+    --bs-table-hover-color: var(--bs-body-color);
+    --bs-table-border-color: var(--mds-border-subtle, var(--bs-card-border-color));
+    font-size: 0.875rem;
+}
+.tool_mulib-table > thead > tr > th {
+    background-color: var(--mds-bg-surface-strong, var(--bs-secondary-bg));
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.tool_mulib-table > tbody > tr:last-child > td {
+    border-bottom-width: 0;
+}
+.tool_mulib-table pre {
+    margin: 0;
+    max-height: 8rem;
+    overflow: auto;
+    font-size: 0.8125rem;
+    white-space: pre-wrap;
+}
+.tool_mulib-table .tool_mulib-table-actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: end;
 }

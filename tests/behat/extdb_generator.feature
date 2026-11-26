@@ -19,7 +19,7 @@ Feature: Test tool_mulib external database generator
 
     And I log in as "admin"
     And I navigate to "Server > External databases > External database servers" in site administration
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-servers" table:
       | Name          | PDO DSN                         | Database user | PDO options (JSON) | Note      |
       | Test server 1 |                                 |               |                    |           |
       | Test server 2 | pgsql:host=127.0.0.1;dbname=edb | root          | {"3":2}            | Some note |
@@ -41,7 +41,7 @@ Feature: Test tool_mulib external database generator
 
     And I log in as "admin"
     And I navigate to "Server > External databases > External database queries" in site administration
-    Then the following should exist in the "reportbuilder-table" table:
+    Then the following should exist in the "tool_mulib-extdb-queries" table:
       | Name         | Category | External database server | SQL query              | Note      |
       | Test query 1 | System   | Test server 1            | SELECT * FROM m_user   |           |
       | Test query 2 | Cat 1    | Test server 2            | SELECT * FROM m_course | Some note |
