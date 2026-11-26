@@ -21,7 +21,12 @@
 
 namespace tool_mulib\local;
 
-use context, context_system, context_tenant, context_user, context_coursecat, context_course;
+use context;
+use context_system;
+use context_tenant;
+use context_user;
+use context_coursecat;
+use context_course;
 use core\exception\coding_exception;
 
 /**
