@@ -50,6 +50,7 @@ final class mulib {
         'tool_muprog',
         'tool_mupwned',
         'tool_murelation',
+        'tool_mureport',
         'tool_musudo',
         'tool_mutenancy',
         'tool_mutrain',
