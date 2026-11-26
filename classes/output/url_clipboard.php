@@ -17,6 +17,7 @@
 // phpcs:disable moodle.Files.BoilerplateComment.CommentEndedTooSoon
 
 namespace tool_mulib\output;
+
 use core\url;
 
 /**
