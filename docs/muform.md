@@ -95,6 +95,10 @@ Add the submit button first, because browsers use the first submit button when E
 the button row, like "Delete row", are fine: with JavaScript, Enter in a text input always uses the
 submit button. If you want the submit button shown last, use the `buttons-reversed` template.
 
+In dialogs on large screens (at least 768×600px) the `buttons` row sticks to the bottom of the dialog while the
+form scrolls, with the "More" pill above it. Small screens keep the row at the end of the form. Rows with unusual
+content call `set_sticky(false)` to stay at the end of the form everywhere.
+
 ## Handling a form
 
 ```php

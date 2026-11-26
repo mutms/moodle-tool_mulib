@@ -103,6 +103,7 @@ $string['muform_minutes'] = 'minuti';
 $string['muform_monthnext'] = 'Mese successivo';
 $string['muform_monthprev'] = 'Mese precedente';
 $string['muform_months'] = 'mesi';
+$string['muform_more'] = 'Altro';
 $string['muform_nofiles'] = 'Nessun file';
 $string['muform_noresults'] = 'Nessun risultato';
 $string['muform_nosubdirs'] = 'Le sottocartelle non sono consentite';

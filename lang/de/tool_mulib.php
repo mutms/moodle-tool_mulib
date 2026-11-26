@@ -107,6 +107,7 @@ $string['muform_minutes'] = 'Minuten';
 $string['muform_monthnext'] = 'Nächster Monat';
 $string['muform_monthprev'] = 'Vorheriger Monat';
 $string['muform_months'] = 'Monate';
+$string['muform_more'] = 'Mehr';
 $string['muform_nofiles'] = 'Keine Dateien';
 $string['muform_noresults'] = 'Keine Ergebnisse';
 $string['muform_nosubdirs'] = 'Unterordner sind nicht erlaubt';

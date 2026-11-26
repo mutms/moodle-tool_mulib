@@ -30,8 +30,27 @@ let calls: {url: string; init: RequestInit}[] = [];
 /** Queued answers. */
 let answers: object[] = [];
 
+/** Callbacks of resize observers, jsdom has no layout. */
+let resizeCallbacks: (() => void)[] = [];
+
 beforeEach(() => {
     mockString('closebuttontitle', 'core', 'Close');
+    mockString('muform_more', 'tool_mulib', 'More');
+    resizeCallbacks = [];
+    global.ResizeObserver = class {
+        constructor(callback: () => void) {
+            resizeCallbacks.push(callback);
+        }
+        observe(): void {
+            return;
+        }
+        disconnect(): void {
+            return;
+        }
+        unobserve(): void {
+            return;
+        }
+    } as unknown as typeof ResizeObserver;
     calls = [];
     answers = [];
     document.body.innerHTML = '<button id="t" data-muform-dialog-url="/handler" data-muform-dialog-title="Edit"'
@@ -86,6 +105,43 @@ describe('tool_mulib/muform/dialog', () => {
         expect(document.querySelector('dialog')).toBeNull();
         expect(calls).toHaveLength(1);
         expect(document.activeElement).toBe(trigger);
+    });
+
+    it('shows the More pill while the form continues below and scrolls down', async() => {
+        answers.push({status: 'render', title: 'Edit item', html: FORM, javascript: ''});
+        openFrom(document.getElementById('t')!);
+        await settle();
+
+        const dialog = document.querySelector<HTMLDialogElement>('dialog.muform-dialog')!;
+        const body = dialog.querySelector<HTMLElement>('.modal-body')!;
+        const more = dialog.querySelector<HTMLButtonElement>('.muform-dialog-more')!;
+        expect(more.hidden).toBe(true);
+        expect(more.getAttribute('aria-hidden')).toBe('true');
+        expect(more.tabIndex).toBe(-1);
+        expect(more.textContent).toContain('More');
+
+        Object.defineProperty(body, 'scrollHeight', {configurable: true, value: 1000});
+        Object.defineProperty(body, 'clientHeight', {configurable: true, value: 400});
+        resizeCallbacks.forEach((callback) => callback());
+        expect(more.hidden).toBe(false);
+
+        body.scrollTo = jest.fn() as typeof body.scrollTo;
+        more.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0}));
+        expect(body.scrollTo).toHaveBeenCalledWith({top: 320, behavior: 'smooth'});
+        body.scrollTop = 200;
+        more.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0}));
+        expect(body.scrollTo).toHaveBeenLastCalledWith({top: 600, behavior: 'smooth'});
+
+        const name = dialog.querySelector<HTMLInputElement>('#id_name')!;
+        name.focus();
+        const press = new MouseEvent('mousedown', {bubbles: true, cancelable: true, button: 0});
+        more.dispatchEvent(press);
+        expect(press.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(name);
+
+        body.scrollTop = 600;
+        body.dispatchEvent(new Event('scroll'));
+        expect(more.hidden).toBe(true);
     });
 
     it('focuses the checked radio of the first element', async() => {

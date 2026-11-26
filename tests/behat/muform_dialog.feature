@@ -145,3 +145,17 @@ Feature: muform works in router controllers, as a full page and in native dialog
     And "dialog[open]" "css_element" should exist
     When I click on "Cancel" "button" in the "dialog[open]" "css_element"
     Then "dialog[open]" "css_element" should not exist
+
+  @javascript
+  Scenario: Dialog shows More while the form continues below
+    Given I change viewport size to "1280x450"
+    And I visit "/r.php/tool_mulib/muform/fixture"
+    When I click on "Edit in dialog" "button"
+    Then I should see "Edit fixture" in the "dialog[open]" "css_element"
+    And ".muform-dialog-more" "css_element" should be visible
+    And I save diagnostic screenshot "dialog_more"
+    When I change viewport size to "1280x900"
+    Then ".muform-dialog-more" "css_element" should be visible
+    And "dialog[open] .muform-buttons-sticky" "css_element" should exist
+    When I change viewport size to "1280x3000"
+    Then ".muform-dialog-more" "css_element" should not be visible

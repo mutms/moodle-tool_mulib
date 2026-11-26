@@ -72,6 +72,11 @@ final class button_test extends muform_testcase {
         $reload = new reload('update', 'Update');
         $this->assertSame('reload', $reload->get_role());
         $this->assertTrue($reload->is_reloading());
+
+        $buttons = new buttons('buttons');
+        $this->assertTrue($buttons->is_sticky());
+        $this->assertSame($buttons, $buttons->set_sticky(false));
+        $this->assertFalse($buttons->is_sticky());
     }
 
     public function test_wizard_buttons(): void {
@@ -185,7 +190,7 @@ final class button_test extends muform_testcase {
             $html
         );
         $this->assertStringContainsString(
-            '<div id="fitem_id_buttons' . $suffix . '" class="mb-3 row fitem muform-buttons"'
+            '<div id="fitem_id_buttons' . $suffix . '" class="mb-3 row fitem muform-buttons muform-buttons-sticky"'
             . ' data-muform-element="buttons" data-muform-component="tool_mulib" data-muform-name="buttons">',
             $html
         );
@@ -235,7 +240,8 @@ final class button_test extends muform_testcase {
         $hook = function (muform_definition $hook): void {
             $form = $hook->form;
             $more = (new buttons('more'))
-                ->set_template('tool_mulib/muform/element/buttons-reversed');
+                ->set_template('tool_mulib/muform/element/buttons-reversed')
+                ->set_sticky(false);
             $form->add($more);
             $form->add(new submit('save', 'Save'), 'more');
             $form->add(new cancel('back', 'Back'), 'more');

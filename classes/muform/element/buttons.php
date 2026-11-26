@@ -28,11 +28,37 @@ use tool_mulib\muform\element;
  * for implicit submission with Enter key. To show it last use the buttons-reversed
  * template variant, either via set_template() or the render variant.
  *
+ * In dialogs on large screens the row sticks to the bottom of the dialog while the form scrolls,
+ * set_sticky(false) keeps it at the end of the form.
+ *
  * @package     tool_mulib
  * @copyright   2026 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class buttons extends element {
+    /** @var bool stick to the bottom of dialogs on large screens */
+    private bool $sticky = true;
+
+    /**
+     * Should the row stick to the bottom of dialogs on large screens?
+     *
+     * @param bool $sticky
+     * @return $this
+     */
+    public function set_sticky(bool $sticky): static {
+        $this->sticky = $sticky;
+        return $this;
+    }
+
+    /**
+     * Does the row stick to the bottom of dialogs on large screens?
+     *
+     * @return bool
+     */
+    public function is_sticky(): bool {
+        return $this->sticky;
+    }
+
     #[\Override]
     public function accepts_children(): bool {
         return true;
@@ -51,6 +77,7 @@ final class buttons extends element {
     #[\Override]
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
+        $context['is_sticky'] = $this->sticky;
 
         // A group without any submit button is fine, Enter then uses the first button.
         $form = $this->get_form();

@@ -107,6 +107,7 @@ $string['muform_minutes'] = 'minutos';
 $string['muform_monthnext'] = 'Mês seguinte';
 $string['muform_monthprev'] = 'Mês anterior';
 $string['muform_months'] = 'meses';
+$string['muform_more'] = 'Mais';
 $string['muform_nofiles'] = 'Sem ficheiros';
 $string['muform_noresults'] = 'Sem resultados';
 $string['muform_nosubdirs'] = 'Não são permitidas subpastas';

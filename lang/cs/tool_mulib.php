@@ -103,6 +103,7 @@ $string['muform_minutes'] = 'minut';
 $string['muform_monthnext'] = 'Další měsíc';
 $string['muform_monthprev'] = 'Předchozí měsíc';
 $string['muform_months'] = 'měsíců';
+$string['muform_more'] = 'Další';
 $string['muform_nofiles'] = 'Žádné soubory';
 $string['muform_noresults'] = 'Žádné výsledky';
 $string['muform_nosubdirs'] = 'Podsložky nejsou povoleny';

@@ -94,13 +94,74 @@ class MuDialog {
       }
     });
     yui.observe(document.body, { childList: true });
+    const more = this.createMore();
     this.dialog.addEventListener("close", () => {
       yui.disconnect();
+      more.disconnect();
       this.dialog.querySelectorAll(":scope > .moodle-dialogue-base").forEach((node) => document.body.append(node));
       this.dialog.remove();
       this.options.trigger?.focus();
       this.resolveClosed();
     });
+  }
+  /**
+   * Floating "More" pill shown while the form continues below the visible part of the dialog body.
+   *
+   * Hidden from assistive technologies and keyboard focus, they do not depend on the visible area.
+   *
+   * @returns observers to disconnect when the dialog closes
+   */
+  createMore() {
+    const body = this.body;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-sm btn-light rounded-pill muform-dialog-more";
+    button.tabIndex = -1;
+    button.setAttribute("aria-hidden", "true");
+    button.hidden = true;
+    button.innerHTML = '<i class="icon fa fa-arrow-down fa-fw m-0"></i> <span></span>';
+    const label = button.querySelector("span");
+    getString("muform_more", "tool_mulib").then((text) => {
+      label.textContent = text;
+      return text;
+    }).catch(() => void 0);
+    const update = /* @__PURE__ */ __name(() => {
+      button.hidden = body.scrollHeight - body.scrollTop - body.clientHeight <= 2;
+    }, "update");
+    button.addEventListener("mousedown", (event) => event.preventDefault());
+    button.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      const end = body.scrollHeight - body.clientHeight;
+      let top = body.scrollTop + Math.round(body.clientHeight * 0.8);
+      if (end - top < body.clientHeight * 0.25) {
+        top = end;
+      }
+      body.scrollTo({ top, behavior: "smooth" });
+    });
+    body.addEventListener("scrollend", update);
+    this.dialog.querySelector(".modal-content").append(button);
+    const resize = new ResizeObserver(update);
+    const observeContent = /* @__PURE__ */ __name(() => {
+      resize.disconnect();
+      resize.observe(body);
+      for (const child of Array.from(body.children)) {
+        resize.observe(child);
+      }
+      update();
+    }, "observeContent");
+    const mutation = new MutationObserver(observeContent);
+    mutation.observe(body, { childList: true });
+    body.addEventListener("scroll", update, { passive: true });
+    observeContent();
+    return {
+      disconnect: /* @__PURE__ */ __name(() => {
+        resize.disconnect();
+        mutation.disconnect();
+      }, "disconnect")
+    };
   }
   /**
    * Show the dialog and load the form.
@@ -265,7 +326,8 @@ class MuDialog {
         const group = Array.from(this.body.querySelectorAll('input[type="radio"]')).filter((radio) => radio.name === name);
         focusable = group.find((radio) => radio.checked) ?? focusable;
       }
-      focusable?.focus();
+      focusable?.focus({ preventScroll: true });
+      this.body.scrollTop = 0;
     }
     await resized;
   }

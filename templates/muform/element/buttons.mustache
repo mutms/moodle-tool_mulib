@@ -25,17 +25,18 @@
     * type - element type, short class name
     * component - component defining the element
     * is_hidden - true if initially hidden
+    * is_sticky - true if the row sticks to the bottom of dialogs on large screens
     * elements_byname - rendered elements with name and html indexed by element name, for custom templates
     * elements - list of child elements with name and html
 
     Example context (json):
     {
-        "name": "buttons", "type": "text", "component": "tool_mulib", "id": "id_buttons", "is_hidden": false, "is_disabled": false,
+        "name": "buttons", "type": "text", "component": "tool_mulib", "id": "id_buttons", "is_hidden": false, "is_disabled": false, "is_sticky": true,
         "elements_byname": {"submit": {"name": "submit", "html": "<button>Save</button>"} },
         "elements": [{"name": "submit", "html": "<button>Save</button>"}]
     }
 }}
-<div id="fitem_{{id}}" class="mb-3 row fitem muform-buttons" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
+<div id="fitem_{{id}}" class="mb-3 row fitem muform-buttons{{#is_sticky}} muform-buttons-sticky{{/is_sticky}}" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
     <div class="col-md-9 offset-md-3 felement {{$rowclass}}d-flex flex-wrap gap-2{{/rowclass}}">
         {{#elements}}{{{html}}}{{/elements}}
     </div>

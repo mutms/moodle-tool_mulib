@@ -326,9 +326,65 @@ dialog.muform-dialog > .moodle-dialogue-base > .moodle-dialogue {
     overflow-y: auto;
 }
 /* stylelint-enable declaration-no-important */
+/* muform: the page behind modal dialogs and panels does not scroll, like with Bootstrap modals. */
+html:has(dialog.muform-dialog[open]),
+html:has(dialog.tool_mulib-picker-panel[open]) {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+}
 dialog.muform-dialog .modal-body {
     max-height: calc(95vh - 5rem);
     overflow: auto;
+    overscroll-behavior: contain;
+    scroll-padding-bottom: 3rem;
+}
+dialog.muform-dialog .modal-content {
+    position: relative;
+}
+dialog.muform-dialog .muform-dialog-more {
+    position: absolute;
+    bottom: 0.75rem;
+    left: var(--bs-modal-padding);
+    z-index: 3;
+    box-shadow: var(--bs-box-shadow);
+}
+/* muform: Behat clicks reach elements under the More pill and the buttons stay in the form, like core fixed elements
+   on Behat sites. */
+body.behat-site dialog.muform-dialog .muform-dialog-more {
+    pointer-events: none;
+}
+body.behat-site dialog.muform-dialog .muform-buttons-sticky {
+    position: static;
+}
+/* muform: buttons stick to the bottom of dialogs on large screens, small screens need the space for the form. */
+@media (min-width: 768px) and (min-height: 600px) {
+    dialog.muform-dialog .muform-buttons-sticky {
+        position: sticky;
+        bottom: calc(-1 * var(--bs-modal-padding));
+        z-index: 2;
+        margin-bottom: calc(-1 * var(--bs-modal-padding));
+        padding-block: 0.75rem;
+        background-color: var(--bs-modal-bg);
+        border-top: var(--bs-border-width) solid var(--bs-border-color);
+    }
+    dialog.muform-dialog .muform-buttons-sticky::before {
+        position: absolute;
+        right: 0;
+        bottom: 100%;
+        left: 0;
+        height: 1.5rem;
+        pointer-events: none;
+        content: "";
+        background: linear-gradient(to bottom, transparent, var(--bs-modal-bg));
+        backdrop-filter: blur(2px);
+        mask-image: linear-gradient(to bottom, transparent, #000);
+    }
+    dialog.muform-dialog .modal-body:has(.muform-buttons-sticky:not([hidden])) {
+        scroll-padding-bottom: 6rem;
+    }
+    dialog.muform-dialog .modal-content:has(.muform-buttons-sticky:not([hidden])) .muform-dialog-more {
+        bottom: 1.25rem;
+    }
 }
 
 /* muform: datetime picker island. */
