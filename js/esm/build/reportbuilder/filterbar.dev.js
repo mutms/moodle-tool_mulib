@@ -741,8 +741,13 @@ class FilterBar {
       feedback.textContent = message;
       feedback.classList.toggle("d-block", message !== "");
     }, "setError");
+    let latest = 0;
     const apply = /* @__PURE__ */ __name(async (value) => {
+      const request = ++latest;
       const answer = await normalise(input, value);
+      if (request !== latest) {
+        return answer.valid ? answer : null;
+      }
       if (!answer.valid) {
         setError(this.strings.invalid);
         return null;

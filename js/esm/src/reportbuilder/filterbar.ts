@@ -1049,8 +1049,13 @@ class FilterBar {
             // Bootstrap shows feedback of invalid inputs that are siblings only.
             feedback.classList.toggle('d-block', message !== '');
         };
+        let latest = 0;
         const apply = async(value: string): Promise<Answer | null> => {
+            const request = ++latest;
             const answer = await normalise(input, value);
+            if (request !== latest) {
+                return answer.valid ? answer : null;
+            }
             if (!answer.valid) {
                 setError(this.strings.invalid);
                 return null;
