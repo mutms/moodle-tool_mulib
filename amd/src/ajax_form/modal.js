@@ -30,6 +30,7 @@ import * as Notification from 'core/notification';
 import * as FormEvents from 'core_form/events';
 import * as FormChangeChecker from 'core_form/changechecker';
 import Pending from 'core/pending';
+import config from 'core/config';
 
 const STATUSES = {
     CANCELLED: 'cancelled',
@@ -75,6 +76,10 @@ export default class AjaxFormModal extends Modal {
 
         modalConfig.show = false;
         modalConfig.removeOnClose = true;
+
+        if (config.behatsiterunning) {
+            $.fx.off = true;
+        }
 
         super.configure(modalConfig);
 
