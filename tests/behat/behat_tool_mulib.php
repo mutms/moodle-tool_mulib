@@ -781,8 +781,12 @@ JS;
      * @param string $nodeelement
      * @param string $nodeselectortype
      */
-    public function i_double_click_on_in_the(string $element, string $selectortype, string $nodeelement,
-            string $nodeselectortype): void {
+    public function i_double_click_on_in_the(
+        string $element,
+        string $selectortype,
+        string $nodeelement,
+        string $nodeselectortype
+    ): void {
         $this->require_javascript();
         $this->get_node_in_container($selectortype, $element, $nodeselectortype, $nodeelement)->doubleClick();
     }
