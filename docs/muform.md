@@ -792,6 +792,9 @@ for `submit_stage()` of the same request. Optional hooks:
   horizontal), so do not combine them with a per-stage `get_heading()`;
 - `is_draft_allowed()`, `save_draft()` and `get_draft_label()` add saving of drafts from any stage,
   see Wizard drafts below;
+- `is_reset_allowed()` adds "Start again" to the left of the bar of locked stages: after a
+  confirmation the stored wizard is deleted and a new one starts, for wizards creating new records
+  whose locked first stage cannot be changed otherwise;
 - `get_heading()` is printed above the stepper, when the page heading is not the wizard title;
 - `render_page()` prints the page.
 

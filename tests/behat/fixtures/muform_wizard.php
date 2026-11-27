@@ -85,6 +85,11 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
     }
 
     #[\Override]
+    protected function is_reset_allowed(): bool {
+        return true;
+    }
+
+    #[\Override]
     protected function is_draft_allowed(): bool {
         return $this->draft;
     }

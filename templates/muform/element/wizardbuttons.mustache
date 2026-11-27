@@ -17,7 +17,8 @@
 {{!
     @template tool_mulib/muform/element/wizardbuttons
 
-    Sticky button bar of wizard stages: Back on the left, progress in the middle, other buttons on the right.
+    Sticky button bar of wizard stages: Back (or Start again on locked stages) on the left, progress in the middle,
+    other buttons on the right.
     Submit buttons are first in HTML for implicit submission with Enter, the right group is shown reversed.
 
     Context variables required for this template:
@@ -28,7 +29,8 @@
         "submits": [{"name": "submit", "html": "<button>Continue</button>"}],
         "others": [{"name": "cancel", "html": "<button>Cancel</button>"}],
         "back": [{"name": "back", "html": "<button>Back</button>"}],
-        "progress": "Step 2 of 4", "has_draft": true, "draftname": "wizarddraft", "draftlabel": "Save draft"
+        "progress": "Step 2 of 4", "has_draft": true, "draftname": "wizarddraft", "draftlabel": "Save draft",
+        "has_reset": false, "resetname": "wizardreset", "resetlabel": "Start again", "resetconfirm": "Discard everything?"
     }
 }}
 <div id="fitem_{{id}}" class="muform-wizardbuttons" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
@@ -40,5 +42,6 @@
     <div class="muform-wizardbuttons-progress">{{progress}}</div>
     <div class="muform-wizardbuttons-back">
         {{#back}}{{{html}}}{{/back}}
+        {{#has_reset}}<button type="submit" id="id_{{resetname}}{{idsuffix}}" name="{{resetname}}" value="1" class="btn btn-secondary" data-muform-role="reload" formnovalidate data-muform-confirm="{{resetconfirm}}">{{resetlabel}}</button>{{/has_reset}}
     </div>
 </div>

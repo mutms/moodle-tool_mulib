@@ -41,11 +41,15 @@ final class wizardbuttons extends element {
     public const string NAME = 'wizardbuttons';
     /** @var string name of the draft button rendered by the bar */
     public const string DRAFT = 'wizarddraft';
+    /** @var string name of the reset button rendered by the bar */
+    public const string RESET = 'wizardreset';
 
     /** @var string|null progress text, such as "Step 2 of 5" */
     private ?string $progress = null;
     /** @var string|null label of the draft button, null means no draft button */
     private ?string $draftlabel = null;
+    /** @var array|null label and confirmation question of the reset button, null means no reset button */
+    private ?array $reset = null;
 
     /**
      * Constructor.
@@ -74,6 +78,28 @@ final class wizardbuttons extends element {
     public function set_draft_label(?string $label): static {
         $this->draftlabel = $label;
         return $this;
+    }
+
+    /**
+     * Show the reset button on the left, set by the wizard page on locked stages of wizards that allow it.
+     *
+     * @param string $label
+     * @param string $confirm confirmation question asked in the browser
+     * @return $this
+     */
+    public function set_reset(string $label, string $confirm): static {
+        $this->reset = [$label, $confirm];
+        return $this;
+    }
+
+    /**
+     * Was the reset button pressed?
+     *
+     * @return bool
+     */
+    public function is_reset_requested(): bool {
+        $postdata = $this->get_form()->get_post_data();
+        return $postdata !== null && array_key_exists(self::RESET, $postdata);
     }
 
     /**
@@ -133,6 +159,10 @@ final class wizardbuttons extends element {
         $context['has_draft'] = $this->draftlabel !== null;
         $context['draftname'] = self::DRAFT;
         $context['draftlabel'] = $this->draftlabel === null ? '' : clean_string($this->draftlabel);
+        $context['has_reset'] = $this->reset !== null;
+        $context['resetname'] = self::RESET;
+        $context['resetlabel'] = $this->reset ? clean_string($this->reset[0]) : '';
+        $context['resetconfirm'] = $this->reset ? clean_string($this->reset[1]) : '';
         return $context;
     }
 }

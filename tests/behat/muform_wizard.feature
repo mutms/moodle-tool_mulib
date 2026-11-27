@@ -229,6 +229,28 @@ Feature: muform wizard helper
     And I press "Finish"
     Then I should see "Wizard finished for Jane Doe" in the "#muform_state" "css_element"
 
+  @javascript
+  Scenario: Locked stages offer to start again
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "locked=1"
+    Then "Start again" "button" should not exist
+    When I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Continue"
+    And I set the following muform fields:
+      | colour | Green |
+    And I press "Continue"
+    And I click on "Details" "link" in the ".muform-wizard-stages" "css_element"
+    Then "Back" "button" should not exist
+    When I press "Start again"
+    And I click on "Cancel" "button" in the ".modal-dialog" "css_element"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "Jane Doe" in the "#wizard_data" "css_element"
+    When I press "Start again"
+    And I click on "Yes" "button" in the ".modal-dialog" "css_element"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "{}" in the "#wizard_data" "css_element"
+    And "input[name='fullname']" "css_element" should exist
+
   Scenario: An unavailable wizard is deleted with a notification
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
     When I set the following muform fields:

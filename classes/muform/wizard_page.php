@@ -208,6 +208,17 @@ abstract class wizard_page {
     }
 
     /**
+     * Can the user start again on locked stages? The bar of locked stages then has "Start again" on the left,
+     * after a confirmation the stored wizard is deleted and a new one starts. Meant for wizards creating new
+     * records, where the locked first stage cannot be changed otherwise.
+     *
+     * @return bool
+     */
+    protected function is_reset_allowed(): bool {
+        return false;
+    }
+
+    /**
      * Label of the draft button.
      *
      * @return string
@@ -407,10 +418,22 @@ abstract class wizard_page {
             $buttons->set_draft_label($this->get_draft_label());
         }
         $draft = $draftallowed && $buttons->is_draft_requested();
+        $resetallowed = $locked && $buttons instanceof wizardbuttons && $this->is_reset_allowed();
+        if ($resetallowed) {
+            $buttons->set_reset(
+                get_string('muform_wizard_reset', 'tool_mulib'),
+                get_string('muform_wizard_resetconfirm', 'tool_mulib')
+            );
+        }
 
         if ($form->is_cancelled()) {
             $wizard->delete();
             redirect($this->get_return_url());
+        }
+        if ($resetallowed && $buttons->is_reset_requested()) {
+            // Posted with a valid sesskey, the button is no element, so the form state stays new.
+            $wizard->delete();
+            redirect($pageurl);
         }
         if ($locked && !$form->is_new()) {
             if ($draft) {
