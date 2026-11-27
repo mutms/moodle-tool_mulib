@@ -34,6 +34,7 @@ function setModuleLoader(loader) {
   loadModule = loader;
 }
 __name(setModuleLoader, "setModuleLoader");
+const WIZARD_TARGET = "wizardstage";
 const COLLAPSIBLE_SELECTOR = "details.muform-collapsible";
 async function initForm(form) {
   const existing = forms.get(form);
@@ -223,14 +224,33 @@ class MuForm {
     this.changechecker?.markFormAsDirty(this.form);
   }
   /**
-   * Moving between wizard stages keeps the completed ones, so it asks only when
-   * the user changed the current stage, which would be lost.
+   * Steps of the wizard stepper work like the Back and Continue buttons of the stage:
+   * an earlier step goes back (changed values are validated and kept), a later step continues
+   * (the stage is validated and stored), the server then opens the clicked step when it is reachable.
+   * Invalid values keep the user on the stage, nothing is lost and the browser never asks.
+   * Without a matching button the link is followed, asking only when the stage was changed.
    */
   watchWizardNav() {
     const nav = this.form.closest(".muform-wizard")?.querySelector("[data-muform-wizard-nav]");
     nav?.addEventListener("click", (event) => {
       const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
       if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const stage = link.dataset.muformWizardStage;
+      const kind = link.dataset.muformWizardDirection === "forward" ? "continue" : "back";
+      const button = this.form.querySelector(`button[data-muform-wizard="${kind}"]:not([disabled])`);
+      if (stage && button && !this.submitting) {
+        event.preventDefault();
+        const target = document.createElement("input");
+        target.type = "hidden";
+        target.name = WIZARD_TARGET;
+        target.value = stage;
+        this.form.append(target);
+        this.form.requestSubmit(button);
+        if (!this.submitting) {
+          target.remove();
+        }
         return;
       }
       if (!this.changed) {

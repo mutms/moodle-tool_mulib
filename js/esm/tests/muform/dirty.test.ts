@@ -15,7 +15,7 @@
 
 import {initForm, setModuleLoader} from '../../src/muform/form';
 import NativeElement from '../../src/muform/native';
-import {TEXT, form} from './fixtures';
+import {NUMBER, TEXT, form} from './fixtures';
 
 const mockChangechecker = {
     watchForm: jest.fn(),
@@ -92,5 +92,71 @@ describe('tool_mulib/muform/form dirty state', () => {
         input.dispatchEvent(new Event('input', {bubbles: true}));
         click('stage1');
         expect(mockChangechecker.resetFormDirtyState).not.toHaveBeenCalled();
+    });
+
+    it('submits the stage with Back or Continue when a step is clicked', async() => {
+        const buttons = '<button type="submit" name="submit" value="1" data-muform-role="submit" data-muform-wizard="continue">'
+            + 'Continue</button><button type="submit" name="back" value="1" data-muform-role="reload" formnovalidate'
+            + ' data-muform-submit-if-changed="1" data-muform-wizard="back">Back</button>';
+        const formel = form(TEXT + buttons);
+        document.body.innerHTML = '<div class="muform-wizard"><nav data-muform-wizard-nav>'
+            + '<a href="#s1" id="s1" data-muform-wizard-stage="one" data-muform-wizard-direction="back">One</a>'
+            + '<a href="#s3" id="s3" data-muform-wizard-stage="three" data-muform-wizard-direction="forward">Three</a></nav>'
+            + '<div class="muform-wizard-form">' + formel.outerHTML + '</div></div>';
+        const muform = await initForm(document.querySelector('form')!);
+        const submitted: Array<{submitter: string, value: string, target: string | null}> = [];
+        muform.form.addEventListener('submit', (event) => {
+            const submitter = event.submitter as HTMLButtonElement;
+            const target = muform.form.querySelector<HTMLInputElement>('input[name="wizardstage"]');
+            submitted.push({submitter: submitter.name, value: submitter.value, target: target?.value ?? null});
+            event.preventDefault();
+        });
+
+        click('s3');
+        expect(submitted).toEqual([{submitter: 'submit', value: '1', target: 'three'}]);
+        expect(mockChangechecker.markFormSubmitted).toHaveBeenCalledWith(muform.form);
+        expect(mockChangechecker.resetFormDirtyState).not.toHaveBeenCalled();
+    });
+
+    it('goes back from a step without validation unless the stage changed', async() => {
+        const buttons = '<button type="submit" name="submit" value="1" data-muform-role="submit" data-muform-wizard="continue">'
+            + 'Continue</button><button type="submit" name="back" value="1" data-muform-role="reload" formnovalidate'
+            + ' data-muform-submit-if-changed="1" data-muform-wizard="back">Back</button>';
+        const formel = form(NUMBER + buttons);
+        document.body.innerHTML = '<div class="muform-wizard"><nav data-muform-wizard-nav>'
+            + '<a href="#s1" id="s1" data-muform-wizard-stage="one" data-muform-wizard-direction="back">One</a></nav>'
+            + '<div class="muform-wizard-form">' + formel.outerHTML + '</div></div>';
+        const muform = await initForm(document.querySelector('form')!);
+        const submitted: string[] = [];
+        muform.form.addEventListener('submit', (event) => {
+            submitted.push((event.submitter as HTMLButtonElement).value);
+            event.preventDefault();
+        });
+
+        // The required number is empty, Back without changes does not validate.
+        click('s1');
+        expect(submitted).toEqual(['1']);
+    });
+
+    it('stays on an invalid stage and forgets the clicked step', async() => {
+        const buttons = '<button type="submit" name="submit" value="1" data-muform-role="submit" data-muform-wizard="continue">'
+            + 'Continue</button>';
+        const formel = form(NUMBER + buttons);
+        document.body.innerHTML = '<div class="muform-wizard"><nav data-muform-wizard-nav>'
+            + '<a href="#s3" id="s3" data-muform-wizard-stage="three" data-muform-wizard-direction="forward">Three</a></nav>'
+            + '<div class="muform-wizard-form">' + formel.outerHTML + '</div></div>';
+        const muform = await initForm(document.querySelector('form')!);
+        const submitted: string[] = [];
+        muform.form.addEventListener('submit', (event) => {
+            if (!event.defaultPrevented) {
+                submitted.push('yes');
+            }
+            event.preventDefault();
+        });
+
+        click('s3');
+        expect(submitted).toEqual([]);
+        expect(muform.form.querySelector('input[name="wizardstage"]')).toBeNull();
+        expect(mockChangechecker.markFormSubmitted).not.toHaveBeenCalled();
     });
 });

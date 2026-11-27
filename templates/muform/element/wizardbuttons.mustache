@@ -1,0 +1,44 @@
+{{!
+    This file is part of MuTMS suite of plugins for Moodle™ LMS.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_mulib/muform/element/wizardbuttons
+
+    Sticky button bar of wizard stages: Back on the left, progress in the middle, other buttons on the right.
+    Submit buttons are first in HTML for implicit submission with Enter, the right group is shown reversed.
+
+    Context variables required for this template:
+
+    Example context (json):
+    {
+        "name": "wizardbuttons", "type": "wizardbuttons", "component": "tool_mulib", "id": "id_wizardbuttons", "is_hidden": false, "is_disabled": false,
+        "submits": [{"name": "submit", "html": "<button>Continue</button>"}],
+        "others": [{"name": "cancel", "html": "<button>Cancel</button>"}],
+        "back": [{"name": "back", "html": "<button>Back</button>"}],
+        "progress": "Step 2 of 4", "has_draft": true, "draftname": "wizarddraft", "draftlabel": "Save draft"
+    }
+}}
+<div id="fitem_{{id}}" class="muform-wizardbuttons" data-muform-element="{{type}}" data-muform-component="{{component}}" data-muform-name="{{name}}"{{#is_hidden}} hidden data-muform-hidden="1"{{/is_hidden}}{{#is_disabled}} data-muform-disabled="1"{{/is_disabled}}>
+    <div class="muform-wizardbuttons-main">
+        {{#submits}}{{{html}}}{{/submits}}
+        {{#has_draft}}<button type="submit" id="id_{{draftname}}{{idsuffix}}" name="{{draftname}}" value="1" class="btn btn-secondary" data-muform-role="submit" data-muform-wizard-draft="1">{{draftlabel}}</button>{{/has_draft}}
+        {{#others}}{{{html}}}{{/others}}
+    </div>
+    <div class="muform-wizardbuttons-progress">{{progress}}</div>
+    <div class="muform-wizardbuttons-back">
+        {{#back}}{{{html}}}{{/back}}
+    </div>
+</div>

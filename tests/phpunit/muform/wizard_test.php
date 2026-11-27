@@ -419,17 +419,28 @@ final class wizard_test extends \advanced_testcase {
         $wizard->complete_stage('columns', []);
         $valid = ['source' => true, 'columns' => true, 'options' => false];
         $this->resolve($wizard, fn(string $name) => $valid[$name], 'columns');
-        $html = $wizard->render($PAGE->get_renderer('core'), $pageurl, $form);
+        $html = $wizard->render($PAGE->get_renderer('core'), $pageurl, $form, ['source' => 'Where <b>from</b>']);
 
         $this->assertStringContainsString('<nav aria-label="' . get_string('muform_steps', 'tool_mulib') . '"', $html);
         $sourceurl = $wizard->get_url($pageurl, 'source')->out(false);
         $link = '<a class="muform-stepper-label stretched-link" href="';
-        $this->assertStringContainsString($link . s($sourceurl) . '">Source &#60;b&#62;data&#60;/b&#62;</a>', $html);
+        $this->assertStringContainsString(
+            $link . s($sourceurl) . '" data-muform-wizard-stage="source" data-muform-wizard-direction="back"'
+            . ' title="Where &#60;b&#62;from&#60;/b&#62;">Source &#60;b&#62;data&#60;/b&#62;</a>',
+            $html
+        );
+        $this->assertStringContainsString(
+            '<span class="muform-stepper-description" aria-hidden="true">Where &#60;b&#62;from&#60;/b&#62;</span>',
+            $html
+        );
+        // Heading of the current stage.
+        $this->assertStringContainsString('<h2 class="h4 mb-1">Columns</h2>', $html);
         $this->assertStringContainsString('<li class="muform-stepper-item active current" aria-current="step">', $html);
         $this->assertStringContainsString('<span class="muform-stepper-label">Columns</span>', $html);
         // The first stage that is not completed is reachable.
         $optionsurl = $wizard->get_url($pageurl, 'options')->out(false);
-        $this->assertStringContainsString($link . s($optionsurl) . '">Options</a>', $html);
+        $this->assertStringContainsString($link . s($optionsurl) . '" data-muform-wizard-stage="options"'
+            . ' data-muform-wizard-direction="forward">Options</a>', $html);
         $this->assertSame(2, substr_count($html, $link));
         $this->assertSame(2, substr_count($html, 'muform-stepper-item active'));
         $this->assertStringNotContainsString('disabled', $html);

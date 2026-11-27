@@ -151,6 +151,59 @@ Feature: muform wizard helper
     When I press "Back"
     Then I should see "Stage choice" in the "#muform_state" "css_element"
 
+  @javascript
+  Scenario: Stepper steps work like Back and Continue
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php"
+    Then I should see "Step 1 of 3" in the ".muform-wizardbuttons" "css_element"
+    And I should see "Who you are" in the ".muform-wizard" "css_element"
+    And I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Continue"
+    And I set the following muform fields:
+      | colour | Green |
+    # An earlier step validates and stores changed values like Back.
+    When I click on "Details" "link" in the ".muform-wizard-stages" "css_element"
+    Then I should see "Stage details" in the "#muform_state" "css_element"
+    And I should see "\"colour\":\"green\"" in the "#wizard_data" "css_element"
+    # A later step validates and stores the stage like Continue and opens the step when it is reachable.
+    When I set the following muform fields:
+      | fullname | John Doe |
+    And I click on "Summary" "link" in the ".muform-wizard-stages" "css_element"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And I should see "\"fullname\":\"John Doe\"" in the "#wizard_data" "css_element"
+    When I press "Continue"
+    And I click on "Choice" "link" in the ".muform-wizard-stages" "css_element"
+    And I set the following muform fields:
+      | colour | Choose... |
+    # Invalid values keep the user on the stage.
+    And I click on "Summary" "link" in the ".muform-wizard-stages" "css_element"
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And I should see "Required" in the "[data-muform-name='colour'] .invalid-feedback" "css_element"
+    When I set the following muform fields:
+      | colour | Red |
+    And I click on "Summary" "link" in the ".muform-wizard-stages" "css_element"
+    Then I should see "John Doe likes red" in the "[data-muform-name='summary']" "css_element"
+    And I should see "Step 3 of 3" in the ".muform-wizardbuttons" "css_element"
+
+  @javascript
+  Scenario: Drafts are saved from any stage once all stages are valid
+    Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "draft=1"
+    When I set the following muform fields:
+      | fullname | Jane Doe |
+    And I press "Save draft"
+    # The choice stage has no default, the draft cannot be saved yet.
+    Then I should see "Stage choice" in the "#muform_state" "css_element"
+    And I should see "Complete this step to save the draft."
+    And I should see "\"fullname\":\"Jane Doe\"" in the "#wizard_data" "css_element"
+    When I set the following muform fields:
+      | colour | Green |
+    And I press "Continue"
+    And I click on "Details" "link" in the ".muform-wizard-stages" "css_element"
+    And I set the following muform fields:
+      | fullname | John Doe |
+    And I press "Save draft"
+    Then I should see "Draft saved for John Doe (green)" in the "#muform_state" "css_element"
+
   Scenario: A locked stage is read-only once it is completed
     Given I am on fixture page "/admin/tool/mulib/tests/behat/fixtures/muform_wizard.php" with parameters "locked=1"
     When I set the following muform fields:

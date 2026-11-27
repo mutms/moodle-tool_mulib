@@ -56,6 +56,9 @@ interface Notification {
     saveCancelPromise(title: string, question: string, saveLabel: string): Promise<void>;
 }
 
+/** Stage clicked in the wizard stepper, must match tool_mulib\\muform\\wizard::TARGET_PARAM. */
+const WIZARD_TARGET = 'wizardstage';
+
 /** Collapsible sections, see tool_mulib\\muform\\element\\collapsible. */
 const COLLAPSIBLE_SELECTOR = 'details.muform-collapsible';
 
@@ -292,15 +295,35 @@ export class MuForm implements FormApi {
     }
 
     /**
-     * Moving between wizard stages keeps the completed ones, so it asks only when
-     * the user changed the current stage, which would be lost.
+     * Steps of the wizard stepper work like the Back and Continue buttons of the stage:
+     * an earlier step goes back (changed values are validated and kept), a later step continues
+     * (the stage is validated and stored), the server then opens the clicked step when it is reachable.
+     * Invalid values keep the user on the stage, nothing is lost and the browser never asks.
+     * Without a matching button the link is followed, asking only when the stage was changed.
      */
     private watchWizardNav(): void {
         const nav = this.form.closest('.muform-wizard')?.querySelector<HTMLElement>('[data-muform-wizard-nav]');
         nav?.addEventListener('click', (event: MouseEvent) => {
-            const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+            const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
             if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
                 // Links opened in another tab leave this page as it is.
+                return;
+            }
+            const stage = link.dataset.muformWizardStage;
+            const kind = link.dataset.muformWizardDirection === 'forward' ? 'continue' : 'back';
+            const button = this.form.querySelector<HTMLButtonElement>(`button[data-muform-wizard="${kind}"]:not([disabled])`);
+            if (stage && button && !this.submitting) {
+                event.preventDefault();
+                const target = document.createElement('input');
+                target.type = 'hidden';
+                target.name = WIZARD_TARGET;
+                target.value = stage;
+                this.form.append(target);
+                this.form.requestSubmit(button);
+                if (!this.submitting) {
+                    // Invalid values or a confirmation, the stage buttons must not carry the target.
+                    target.remove();
+                }
                 return;
             }
             if (!this.changed) {

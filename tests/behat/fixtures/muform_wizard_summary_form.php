@@ -22,7 +22,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\wizardbuttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\info;
 use tool_mulib\muform\element\submit;
@@ -45,9 +45,9 @@ final class tool_mulib_muform_wizard_summary_form extends form {
         $data = $this->get_extra_data();
         $this->add(new info('summary', 'Summary', $data['fullname'] . ' likes ' . $data['colour'] . ', files: ' . $data['files']));
 
-        $this->add(new buttons('buttons'));
-        $this->add(new submit('submit', 'Finish'), 'buttons');
-        $this->add(new wizardback(validate: false), 'buttons');
-        $this->add(new cancel(), 'buttons');
+        $this->add(new wizardbuttons());
+        $this->add(new submit('submit', 'Finish'), wizardbuttons::NAME);
+        $this->add(new wizardback(validate: false), wizardbuttons::NAME);
+        $this->add(new cancel(), wizardbuttons::NAME);
     }
 }

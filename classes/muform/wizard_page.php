@@ -19,6 +19,7 @@ namespace tool_mulib\muform;
 
 use core\url;
 use tool_mulib\muform\element\wizardback;
+use tool_mulib\muform\element\wizardbuttons;
 use stdClass;
 
 /**
@@ -44,6 +45,8 @@ abstract class wizard_page {
     protected string $stage;
     /** @var url URL of the current stage, the target of its form */
     protected url $formurl;
+    /** @var bool the draft button was pressed, submit_stage() of the last stage must only store the data */
+    private bool $savingdraft = false;
 
     /**
      * Wizard name including the page parameters, different parameters must never share one state.
@@ -79,7 +82,10 @@ abstract class wizard_page {
     abstract protected function setup_page(): void;
 
     /**
-     * Does the stored data make the stage complete? Called only for stages the user submitted.
+     * Does the stored data make the stage complete?
+     *
+     * Called for stages the user submitted, and for all stages when a draft is saved -
+     * stages not submitted yet are evaluated on the stored state including start defaults.
      *
      * @param string $stage
      * @return bool
@@ -101,6 +107,7 @@ abstract class wizard_page {
      * Store them in $this->state and return null, the stage is then completed and the wizard continues.
      * A stage that finishes the wizard does the job, deletes the wizard and returns where to go;
      * it may also return the URL of a stage to stay in the wizard without completing anything.
+     * When a draft is being saved (is_saving_draft()) every stage only stores its data and returns null.
      *
      * @param string $stage
      * @param stdClass $data
@@ -183,6 +190,53 @@ abstract class wizard_page {
     }
 
     /**
+     * Short descriptions of stages, shown in the stepper and below the heading of the current stage.
+     *
+     * @return array<string,string> plain text indexed by stage names, stages without description are left out
+     */
+    protected function get_stage_descriptions(): array {
+        return [];
+    }
+
+    /**
+     * Can the wizard be saved as a draft now? All stages then get the draft button in their wizardbuttons bar.
+     *
+     * @return bool
+     */
+    protected function is_draft_allowed(): bool {
+        return false;
+    }
+
+    /**
+     * Label of the draft button.
+     *
+     * @return string
+     */
+    protected function get_draft_label(): string {
+        return get_string('muform_savedraft', 'tool_mulib');
+    }
+
+    /**
+     * Save the draft - called after the current stage was stored and all stages are valid.
+     *
+     * Store $this->state, delete the wizard and return where to go.
+     *
+     * @return url
+     */
+    protected function save_draft(): url {
+        throw new \coding_exception('Wizards allowing drafts must implement save_draft()');
+    }
+
+    /**
+     * Is a draft being saved? submit_stage() of stages finishing the wizard must then only store data.
+     *
+     * @return bool
+     */
+    final protected function is_saving_draft(): bool {
+        return $this->savingdraft;
+    }
+
+    /**
      * Heading printed above the stepper.
      *
      * @return string|null null means no heading, for example when the page layout shows the title
@@ -240,7 +294,7 @@ abstract class wizard_page {
         if ($heading !== null) {
             echo $OUTPUT->heading($heading, 2, 'mb-3');
         }
-        echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form);
+        echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form, $this->get_stage_descriptions());
         echo $OUTPUT->footer();
     }
 
@@ -259,6 +313,48 @@ abstract class wizard_page {
             $after = $after || ($name === $this->stage);
         }
         return null;
+    }
+
+    /**
+     * Stage clicked in the stepper, submitted with Back or Continue.
+     *
+     * @return string|null
+     */
+    private function get_target_stage(): ?string {
+        $target = optional_param(wizard::TARGET_PARAM, '', PARAM_ALPHA);
+        if ($target === '' || !array_key_exists($target, $this->get_stages()) || $target === $this->stage) {
+            return null;
+        }
+        return $target;
+    }
+
+    /**
+     * Save a draft after the current stage was stored, or open the first stage that is not valid yet.
+     *
+     * @param url $pageurl
+     */
+    private function finish_draft(url $pageurl): void {
+        $skipped = $this->get_skipped_stages();
+        $names = array_values(array_filter(array_keys($this->get_stages()), fn($name) => !in_array($name, $skipped, true)));
+        // The last stage finishes the wizard, it reviews the other stages and has nothing of its own to check.
+        array_pop($names);
+        $previous = null;
+        $passed = false;
+        foreach ($names as $name) {
+            if (!$this->is_stage_valid($name)) {
+                if ($passed && $previous !== null) {
+                    // Stages between the current one and the invalid one are valid with their stored data.
+                    $this->wizard->complete_stage($previous, $this->state);
+                } else {
+                    $this->wizard->complete_stage($this->stage, $this->state);
+                }
+                \core\notification::warning(get_string('muform_wizard_draftincomplete', 'tool_mulib'));
+                redirect($this->wizard->get_url($pageurl, $name));
+            }
+            $passed = $passed || ($name === $this->stage);
+            $previous = $name;
+        }
+        redirect($this->save_draft());
     }
 
     /**
@@ -304,20 +400,31 @@ abstract class wizard_page {
         }
         $previous = $wizard->get_previous_stage();
         $back = $form->get_element(wizardback::NAME);
+        $target = $this->get_target_stage();
+        $buttons = $form->get_element(wizardbuttons::NAME);
+        $draftallowed = $buttons instanceof wizardbuttons && $this->is_draft_allowed();
+        if ($draftallowed) {
+            $buttons->set_draft_label($this->get_draft_label());
+        }
+        $draft = $draftallowed && $buttons->is_draft_requested();
 
         if ($form->is_cancelled()) {
             $wizard->delete();
             redirect($this->get_return_url());
         }
         if ($locked && !$form->is_new()) {
+            if ($draft) {
+                $this->savingdraft = true;
+                $this->finish_draft($pageurl);
+            }
             // Nothing can be changed, the buttons only move to the previous or next stage.
             $goback = $previous !== null && $back?->get_value();
-            redirect($wizard->get_url($pageurl, $goback ? $previous : $this->get_next_stage()));
+            redirect($wizard->get_url($pageurl, $target ?? ($goback ? $previous : $this->get_next_stage())));
         }
         if ($form->is_reloaded()) {
             if ($previous !== null && $back?->get_value()) {
                 // Nothing was changed, or the stage is never stored when going back.
-                redirect($wizard->get_url($pageurl, $previous));
+                redirect($wizard->get_url($pageurl, $target ?? $previous));
             }
             $before = $this->state;
             $again = $this->reload_stage($this->stage, $form);
@@ -330,9 +437,18 @@ abstract class wizard_page {
             }
         }
         if ($data = $form->get_data()) {
+            $this->savingdraft = $draft;
             $url = $this->submit_stage($this->stage, $data, $form);
             if ($url !== null) {
                 redirect($url);
+            }
+            if ($draft) {
+                if ($this->keeps_later_stages()) {
+                    $wizard->mark_changed($this->stage, false);
+                    $names = array_keys($stages);
+                    $wizard->complete_stage(end($names), $this->state);
+                }
+                $this->finish_draft($pageurl);
             }
             // Back pressed after changes: the stage was validated and is stored like with Continue.
             $goback = $previous !== null && $back instanceof wizardback && $back->get_value() && $back->is_submitting();
@@ -341,10 +457,11 @@ abstract class wizard_page {
                 $wizard->mark_changed($this->stage, false);
                 $wizard->complete_stage(end($names), $this->state);
                 $next = $names[array_search($this->stage, $names, true) + 1] ?? null;
-                redirect($wizard->get_url($pageurl, $goback ? $previous : $next));
+                redirect($wizard->get_url($pageurl, $target ?? ($goback ? $previous : $next)));
             }
             $wizard->complete_stage($this->stage, $this->state);
-            redirect($wizard->get_url($pageurl, $goback ? $previous : null));
+            // A later stage clicked in the stepper is opened only when it is reachable, see wizard::resolve_stages().
+            redirect($wizard->get_url($pageurl, $target ?? ($goback ? $previous : null)));
         }
 
         $this->render_page($form);

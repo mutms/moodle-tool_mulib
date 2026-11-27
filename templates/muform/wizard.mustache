@@ -20,12 +20,18 @@
     the stepper above the stage form in a card, horizontal when there is enough space,
     or in a sticky column left of the form when the wizard is wide.
     Completed and current steps are active, reachable steps are links, the current one is highlighted,
-    later and skipped steps are muted.
+    later and skipped steps are muted. In browsers with JavaScript a click on a step submits the stage form
+    with its Back or Continue button (tool_mulib/muform/form), so that changed values are validated and kept.
+    The current stage of wizards with stage descriptions has a heading above the form with its label and description, the progress is shown
+    in the wizard button bar of the form. Descriptions are shown once: in the vertical stepper of wide wizards,
+    below the heading otherwise.
 
     Context variables required for this template:
     * title - accessible name of the step list, already cleaned
     * skippedhint - text read by screen readers for skipped steps, already cleaned
-    * stages - list of steps in order with number, label (already cleaned), is_active, is_current, is_skipped, is_link and url
+    * stages - list of steps in order with number, name, label and description (already cleaned), has_description,
+      is_active, is_current, is_skipped, is_link, direction (back or forward from the current step) and url
+    * has_heading, heading, description - heading of the current stage, already cleaned
     * formhtml - rendered stage form
 
     Example context (json):
@@ -33,10 +39,11 @@
         "title": "Steps",
         "skippedhint": "skipped",
         "stages": [
-            {"number": 1, "label": "Source", "is_active": true, "is_current": false, "is_skipped": false, "is_link": true, "url": "https://example.com/import.php?wizard=5&stage=source"},
-            {"number": 2, "label": "Columns", "is_active": true, "is_current": true, "is_skipped": false, "is_link": false, "url": "https://example.com/import.php?wizard=5&stage=columns"},
-            {"number": 3, "label": "Options", "is_active": false, "is_current": false, "is_skipped": true, "is_link": false, "url": "https://example.com/import.php?wizard=5&stage=options"}
+            {"number": 1, "name": "source", "label": "Source", "description": "File to import", "has_description": true, "is_active": true, "is_current": false, "is_skipped": false, "is_link": true, "direction": "back", "url": "https://example.com/import.php?wizard=5&stage=source"},
+            {"number": 2, "name": "columns", "label": "Columns", "description": "", "has_description": false, "is_active": true, "is_current": true, "is_skipped": false, "is_link": false, "direction": "back", "url": "https://example.com/import.php?wizard=5&stage=columns"},
+            {"number": 3, "name": "options", "label": "Options", "description": "", "has_description": false, "is_active": false, "is_current": false, "is_skipped": true, "is_link": false, "direction": "forward", "url": "https://example.com/import.php?wizard=5&stage=options"}
         ],
+        "has_heading": true, "heading": "Columns", "description": "",
         "formhtml": "<form>...</form>"
     }
 }}
@@ -47,14 +54,23 @@
             {{#stages}}
             <li class="muform-stepper-item{{#is_active}} active{{/is_active}}{{#is_current}} current{{/is_current}}{{#is_skipped}} skipped{{/is_skipped}}{{^is_current}}{{^is_link}} disabled{{/is_link}}{{/is_current}}"{{#is_current}} aria-current="step"{{/is_current}}>
                 <span class="muform-stepper-number" aria-hidden="true">{{number}}</span>
-                {{#is_link}}<a class="muform-stepper-label stretched-link" href="{{url}}">{{label}}</a>{{/is_link}}
-                {{^is_link}}<span class="muform-stepper-label">{{label}}{{#is_skipped}}<span class="visually-hidden"> ({{skippedhint}})</span>{{/is_skipped}}</span>{{/is_link}}
+                <span class="muform-stepper-text">
+                    {{#is_link}}<a class="muform-stepper-label stretched-link" href="{{url}}" data-muform-wizard-stage="{{name}}" data-muform-wizard-direction="{{direction}}"{{#has_description}} title="{{description}}"{{/has_description}}>{{label}}</a>{{/is_link}}
+                    {{^is_link}}<span class="muform-stepper-label"{{#has_description}} title="{{description}}"{{/has_description}}>{{label}}{{#is_skipped}}<span class="visually-hidden"> ({{skippedhint}})</span>{{/is_skipped}}</span>{{/is_link}}
+                    {{#has_description}}<span class="muform-stepper-description" aria-hidden="true">{{description}}</span>{{/has_description}}
+                </span>
             </li>
             {{/stages}}
         </ol>
     </nav>
     <div class="muform-wizard-form card">
         <div class="card-body">
+            {{#has_heading}}
+            <div class="muform-wizard-heading">
+                <h2 class="h4 mb-1">{{heading}}</h2>
+                {{#description}}<p class="muform-wizard-description text-muted mb-0">{{description}}</p>{{/description}}
+            </div>
+            {{/has_heading}}
             {{{formhtml}}}
         </div>
     </div>

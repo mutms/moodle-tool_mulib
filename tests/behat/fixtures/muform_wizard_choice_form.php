@@ -22,7 +22,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\wizardbuttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\select;
 use tool_mulib\muform\element\wizardback;
@@ -46,9 +46,9 @@ final class tool_mulib_muform_wizard_choice_form extends form {
             ->set_required(true);
         $this->add($colour);
 
-        $this->add(new buttons('buttons'));
-        $this->add(new wizardcontinue(), 'buttons');
-        $this->add(new wizardback(), 'buttons');
-        $this->add(new cancel(), 'buttons');
+        $this->add(new wizardbuttons());
+        $this->add(new wizardcontinue(), wizardbuttons::NAME);
+        $this->add(new wizardback(), wizardbuttons::NAME);
+        $this->add(new cancel(), wizardbuttons::NAME);
     }
 }

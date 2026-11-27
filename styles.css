@@ -246,6 +246,10 @@
         gap: 2rem;
         align-items: start;
     }
+    /* The vertical stepper shows the descriptions of all stages. */
+    .muform-wizard-description {
+        display: none;
+    }
     /* The column is narrower than 30rem, so the stepper inside is vertical. */
     .muform-wizard-stages {
         position: sticky;
@@ -254,6 +258,78 @@
         margin-bottom: 0;
         overflow-y: auto;
     }
+}
+
+/* muform: step descriptions, only in the vertical stepper, the horizontal one shows them as titles. */
+.muform-stepper-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.muform-stepper-description {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    color: var(--bs-secondary-color);
+}
+/* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator yet */
+@container (min-width: 30rem) {
+    .muform-stepper:not(:has(> :nth-child(7))) .muform-stepper-description {
+        display: none;
+    }
+}
+.muform-wizard-heading {
+    margin-bottom: 1.5rem;
+}
+
+/* muform: wizard button bar sticks to the bottom of the page, Back left, progress in the middle,
+   other buttons right with the primary one last; the right group is reversed, see the template. */
+.muform-wizardbuttons {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin: 1.5rem calc(-1 * var(--bs-card-spacer-x, 1rem)) calc(-1 * var(--bs-card-spacer-y, 1rem));
+    padding: 0.75rem var(--bs-card-spacer-x, 1rem);
+    background-color: var(--bs-card-bg, var(--bs-body-bg));
+    border-top: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom-right-radius: var(--bs-card-inner-border-radius, 0);
+    border-bottom-left-radius: var(--bs-card-inner-border-radius, 0);
+    box-shadow: 0 -0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+}
+.muform-wizardbuttons-back {
+    display: flex;
+    flex: 1 1 0;
+    gap: 0.5rem;
+    order: 1;
+}
+.muform-wizardbuttons-progress {
+    order: 2;
+    font-size: 0.875rem;
+    color: var(--bs-secondary-color);
+    white-space: nowrap;
+}
+.muform-wizardbuttons-main {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: row-reverse;
+    flex-wrap: wrap-reverse;
+    gap: 0.5rem;
+    order: 3;
+}
+.muform-wizardbuttons-progress:empty {
+    display: none;
+}
+
+@media (max-width: 575.98px) {
+    .muform-wizardbuttons-progress {
+        display: none;
+    }
+}
+body.behat-site .muform-wizardbuttons {
+    position: static;
 }
 
 /* muform: native dialogs, styled like Bootstrap modals. */

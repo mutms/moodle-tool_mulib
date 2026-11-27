@@ -97,10 +97,15 @@ final class button_test extends muform_testcase {
         $html = $this->render($form);
         $this->assertStringContainsString(
             'data-muform-element="wizardback" data-muform-component="tool_mulib" data-muform-name="back"'
-            . ' data-muform-role="reload" formnovalidate data-muform-submit-if-changed="1">',
+            . ' data-muform-role="reload" formnovalidate data-muform-submit-if-changed="1" data-muform-wizard="back">',
             $html
         );
         $this->assertStringContainsString('data-muform-element="wizardcontinue"', $html);
+        $this->assertStringContainsString('data-muform-wizard="continue"', $html);
+        // The bar has submit buttons first in HTML, Back last, no draft button unless the wizard page adds it.
+        $this->assertStringContainsString('class="muform-wizardbuttons"', $html);
+        $this->assertLessThan(strpos($html, 'name="back"'), strpos($html, 'name="submit"'));
+        $this->assertStringNotContainsString('wizarddraft', $html);
         $this->assertStringContainsString('>' . get_string('muform_continue', 'tool_mulib') . '</button>', $html);
         $this->assertStringContainsString('>' . get_string('muform_back', 'tool_mulib') . '</button>', $html);
         $this->assertStringNotContainsString('data-muform-changed', $html);

@@ -18,7 +18,7 @@
 
 namespace tool_mulib\phpunit\muform\fixtures;
 
-use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\wizardbuttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\text;
 use tool_mulib\muform\element\wizardback;
@@ -36,9 +36,9 @@ final class wizard_stage_form extends form {
     #[\Override]
     protected function definition(): void {
         $this->add((new text('name', 'Name'))->set_required(true));
-        $this->add(new buttons('buttons'));
-        $this->add(new wizardcontinue(), 'buttons');
-        $this->add(new wizardback($this->get_extra_data()['validate'] ?? true), 'buttons');
-        $this->add(new cancel(), 'buttons');
+        $this->add(new wizardbuttons());
+        $this->add(new wizardcontinue(), wizardbuttons::NAME);
+        $this->add(new wizardback($this->get_extra_data()['validate'] ?? true), wizardbuttons::NAME);
+        $this->add(new cancel(), wizardbuttons::NAME);
     }
 }

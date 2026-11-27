@@ -62,18 +62,37 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
      *
      * @param bool $locked lock the details stage
      * @param bool $unavailable the wizard cannot be used
+     * @param bool $draft drafts can be saved
      */
     public function __construct(
         /** @var bool lock the details stage */
         private bool $locked,
         /** @var bool the wizard cannot be used */
-        private bool $unavailable
+        private bool $unavailable,
+        /** @var bool drafts can be saved */
+        private bool $draft = false
     ) {
     }
 
     #[\Override]
     protected function get_name(): string {
-        return 'tool_mulib_fixture' . ($this->locked ? '_locked' : '');
+        return 'tool_mulib_fixture' . ($this->locked ? '_locked' : '') . ($this->draft ? '_draft' : '');
+    }
+
+    #[\Override]
+    protected function get_stage_descriptions(): array {
+        return ['details' => 'Who you are', 'choice' => 'What you like'];
+    }
+
+    #[\Override]
+    protected function is_draft_allowed(): bool {
+        return $this->draft;
+    }
+
+    #[\Override]
+    protected function save_draft(): \core\url {
+        $this->wizard->delete();
+        return new \core\url(self::PATH, ['drafted' => $this->state['fullname'] . ' (' . $this->state['colour'] . ')']);
     }
 
     #[\Override]
@@ -84,6 +103,9 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
     #[\Override]
     protected function get_page_url(): \core\url {
         $params = $this->locked ? ['locked' => 1] : [];
+        if ($this->draft) {
+            $params['draft'] = 1;
+        }
         return new \core\url(self::PATH, $params);
     }
 
@@ -143,7 +165,7 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
 
     #[\Override]
     protected function submit_stage(string $stage, stdClass $data, form $form): ?\core\url {
-        if ($stage === 'summary') {
+        if ($stage === 'summary' && !$this->is_saving_draft()) {
             $this->wizard->delete();
             return new \core\url(self::PATH, ['finished' => $this->state['fullname']]);
         }
@@ -161,7 +183,7 @@ final class tool_mulib_muform_wizard_fixture_page extends wizard_page {
         $text = 'Stage ' . $this->stage . ($form->is_invalid() ? ' is invalid' : '');
         echo html_writer::div($text, 'alert alert-info', ['id' => 'muform_state']);
         echo html_writer::tag('pre', s(json_encode((object)$this->state, JSON_UNESCAPED_SLASHES)), ['id' => 'wizard_data']);
-        echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form);
+        echo $this->wizard->render($OUTPUT, $this->get_page_url(), $form, $this->get_stage_descriptions());
         echo $OUTPUT->footer();
     }
 }
@@ -171,11 +193,14 @@ if (optional_param('cancelled', 0, PARAM_BOOL)) {
     $state = 'Wizard cancelled';
 } else if ($finished = optional_param('finished', '', PARAM_TEXT)) {
     $state = 'Wizard finished for ' . $finished;
+} else if ($drafted = optional_param('drafted', '', PARAM_TEXT)) {
+    $state = 'Draft saved for ' . $drafted;
 }
 
 $page = new tool_mulib_muform_wizard_fixture_page(
     optional_param('locked', 0, PARAM_BOOL),
-    optional_param('unavailable', 0, PARAM_BOOL)
+    optional_param('unavailable', 0, PARAM_BOOL),
+    optional_param('draft', 0, PARAM_BOOL)
 );
 if ($state === null) {
     $page->execute();

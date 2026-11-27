@@ -98,6 +98,8 @@ abstract class button extends element {
         $context['is_novalidate'] = ($this->get_role() !== 'submit');
         $context['confirm'] = $this->confirm === null ? '' : clean_string($this->confirm);
         $context['is_submitifchanged'] = false;
+        // Wizard stage navigation in the browser presses the back or continue button of the stage.
+        $context['wizardbutton'] = '';
         return $context;
     }
 }

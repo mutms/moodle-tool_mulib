@@ -87,6 +87,7 @@ final class wizardback extends button {
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
         $context['is_submitifchanged'] = $this->validate;
+        $context['wizardbutton'] = 'back';
         return $context;
     }
 }

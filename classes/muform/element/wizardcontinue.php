@@ -18,6 +18,8 @@
 
 namespace tool_mulib\muform\element;
 
+use core\output\core_renderer;
+
 /**
  * Continue button of a wizard stage, a submit button with the name and label all wizards share,
  * see docs/muform.md.
@@ -48,5 +50,12 @@ final class wizardcontinue extends button {
     #[\Override]
     public function is_submitting(): bool {
         return true;
+    }
+
+    #[\Override]
+    protected function get_template_data(core_renderer $output, array $allerrors): array {
+        $context = parent::get_template_data($output, $allerrors);
+        $context['wizardbutton'] = 'continue';
+        return $context;
     }
 }

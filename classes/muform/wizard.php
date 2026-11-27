@@ -20,6 +20,7 @@ namespace tool_mulib\muform;
 use core\exception\coding_exception;
 use core\output\core_renderer;
 use core\url;
+use tool_mulib\muform\element\wizardbuttons;
 use stdClass;
 
 /**
@@ -37,6 +38,8 @@ final class wizard {
     public const string PARAM = 'wizard';
     /** @var string page parameter with the requested stage name */
     public const string STAGE_PARAM = 'stage';
+    /** @var string submitted with Back or Continue when a stage was clicked in the stepper, the stage to go to */
+    public const string TARGET_PARAM = 'wizardstage';
     /** @var int rows older than this are purged when a wizard starts */
     public const int TTL = DAYSECS;
 
@@ -330,41 +333,72 @@ final class wizard {
     }
 
     /**
-     * Render the stepper and the form, with completed stages the form is marked dirty.
+     * Render the stepper, the heading of the current stage and the form; with completed stages the form is marked dirty.
+     *
+     * Reachable stages are links, in browsers with JavaScript a click submits the form with Back
+     * (earlier stages) or Continue (later stages) and the stage name in TARGET_PARAM.
      *
      * @param core_renderer $output
      * @param url $pageurl
      * @param form $form the form of the current stage
+     * @param array<string,string> $descriptions short plain text descriptions indexed by stage names
      * @return string
      */
-    public function render(core_renderer $output, url $pageurl, form $form): string {
+    public function render(core_renderer $output, url $pageurl, form $form, array $descriptions = []): string {
         $items = [];
         $pendingseen = false;
         $number = 0;
         $anycompleted = false;
+        $currentseen = false;
+        $current = null;
+        $total = 0;
         foreach ($this->get_states() as $name => $state) {
             $number++;
             $reachable = !$state['skipped'] && ($state['completed'] || !$pendingseen);
             $pendingseen = $pendingseen || !$state['completed'];
             $anycompleted = $anycompleted || ($state['completed'] && !$state['skipped']);
+            $description = isset($descriptions[$name]) ? clean_string($descriptions[$name]) : '';
             $items[] = [
                 'number' => $number,
+                'name' => $name,
                 'label' => clean_string($this->stages[$name]),
+                'description' => $description,
+                'has_description' => $description !== '',
                 'is_active' => ($state['completed'] && !$state['skipped']) || $state['current'],
                 'is_current' => $state['current'],
                 'is_skipped' => $state['skipped'],
                 'is_link' => $reachable && !$state['current'],
+                'direction' => $currentseen ? 'forward' : 'back',
                 'url' => $this->get_url($pageurl, $name)->out(false),
             ];
+            if (!$state['skipped']) {
+                $total++;
+                if ($state['current']) {
+                    $current = ['number' => $total, 'label' => $this->stages[$name], 'description' => $description];
+                }
+            }
+            $currentseen = $currentseen || $state['current'];
         }
         // Leaving the page loses completed stages, nothing links back to a running wizard.
         if ($anycompleted) {
             $form->set_dirty(true);
         }
+        $progress = '';
+        if ($current) {
+            $progress = get_string('muform_stepprogress', 'tool_mulib', ['number' => $current['number'], 'total' => $total]);
+        }
+        $buttons = $form->get_element(wizardbuttons::NAME);
+        if ($buttons instanceof wizardbuttons) {
+            $buttons->set_progress($progress);
+        }
         return $output->render_from_template('tool_mulib/muform/wizard', [
             'title' => clean_string(get_string('muform_steps', 'tool_mulib')),
             'skippedhint' => clean_string(get_string('muform_stepskipped', 'tool_mulib')),
             'stages' => $items,
+            // Only wizards with descriptions get the stage heading, older wizards may print their own via get_heading().
+            'has_heading' => $current !== null && $descriptions,
+            'heading' => $current ? clean_string($current['label']) : '',
+            'description' => $current['description'] ?? '',
             'formhtml' => $form->render($output),
         ]);
     }

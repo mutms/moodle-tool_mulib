@@ -779,6 +779,12 @@ for `submit_stage()` of the same request. Optional hooks:
   there only move to the next or previous stage and nothing is submitted;
 - `keeps_later_stages()` is for wizards editing existing data: all stages are completed from the
   start, submitting one goes to the following stage and the later ones stay completed;
+- `get_stage_descriptions()` returns a short plain text description per stage, shown under the
+  labels of the vertical stepper (as titles in the horizontal one); wizards with descriptions also get
+  a heading of the current stage above the form (label, and the description when the stepper is
+  horizontal), so do not combine them with a per-stage `get_heading()`;
+- `is_draft_allowed()`, `save_draft()` and `get_draft_label()` add saving of drafts from any stage,
+  see Wizard drafts below;
 - `get_heading()` is printed above the stepper, when the page heading is not the wizard title;
 - `render_page()` prints the page.
 
@@ -813,15 +819,22 @@ the file), and locked: later stages depend on it, different data means starting 
 
 ### Wizard buttons
 
-Stage forms use `wizardcontinue` (submit named `submit`, "Continue") and `wizardback` (named `back`),
-the first stage has no Back:
+Stage forms put their buttons into `wizardbuttons`, a bar sticking to the bottom of the page:
+Back on the left, the progress ("Step 2 of 5", set by the page) in the middle, the other buttons
+on the right with the first submit button last. Stages use `wizardcontinue` (submit named `submit`,
+"Continue") and `wizardback` (named `back`), the first stage has no Back. The plain `buttons`
+container is for ordinary forms and dialogs, never for wizard stages:
 
 ```php
-$this->add(new buttons('buttons'));
-$this->add(new wizardcontinue(), 'buttons');
-$this->add(new wizardback(), 'buttons');
-$this->add(new cancel(), 'buttons');
+$this->add(new wizardbuttons());
+$this->add(new wizardcontinue(), wizardbuttons::NAME);
+$this->add(new wizardback(), wizardbuttons::NAME);
+$this->add(new cancel(), wizardbuttons::NAME);
 ```
+
+Every action is in the bar only once - a last stage puts its final submit buttons there, its
+content only shows information (no second copy of the buttons, no edit buttons per section,
+the stepper is the way back).
 
 Back must not lose what the user entered, and the wizard never stores data that were not validated.
 So when nothing was changed in the browser Back reloads the form and the wizard goes to the
@@ -830,19 +843,41 @@ stage is stored and completed, then the wizard goes back. Invalid values keep th
 The browser picks the way, the server only sees a reload or a submission, so it cannot be made to
 store unvalidated data. Without JavaScript Back always reloads.
 
+Steps of the stepper work the same way: in browsers with JavaScript a click on an earlier step
+presses Back, a click on a later step presses Continue, both with the step name in
+`wizard::TARGET_PARAM`. The page then opens that step instead of the previous or next one, a later
+step only when it is reachable (otherwise the first stage that is not completed). Invalid values
+keep the user on the stage, so steps never ask about unsaved changes. Without JavaScript, or when
+the stage has no matching button, steps are plain links.
+
 Use `new wizardback(validate: false)` on a last stage whose submission finishes the wizard, there
 Back never stores anything. A form counts as changed also when it was rendered from submitted data,
 for example after a failed validation, or after `$form->set_changed(true)`.
 
 `reload_stage()` of `wizard_page` only changes `$this->state`, for example adds a row with the typed
 values. The page stores the changed state and marks the stage as changed (`wizard::mark_changed()`),
-so Back validates it and leaving the stage asks for confirmation; the mark is forgotten when the
-stage is completed.
+so Back validates it; the mark is forgotten when the stage is completed.
 
 Cancel and the final submit delete the row. The stepper is
 horizontal for up to 6 steps when there is room, and a sticky column left of the form in wide pages.
-With completed stages the form is marked dirty, so leaving the page asks for confirmation; stepper
-links do not ask unless the current stage was changed.
+With completed stages the form is marked dirty, so leaving the wizard (any other link) asks for
+confirmation; moving between steps never asks.
+
+### Wizard drafts
+
+Wizards creating or editing records that have a draft state may save the draft from any stage.
+`is_draft_allowed()` returns true and the page adds the draft button ("Save draft", see
+`get_draft_label()`) to the `wizardbuttons` bar of every stage. Pressing it validates the stage like
+Continue and calls `submit_stage()` with `is_saving_draft()` true - stages that finish the wizard
+must then only store their data and return null. Then `is_stage_valid()` is evaluated for all
+stages except the last one (it finishes the wizard) on the stored state, including stages not
+submitted yet with their start defaults:
+
+- all valid - `save_draft()` stores the draft, deletes the wizard and returns where to go;
+- otherwise the first invalid stage is opened with a notice asking to complete it.
+
+Choose defaults so that drafts can be saved early, required values without a default belong to
+early stages.
 
 ## Custom fields
 

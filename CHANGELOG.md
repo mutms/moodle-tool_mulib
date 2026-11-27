@@ -28,6 +28,8 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - tool_mulib\picker: picker panels over the right half of the screen independent of forms, families with sources in
   `<component>\picker\<family>`, used by muform elements and reports
 - picker and pickermany muform elements, pills with a family panel over the right half of the screen
+- muform wizards: wizardbuttons sticky bar (Back, progress, other buttons), stepper steps submit the stage
+  with Back or Continue instead of asking about unsaved changes, stage descriptions, drafts saved from any stage
 - Behat diagnostic steps for AI agents and developers: screenshots, page content and element layout and style dumps
 - userpicker and userpickermany muform elements, users picked in a panel with identity columns and paging
 - get_current_userids() hook of users picker sources for current values that stay valid whatever the candidate and tenant rules say

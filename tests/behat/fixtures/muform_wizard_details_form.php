@@ -22,7 +22,7 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mulib\muform\element\buttons;
+use tool_mulib\muform\element\wizardbuttons;
 use tool_mulib\muform\element\cancel;
 use tool_mulib\muform\element\filemanager;
 use tool_mulib\muform\element\text;
@@ -49,8 +49,8 @@ final class tool_mulib_muform_wizard_details_form extends form {
         $this->add($fullname);
         $this->add((new filemanager('attachments', 'Attachments', 1, ['.txt']))->set_frozen($locked));
 
-        $this->add(new buttons('buttons'));
-        $this->add(new wizardcontinue(), 'buttons');
-        $this->add(new cancel(), 'buttons');
+        $this->add(new wizardbuttons());
+        $this->add(new wizardcontinue(), wizardbuttons::NAME);
+        $this->add(new cancel(), wizardbuttons::NAME);
     }
 }
