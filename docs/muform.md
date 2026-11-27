@@ -472,10 +472,11 @@ error, use `set_default()` to preselect an option or `set_required(false)` to al
 Descriptions are plain text on purpose: the clickable card cannot contain links or other interactive
 content, and screen readers read the description as text.
 
-Cards are shown in two columns when the element is at least 48rem wide, such as in full page forms
-and `xl` dialogs on large screens, `lg` and smaller dialogs keep one column. The layout follows the
-width of the element, not the screen (CSS container query). Use `->set_max_columns(1)` when long
-descriptions do not read well side by side.
+Cards are shown in two columns when the element is at least 32rem wide and in three columns from
+50rem, such as in full page forms; narrow dialogs keep one column. The layout follows the width of
+the element, not the screen (CSS container query). Use `->set_max_columns(1)` or `(2)` when long
+descriptions do not read well side by side, `->set_min_column_width()` for short cards that fit
+more columns in narrow elements too.
 
 ### Yes or No
 

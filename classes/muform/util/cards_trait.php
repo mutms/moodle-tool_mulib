@@ -35,8 +35,8 @@ trait cards_trait {
     /** @var array plain text descriptions indexed by option keys */
     private array $descriptions = [];
     /** @var int maximum number of card columns when the element is wide enough */
-    private int $maxcolumns = 2;
-    /** @var float|null minimum card column width in rem for two columns in narrow elements, null means element width 48rem */
+    private int $maxcolumns = 3;
+    /** @var float|null minimum card column width in rem for more columns in narrow elements, null means fixed element widths */
     private ?float $mincolumnwidth = null;
 
     /**
@@ -51,24 +51,24 @@ trait cards_trait {
     /**
      * Set maximum number of card columns.
      *
-     * Cards are shown in two columns when the element is at least 48rem wide,
-     * use 1 when long descriptions do not read well side by side.
+     * Cards are shown in two columns when the element is at least 32rem wide and in three columns
+     * from 50rem, use 1 or 2 when long descriptions do not read well side by side.
      *
-     * @param int $columns 1 or 2
+     * @param int $columns 1, 2 or 3
      * @return static
      */
     public function set_max_columns(int $columns): static {
-        if ($columns !== 1 && $columns !== 2) {
-            throw new coding_exception('Card columns must be 1 or 2');
+        if ($columns < 1 || $columns > 3) {
+            throw new coding_exception('Card columns must be 1, 2 or 3');
         }
         $this->maxcolumns = $columns;
         return $this;
     }
 
     /**
-     * Show two card columns whenever each column can be at least this wide.
+     * Show more card columns (up to the maximum) whenever each column can be at least this wide.
      *
-     * By default cards are in two columns only when the element is at least 48rem wide (full page forms, xl dialogs),
+     * By default cards are in two columns when the element is at least 32rem wide and in three from 50rem,
      * use this for short cards that fit side by side in smaller dialogs too. Ignored with set_max_columns(1).
      *
      * @param float $rem minimum column width in rem, for example 12
@@ -122,7 +122,9 @@ trait cards_trait {
         }
         $context['groups'] = $groups;
         $context['singlecolumn'] = ($this->maxcolumns === 1);
-        $context['mincolumnwidth'] = ($this->maxcolumns === 2 && $this->mincolumnwidth !== null)
+        $context['maxtwocolumns'] = ($this->maxcolumns === 2);
+        $context['maxcolumns'] = $this->maxcolumns;
+        $context['mincolumnwidth'] = ($this->maxcolumns > 1 && $this->mincolumnwidth !== null)
             ? rtrim(rtrim(sprintf('%.3F', $this->mincolumnwidth), '0'), '.') : null;
         return $context;
     }

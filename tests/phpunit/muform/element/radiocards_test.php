@@ -175,12 +175,12 @@ final class radiocards_test extends muform_testcase {
     public function test_max_columns(): void {
         $element = new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']);
         $this->assertSame($element, $element->set_max_columns(2));
-        foreach ([0, 3] as $columns) {
+        foreach ([0, 4] as $columns) {
             try {
                 $element->set_max_columns($columns);
                 $this->fail('Exception expected');
             } catch (coding_exception $ex) {
-                $this->assertStringContainsString('Card columns must be 1 or 2', $ex->getMessage());
+                $this->assertStringContainsString('Card columns must be 1, 2 or 3', $ex->getMessage());
             }
         }
 
@@ -213,7 +213,7 @@ final class radiocards_test extends muform_testcase {
         };
         \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
         $html = $this->render(new simple_form($this->get_url(), []));
-        $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-fit" style="--muform-cards-min-width: 12.5rem">', $html);
+        $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-fit" style="--muform-cards-min-width: 12.5rem; --muform-cards-columns: 3">', $html);
 
         // One column wins.
         $hook = function (muform_definition $hook): void {

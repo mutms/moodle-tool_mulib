@@ -136,12 +136,12 @@ final class checkboxcards_test extends muform_testcase {
     public function test_max_columns(): void {
         $element = new checkboxcards('options', 'X', ['addonly' => 'Add only', 'forced' => 'Seed forced']);
         $this->assertSame($element, $element->set_max_columns(2));
-        foreach ([0, 3] as $columns) {
+        foreach ([0, 4] as $columns) {
             try {
                 $element->set_max_columns($columns);
                 $this->fail('Exception expected');
             } catch (coding_exception $ex) {
-                $this->assertStringContainsString('Card columns must be 1 or 2', $ex->getMessage());
+                $this->assertStringContainsString('Card columns must be 1, 2 or 3', $ex->getMessage());
             }
         }
 

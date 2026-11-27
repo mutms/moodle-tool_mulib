@@ -26,8 +26,10 @@
     * attr_required - true if at least one option must be checked
     * nolabelfor - always true
     * value - list of checked keys
-    * singlecolumn - true when cards must not be shown in two columns in wide forms
-    * mincolumnwidth - minimum column width in rem for two columns in narrow elements, null for the default
+    * singlecolumn - true when cards must not be shown in columns in wide forms
+    * maxtwocolumns - true when cards are shown in two columns at most
+    * maxcolumns - maximum number of columns, 1 to 3
+    * mincolumnwidth - minimum column width in rem for more columns in narrow elements, null for the default
     * groups - list of option groups with label (may be empty) and options (key, label, description, has_description, is_checked, id)
 
     Example context (json):
@@ -36,7 +38,7 @@
         "label": "Label", "nolabelfor": true, "is_required": false, "attr_required": false,
         "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
         "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
-        "singlecolumn": false, "mincolumnwidth": null, "value": ["a"], "groups": [{"label": "", "options": [
+        "singlecolumn": false, "maxtwocolumns": false, "maxcolumns": 3, "mincolumnwidth": null, "value": ["a"], "groups": [{"label": "", "options": [
             {"key": "a", "label": "Option A", "description": "Explanation of A", "has_description": true, "is_checked": true, "id": "id_checkboxcards_0"},
             {"key": "b", "label": "Option B", "description": "", "has_description": false, "is_checked": false, "id": "id_checkboxcards_1"}
         ]}]
@@ -46,7 +48,7 @@
     {{$control}}
         <div class="muform-cards-container w-100">
         {{^is_frozen}}<input type="hidden" name="{{name}}[]" value=""{{#is_disabled}} disabled{{/is_disabled}}>{{/is_frozen}}
-        <div role="group" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#attr_required}} data-muform-required="1"{{/attr_required}} class="w-100 muform-cards{{#singlecolumn}} muform-cards-single{{/singlecolumn}}{{#mincolumnwidth}} muform-cards-fit{{/mincolumnwidth}}"{{#mincolumnwidth}} style="--muform-cards-min-width: {{mincolumnwidth}}rem"{{/mincolumnwidth}}>
+        <div role="group" id="{{id}}" aria-labelledby="{{id}}_label" aria-describedby="{{errorid}}"{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#attr_required}} data-muform-required="1"{{/attr_required}} class="w-100 muform-cards{{#singlecolumn}} muform-cards-single{{/singlecolumn}}{{#maxtwocolumns}} muform-cards-max2{{/maxtwocolumns}}{{#mincolumnwidth}} muform-cards-fit{{/mincolumnwidth}}"{{#mincolumnwidth}} style="--muform-cards-min-width: {{mincolumnwidth}}rem; --muform-cards-columns: {{maxcolumns}}"{{/mincolumnwidth}}>
             {{#groups}}
             {{#label}}<div class="w-100 fw-bold mt-2 muform-cards-group">{{label}}</div>{{/label}}
             {{#options}}

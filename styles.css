@@ -15,14 +15,15 @@
     flex-direction: column;
     gap: 0.5rem;
 }
-/* Two columns when the element is wide, such as in full page forms and xl dialogs, but not in lg dialogs. */
+/* Columns follow the width of the element (container queries): one in narrow dialogs,
+   two from 32rem, three from 50rem such as in full page forms; see set_max_columns(). */
 .muform .muform-cards-container {
     /* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator */
     container-type: inline-size;
 }
 
 /* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator */
-@container (min-width: 48rem) {
+@container (min-width: 32rem) {
     .muform .muform-cards:not(.muform-cards-single) {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -31,10 +32,18 @@
         grid-column: 1 / -1;
     }
 }
-/* Two columns whenever each fits the minimum width (set_min_column_width()), never more than two. */
+
+/* stylelint-disable-next-line csstree/validator -- container queries are not known to the validator */
+@container (min-width: 50rem) {
+    .muform .muform-cards:not(.muform-cards-single):not(.muform-cards-max2) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+/* More columns whenever each fits the minimum width (set_min_column_width()), never more than the maximum. */
 .muform .muform-cards.muform-cards-fit {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--muform-cards-min-width), calc((100% - 0.5rem) / 2))), 1fr));
+    --muform-cards-fit-width: calc((100% - (var(--muform-cards-columns) - 1) * 0.5rem) / var(--muform-cards-columns));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--muform-cards-min-width), var(--muform-cards-fit-width))), 1fr));
 }
 .muform .muform-cards.muform-cards-fit > .muform-cards-group {
     grid-column: 1 / -1;
