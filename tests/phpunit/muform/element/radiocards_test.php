@@ -224,4 +224,31 @@ final class radiocards_test extends muform_testcase {
         $html = $this->render(new simple_form($this->get_url(), []));
         $this->assertStringContainsString(' class="w-100 muform-cards muform-cards-single">', $html);
     }
+
+    public function test_icons(): void {
+        $element = new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated']);
+        $this->assertSame($element, $element->set_icons(['standard' => 'fa-solid fa-gun']));
+        foreach ([['other' => 'fa-gun'], ['standard' => 'not an icon'], ['standard' => 'fa-gun"']] as $icons) {
+            try {
+                $element->set_icons($icons);
+                $this->fail('Exception expected');
+            } catch (coding_exception $ex) {
+                $this->assertMatchesRegularExpression('/icon/i', $ex->getMessage());
+            }
+        }
+
+        $hook = function (muform_definition $hook): void {
+            $hook->form->add((new radiocards('type', 'X', ['standard' => 'Standard', 'curated' => 'Curated', 'none' => 'None']))
+                ->set_icons(['standard' => 'fa-gun', 'curated' => 'core:i/star']));
+        };
+        \core\di::get(\core\hook\manager::class)->phpunit_redirect_hook(muform_definition::class, $hook);
+        $html = $this->render(new simple_form($this->get_url(), []));
+        $this->assertSame(3, substr_count($html, '<div class="form-check muform-card muform-card-iconic">'));
+        $this->assertStringContainsString(
+            '<span class="muform-card-icon" aria-hidden="true"><i class="icon-fa fa-solid fa-gun" aria-hidden="true"></i></span>',
+            $html
+        );
+        $this->assertStringContainsString('<span class="muform-card-icon muform-card-icon-image" aria-hidden="true"><img src="', $html);
+        $this->assertStringContainsString('<span class="muform-card-icon" aria-hidden="true"></span>', $html);
+    }
 }

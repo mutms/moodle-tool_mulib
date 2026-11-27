@@ -18,6 +18,7 @@
 namespace tool_mulib\muform\util;
 
 use core\exception\coding_exception;
+use core\output\core_renderer;
 
 /**
  * Options, descriptions and layout of radiocards and checkboxcards elements.
@@ -36,6 +37,8 @@ trait cards_trait {
     private array $descriptions = [];
     /** @var int maximum number of card columns when the element is wide enough */
     private int $maxcolumns = 3;
+    /** @var array icons indexed by option keys, see set_icons() */
+    private array $icons = [];
     /** @var float|null minimum card column width in rem for more columns in narrow elements, null means fixed element widths */
     private ?float $mincolumnwidth = null;
 
@@ -83,6 +86,46 @@ trait cards_trait {
     }
 
     /**
+     * Show a big icon in each card, the check box or radio moves to the top right corner.
+     *
+     * Icons are Font Awesome classes ("fa-solid fa-gun", "fa-bullseye") or images from pix directories
+     * as "component:name" ("local_example:type_basic"), usually SVG. The icon is decorative only,
+     * the card title must say everything. Options without an icon get an empty box of the same size.
+     *
+     * @param array $icons icons indexed by option keys
+     * @return static
+     */
+    public function set_icons(array $icons): static {
+        foreach ($icons as $key => $icon) {
+            $key = (string)$key;
+            if (!$this->options->has_key($key)) {
+                throw new coding_exception('Icon of unknown option: ' . $key);
+            }
+            if (!is_string($icon) || !preg_match('/^(fa-[a-z0-9-]+( fa-[a-z0-9-]+)*|[a-z][a-z0-9_]*:[a-zA-Z0-9_\/.-]+)$/', $icon)) {
+                throw new coding_exception('Invalid card icon: ' . $key);
+            }
+        }
+        $this->icons = array_map('strval', $icons);
+        return $this;
+    }
+
+    /**
+     * HTML of a card icon.
+     *
+     * @param core_renderer $output
+     * @param string $icon see set_icons()
+     * @return string
+     */
+    private static function render_card_icon(core_renderer $output, string $icon): string {
+        if (str_starts_with($icon, 'fa-')) {
+            $classes = str_contains($icon, ' ') ? $icon : 'fa-solid ' . $icon;
+            return \html_writer::tag('i', '', ['class' => 'icon-fa ' . $classes, 'aria-hidden' => 'true']);
+        }
+        [$component, $name] = explode(':', $icon, 2);
+        return \html_writer::empty_tag('img', ['src' => $output->image_url($name, $component)->out(false), 'alt' => '']);
+    }
+
+    /**
      * Set options and validate their descriptions, called from the constructor.
      *
      * @param array|options $options option titles indexed by value keys or options instance with groups
@@ -106,11 +149,12 @@ trait cards_trait {
     /**
      * Add cards to template data.
      *
+     * @param core_renderer $output
      * @param array $context template data of the element
      * @param array $selected keys of selected options
      * @return array
      */
-    private function add_cards_template_data(array $context, array $selected): array {
+    private function add_cards_template_data(core_renderer $output, array $context, array $selected): array {
         $context['nolabelfor'] = true;
         $groups = $this->options->get_template_data($context['id'], $selected);
         foreach ($groups as $g => $group) {
@@ -118,8 +162,12 @@ trait cards_trait {
                 $description = $this->descriptions[$option['key']] ?? '';
                 $groups[$g]['options'][$o]['description'] = clean_string($description);
                 $groups[$g]['options'][$o]['has_description'] = ($description !== '');
+                $icon = $this->icons[$option['key']] ?? null;
+                $groups[$g]['options'][$o]['iconhtml'] = $icon === null ? '' : self::render_card_icon($output, $icon);
+                $groups[$g]['options'][$o]['is_iconimage'] = $icon !== null && !str_starts_with($icon, 'fa-');
             }
         }
+        $context['has_icons'] = !empty($this->icons);
         $context['groups'] = $groups;
         $context['singlecolumn'] = ($this->maxcolumns === 1);
         $context['maxtwocolumns'] = ($this->maxcolumns === 2);

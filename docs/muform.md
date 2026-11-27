@@ -478,6 +478,12 @@ the element, not the screen (CSS container query). Use `->set_max_columns(1)` or
 descriptions do not read well side by side, `->set_min_column_width()` for short cards that fit
 more columns in narrow elements too.
 
+`->set_icons(['basic' => 'fa-solid fa-gun', 'special' => 'local_example:type_special'])` gives cards a
+big decorative icon above the title and moves the check box or radio to the top right corner, the
+whole card stays clickable. Icons are Font Awesome classes or images from pix directories as
+`component:name` (usually SVG, they keep their own colours); options without an icon get an empty
+box. The title must say everything, screen readers ignore icons.
+
 ### Yes or No
 
 `yesno` asks a question with two inline radios, Yes and No, and returns 1 or 0 like `checkbox`. Use it

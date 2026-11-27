@@ -118,6 +118,46 @@
     content: "";
 }
 
+/* Cards with icons (set_icons()): a big icon first, the check box or radio in the top right corner,
+   the whole card stays clickable through the label. */
+.muform .muform-card.muform-card-iconic {
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+}
+.muform .muform-card.muform-card-iconic .form-check-input {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    float: none;
+    margin: 0;
+}
+.muform .muform-card.muform-card-iconic .form-check-label {
+    display: block;
+    margin: 0.5rem 0 0;
+    padding-left: 0;
+}
+.muform .muform-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.125rem;
+    color: var(--bs-white, #fff);
+    background-color: var(--bs-primary);
+    border-radius: var(--bs-border-radius);
+}
+.muform .muform-card-icon:empty {
+    background-color: var(--bs-secondary-bg);
+}
+/* Images bring their own shape and colours. */
+.muform .muform-card-icon.muform-card-icon-image {
+    background-color: transparent;
+}
+.muform .muform-card-icon img {
+    width: 100%;
+    height: 100%;
+}
+
 /* muform: the gap between a check box or radio and its text is clickable too. */
 .muform .form-check-input + .form-check-label {
     margin-left: -0.5em;

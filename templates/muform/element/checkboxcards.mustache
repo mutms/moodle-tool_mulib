@@ -30,7 +30,9 @@
     * maxtwocolumns - true when cards are shown in two columns at most
     * maxcolumns - maximum number of columns, 1 to 3
     * mincolumnwidth - minimum column width in rem for more columns in narrow elements, null for the default
-    * groups - list of option groups with label (may be empty) and options (key, label, description, has_description, is_checked, id)
+    * has_icons - cards have icons, the check box or radio is in the top right corner
+    * groups - list of option groups with label (may be empty) and options (key, label, description, has_description, is_checked, id,
+      iconhtml - decorative icon, is_iconimage - the icon is an image, not a font icon)
 
     Example context (json):
     {
@@ -38,9 +40,9 @@
         "label": "Label", "nolabelfor": true, "is_required": false, "attr_required": false,
         "helpbuttonhtml": "", "is_frozen": false, "is_hidden": false, "is_disabled": false,
         "has_errors": false, "errors": [], "requiredhint": "Required", "invalidhint": "Error",
-        "singlecolumn": false, "maxtwocolumns": false, "maxcolumns": 3, "mincolumnwidth": null, "value": ["a"], "groups": [{"label": "", "options": [
-            {"key": "a", "label": "Option A", "description": "Explanation of A", "has_description": true, "is_checked": true, "id": "id_checkboxcards_0"},
-            {"key": "b", "label": "Option B", "description": "", "has_description": false, "is_checked": false, "id": "id_checkboxcards_1"}
+        "has_icons": false, "singlecolumn": false, "maxtwocolumns": false, "maxcolumns": 3, "mincolumnwidth": null, "value": ["a"], "groups": [{"label": "", "options": [
+            {"key": "a", "label": "Option A", "description": "Explanation of A", "has_description": true, "iconhtml": "", "is_iconimage": false, "is_checked": true, "id": "id_checkboxcards_0"},
+            {"key": "b", "label": "Option B", "description": "", "has_description": false, "iconhtml": "", "is_iconimage": false, "is_checked": false, "id": "id_checkboxcards_1"}
         ]}]
     }
 }}
@@ -52,7 +54,8 @@
             {{#groups}}
             {{#label}}<div class="w-100 fw-bold mt-2 muform-cards-group">{{label}}</div>{{/label}}
             {{#options}}
-            <div class="form-check muform-card">
+            <div class="form-check muform-card{{#has_icons}} muform-card-iconic{{/has_icons}}">
+                {{#has_icons}}<span class="muform-card-icon{{#is_iconimage}} muform-card-icon-image{{/is_iconimage}}" aria-hidden="true">{{{iconhtml}}}</span>{{/has_icons}}
                 <input type="checkbox" class="form-check-input{{#has_errors}} is-invalid{{/has_errors}}" id="{{id}}" name="{{name}}[]" value="{{key}}"{{#has_description}} aria-describedby="{{id}}_description"{{/has_description}}{{#is_checked}} checked{{/is_checked}}{{#is_frozen}} disabled{{/is_frozen}}{{#is_required}} aria-required="true"{{/is_required}}{{#has_errors}} aria-invalid="true"{{/has_errors}}{{#is_disabled}} disabled{{/is_disabled}}>
                 <label class="form-check-label" for="{{id}}">{{label}}</label>
                 {{#has_description}}<div class="form-text mt-0" id="{{id}}_description">{{description}}</div>{{/has_description}}

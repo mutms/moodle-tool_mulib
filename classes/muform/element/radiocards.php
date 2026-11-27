@@ -76,6 +76,6 @@ final class radiocards extends element {
             // Some option is already selected, the required marker would be only noise.
             $context['is_required'] = false;
         }
-        return $this->add_cards_template_data($context, ($this->value === null) ? [] : [$this->value]);
+        return $this->add_cards_template_data($output, $context, ($this->value === null) ? [] : [$this->value]);
     }
 }

@@ -96,6 +96,6 @@ final class checkboxcards extends element {
     #[\Override]
     protected function get_template_data(core_renderer $output, array $allerrors): array {
         $context = parent::get_template_data($output, $allerrors);
-        return $this->add_cards_template_data($context, $this->value);
+        return $this->add_cards_template_data($output, $context, $this->value);
     }
 }
