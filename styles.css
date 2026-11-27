@@ -281,6 +281,28 @@
     margin-bottom: 1.5rem;
 }
 
+/* muform: wizard stages have labels above the controls, the stepper already takes the left column. */
+.muform-wizard-form .muform-element > .col-md-3,
+.muform-wizard-form .muform-element > .col-md-9 {
+    flex: 0 0 auto;
+    width: 100%;
+}
+/* The label has the pb-0 utility (important), the space below it is a margin. */
+.muform-wizard-form .muform-element > .col-form-label {
+    padding-top: 0;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+/* Required marker and help icon right after the label, not pushed to the end of the line
+   (more specific than the Boost rule for .mform labels, themes load after plugin styles). */
+.muform-wizard-form .mform .muform-element > .col-form-label .form-label-addon {
+    margin-left: 0.25rem;
+}
+/* Elements without a label, such as checkboxes with their text, do not keep an empty line. */
+.muform-wizard-form .muform-element > .col-form-label:has(> :is(label, span):empty):not(:has(.form-label-addon > *)) {
+    display: none;
+}
+
 /* muform: wizard button bar sticks to the bottom of the page, Back left, progress in the middle,
    other buttons right with the primary one last; the right group is reversed, see the template. */
 .muform-wizardbuttons {
