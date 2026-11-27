@@ -503,7 +503,8 @@ removing a row.
 is meant for your own validator, usually `required_if_visible` for fields that appear through display
 rules. `set_frozen(true)` shows the current value as text and ignores anything submitted; it is the
 only way to make a value unchangeable. `add_validator()`, `add_help_button()` and `set_template()` do
-what they say. Setters that affect the value throw an exception once the element was added.
+what they say; `set_template_context()` passes extra data to an overridden template as `{{#extra}}…{{/extra}}`
+(values are not escaped by the element, the template decides). Setters that affect the value throw an exception once the element was added.
 
 Never use the HTML `required` attribute on a field that can be hidden, the browser would refuse to
 submit the form because of a field the user cannot see.

@@ -578,6 +578,22 @@ abstract class element {
         return $this;
     }
 
+    /** @var array extra template data for overridden templates, see set_template_context() */
+    private array $templatecontext = [];
+
+    /**
+     * Extra data for an overridden template, available there as {{#extra}}{{name}}{{/extra}}.
+     *
+     * Values are passed to the template as they are, clean or escape them before.
+     *
+     * @param array $data
+     * @return static
+     */
+    public function set_template_context(array $data): static {
+        $this->templatecontext = $data;
+        return $this;
+    }
+
     /**
      * CSS class of the width attribute, empty for auto or elements without the attribute.
      *
@@ -662,6 +678,7 @@ abstract class element {
             'requiredhint' => clean_string($this->get_required_hint()),
             'invalidhint' => clean_string($this->get_invalid_hint()),
             'helpbuttonhtml' => '',
+            'extra' => $this->templatecontext,
         ];
 
         if ($this->help) {
