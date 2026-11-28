@@ -372,8 +372,11 @@ abstract class wizard_page {
      * Handle the request.
      */
     final public function execute(): void {
+        global $PAGE;
+
         $pageurl = $this->get_page_url();
         $this->setup_page();
+        $PAGE->set_secondary_navigation(false);
 
         $name = $this->get_name();
         $stages = $this->get_stages();

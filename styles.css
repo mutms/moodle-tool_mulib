@@ -352,7 +352,7 @@
     display: none;
 }
 
-/* muform: wizard button bar sticks to the bottom of the page, Back left, progress in the middle,
+/* muform: wizard button bar sticks to the bottom of the page, Back and progress left,
    other buttons right with the primary one last; the right group is reversed, see the template. */
 .muform-wizardbuttons {
     position: sticky;
@@ -368,11 +368,22 @@
     border-top: var(--bs-border-width) solid var(--bs-border-color);
     border-bottom-right-radius: var(--bs-card-inner-border-radius, 0);
     border-bottom-left-radius: var(--bs-card-inner-border-radius, 0);
-    box-shadow: 0 -0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+}
+.muform-wizardbuttons::before {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: 1.5rem;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(to bottom, transparent, var(--bs-card-bg, var(--bs-body-bg)));
+    backdrop-filter: blur(2px);
+    mask-image: linear-gradient(to bottom, transparent, #000);
 }
 .muform-wizardbuttons-back {
     display: flex;
-    flex: 1 1 0;
+    flex: 0 0 auto;
     gap: 0.5rem;
     order: 1;
 }
@@ -384,7 +395,7 @@
 }
 .muform-wizardbuttons-main {
     display: flex;
-    flex: 1 1 0;
+    flex: 1 1 auto;
     flex-direction: row-reverse;
     flex-wrap: wrap-reverse;
     gap: 0.5rem;
@@ -401,6 +412,9 @@
 }
 body.behat-site .muform-wizardbuttons {
     position: static;
+}
+body.behat-site .muform-wizardbuttons::before {
+    display: none;
 }
 
 /* muform: native dialogs, styled like Bootstrap modals. */

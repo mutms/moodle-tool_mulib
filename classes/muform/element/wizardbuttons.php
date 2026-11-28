@@ -24,8 +24,8 @@ use tool_mulib\muform\element;
 /**
  * Button bar of wizard stages, see docs/muform.md.
  *
- * Sticks to the bottom of the page while the stage scrolls: Back on the left, stage progress
- * in the middle, the other buttons on the right with submit buttons last. The wizard page sets
+ * Sticks to the bottom of the page while the stage scrolls: Back and stage progress on the left,
+ * the other buttons on the right with submit buttons last. The wizard page sets
  * the progress and adds the draft button when drafts can be saved, stage forms add only
  * their own buttons (wizardback, wizardcontinue or the final submit buttons, cancel).
  *
@@ -59,7 +59,7 @@ final class wizardbuttons extends element {
     }
 
     /**
-     * Progress text shown in the middle of the bar, set by the wizard page.
+     * Progress text shown on the left after Back, set by the wizard page.
      *
      * @param string|null $progress
      * @return $this

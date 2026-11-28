@@ -341,7 +341,7 @@ final class wizard {
      * @param core_renderer $output
      * @param url $pageurl
      * @param form $form the form of the current stage
-     * @param array<string,string> $descriptions short plain text descriptions indexed by stage names
+     * @param array $descriptions short plain text descriptions indexed by stage names
      * @return string
      */
     public function render(core_renderer $output, url $pageurl, form $form, array $descriptions = []): string {

@@ -767,7 +767,8 @@ completes the stage and prints the page. Hooks work with these properties:
   finishing;
 - `$this->stage` and `$this->formurl` - the current stage and its URL, set before `create_form()`.
 
-`setup_page()` sets `$PAGE` (context, URL, layout, title, heading, navigation). `submit_stage()`
+`setup_page()` sets `$PAGE` (context, URL, layout, title, heading, navigation); the page then removes
+the secondary navigation, wizards are left with Cancel. `submit_stage()`
 returns null to complete the stage and continue, or a URL to go elsewhere without completing it:
 after finishing (delete the wizard first), or `$this->formurl` to show the stage again. Values
 computed in `create_form()`, such as problems shown on a summary stage, may be kept in properties
@@ -831,7 +832,7 @@ the file), and locked: later stages depend on it, different data means starting 
 ### Wizard buttons
 
 Stage forms put their buttons into `wizardbuttons`, a bar sticking to the bottom of the page:
-Back on the left, the progress ("Step 2 of 5", set by the page) in the middle, the other buttons
+Back and the progress ("Step 2 of 5", set by the page) on the left, the other buttons
 on the right with the first submit button last. Stages use `wizardcontinue` (submit named `submit`,
 "Continue") and `wizardback` (named `back`), the first stage has no Back. The plain `buttons`
 container is for ordinary forms and dialogs, never for wizard stages:
